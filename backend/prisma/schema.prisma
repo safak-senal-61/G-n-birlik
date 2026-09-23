@@ -1,0 +1,318 @@
+// =====================================================================
+// Günübirlik İş Bulma Platformu - Prisma Şema
+// =====================================================================
+// Bu şema hem SQLite (geliştirme) hem PostgreSQL (production) ile çalışır.
+//
+// Geliştirme (mevcut):
+//   - SQLite kullanır (file:/home/z/my-project/db/custom.db)
+//   - Değişiklik için: bun run db:push
+//
+// Production (PostgreSQL):
+//   1. Supabase (https://supabase.com) veya Neon (https://neon.tech) hesabı aç
+//   2. .env dosyasında:
+//      - provider = "postgresql" yap (aşağıda)
+//      - DATABASE_URL = postgresql://user:pass@host:5432/db?schema=public
+//   3. Çalıştır: bun run db:push (veya prisma migrate dev --name init)
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Geliştirme: sqlite | Production: postgresql
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== KULLANICI ====================
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  phone        String?  @unique
+  password     String?  // Google OAuth kullanıcılarında null olabilir
+  fullName     String
+  role         String   @default("WORKER") // WORKER | EMPLOYER | ADMIN
+  avatarUrl    String?
+  bio          String?
+
+  // OAuth
+  googleId     String?  @unique
+  provider     String   @default("LOCAL") // LOCAL | GOOGLE
+
+  // Konum bilgileri
+  city         String?
+  district     String?
+  latitude     Float?
+  longitude    Float?
+  address      String?
+
+  // İş arayan profili
+  skills       String?  // JSON array of skill names
+  experienceYears Int?
+  hourlyWageMin   Float?
+  hourlyWageMax   Float?
+  isAvailable     Boolean @default(true)
+  ratingAvg       Float   @default(0)
+  ratingCount     Int     @default(0)
+
+  // İşveren profili
+  companyName     String?
+  companyTaxId    String?
+  isVerified      Boolean @default(false)
+
+  // Güvenlik
+  emailVerified   Boolean @default(false)
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret String?  // TOTP secret (encrypted)
+  twoFactorBackupCodes String? // JSON array of backup codes
+
+  // Meta
+  fcmToken        String? // Mobil push notification token
+  lastActiveAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // İlişkiler
+  jobsPosted      Job[]
+  applications    Application[]
+  conversations   ConversationParticipant[]
+  messages        Message[]
+  reviewsGiven    Review[]      @relation("ReviewReviewer")
+  reviewsReceived Review[]      @relation("ReviewReceiver")
+  notifications   Notification[]
+  savedJobs       SavedJob[]
+  passwordResets  PasswordReset[]
+  emailVerifications EmailVerification[]
+
+  @@index([role])
+  @@index([city])
+  @@index([latitude, longitude])
+  @@index([googleId])
+}
+
+// ==================== ŞİFRE SIFIRLAMA ====================
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique // E-posta ile gönderilen token
+  code      String   // 6 haneli kod (SMS/e-posta)
+  expiresAt DateTime
+  usedAt    DateTime?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([code])
+}
+
+// ==================== E-POSTA DOĞRULAMA ====================
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email     String   // Doğrulanacak e-posta
+  code      String   // 6 haneli kod
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([code])
+}
+
+// ==================== İŞ İLANI ====================
+model Job {
+  id            String   @id @default(cuid())
+  employerId    String
+  employer      User     @relation(fields: [employerId], references: [id], onDelete: Cascade)
+
+  title         String
+  description   String
+  category      String   // INSAAT | RESTAURANT | TEMIZLIK | NAKLIYE | TARIM | DIGER
+  requiredSkills String? // JSON array
+
+  // Tarih ve saat
+  workDate      DateTime
+  startTime     String   // "08:00"
+  endTime       String   // "17:00"
+  durationHours Float    // 9
+
+  // Ücret
+  wageAmount    Float
+  wageType      String   @default("DAILY") // HOURLY | DAILY | FIXED
+  currency      String   @default("TRY")
+  isWageNegotiable Boolean @default(false)
+
+  // Konum
+  city          String
+  district      String
+  address       String?
+  latitude      Float
+  longitude     Float
+  locationNote  String?
+
+  // Kapasite
+  openingsTotal Int      @default(1) // Kaç kişi aranıyor
+  openingsFilled Int     @default(0) // Kaç kişi yerleştirildi
+
+  // Durum
+  status        String   @default("OPEN") // OPEN | FILLED | CLOSED | CANCELLED
+  urgency       String   @default("NORMAL") // LOW | NORMAL | HIGH | URGENT
+
+  // Meta
+  viewCount     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // İlişkiler
+  applications  Application[]
+  savedBy       SavedJob[]
+  reviews       Review[]
+  conversations Conversation[]
+
+  @@index([employerId])
+  @@index([status])
+  @@index([category])
+  @@index([city, district])
+  @@index([workDate])
+  @@index([latitude, longitude])
+}
+
+// ==================== BAŞVURU ====================
+model Application {
+  id          String   @id @default(cuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  workerId    String
+  worker      User     @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  status      String   @default("PENDING")
+  // PENDING | ACCEPTED | REJECTED | WITHDRAWN | COMPLETED | NO_SHOW
+
+  message     String?  // Başvuru notu
+  proposedWage Float?  // İşçi ücret teklifi (pazarlık varsa)
+
+  // İşveren notu
+  employerNote String?
+  rating       Int?    // 1-5 işveren verdiği puan
+  ratedAt      DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  respondedAt DateTime?
+  completedAt DateTime?
+
+  // İlişkiler
+  conversations Conversation[]
+  reviews        Review[]
+
+  @@unique([jobId, workerId])
+  @@index([jobId])
+  @@index([workerId])
+  @@index([status])
+}
+
+// ==================== MESAJLAŞMA ====================
+model Conversation {
+  id          String   @id @default(cuid())
+  jobId       String?  // İlan bazlı sohbet
+  job         Job?     @relation(fields: [jobId], references: [id])
+  applicationId String?
+  application Application? @relation(fields: [applicationId], references: [id])
+
+  type        String   @default("DIRECT") // DIRECT | JOB_GROUP
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages    Message[]
+
+  @@index([jobId])
+}
+
+model ConversationParticipant {
+  id              String   @id @default(cuid())
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt      DateTime?
+  createdAt       DateTime @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id              String   @id @default(cuid())
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId        String
+  sender          User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  content         String
+  type            String   @default("TEXT") // TEXT | IMAGE | LOCATION | SYSTEM
+  metadata        String?  // JSON
+
+  createdAt       DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
+// ==================== DEĞERLENDİRME ====================
+model Review {
+  id          String   @id @default(cuid())
+  jobId       String?
+  job         Job?     @relation(fields: [jobId], references: [id])
+  applicationId String?
+  application Application? @relation(fields: [applicationId], references: [id])
+
+  reviewerId  String
+  reviewer    User     @relation("ReviewReviewer", fields: [reviewerId], references: [id])
+  receiverId  String
+  receiver    User     @relation("ReviewReceiver", fields: [receiverId], references: [id])
+
+  rating      Int      // 1-5
+  comment     String?
+  reviewType  String   // WORKER_TO_EMPLOYER | EMPLOYER_TO_WORKER
+
+  createdAt   DateTime @default(now())
+
+  @@index([receiverId])
+  @@index([reviewerId])
+}
+
+// ==================== BİLDİRİM ====================
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type        String   // JOB_APPLIED | APPLICATION_ACCEPTED | APPLICATION_REJECTED | NEW_MESSAGE | JOB_REMINDER | JOB_NEARBY
+  title       String
+  body        String
+  data        String?  // JSON payload
+
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+// ==================== KAYDEDİLEN İŞLER ====================
+model SavedJob {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, jobId])
+  @@index([userId])
+}

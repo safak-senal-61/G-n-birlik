@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Gunubirlik Is Bul",
+    "slug": "gunubirlik-is-bul",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "gunubirlik",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#10b981"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.gunubirlik.isbul"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#10b981"
+      },
+      "package": "com.gunubirlik.isbul",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-location",
+      "expo-image-picker",
+      "expo-notifications"
+    ],
+    "extra": {
+      "API_BASE_URL": "http://21.0.9.75:3000/api/v1",
+      "WS_URL": "http://21.0.9.75:3000",
+      "WS_PORT": "3004"
+    }
+  }
+}
