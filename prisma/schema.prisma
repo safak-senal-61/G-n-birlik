@@ -1,0 +1,974 @@
+// =====================================================================
+// Günübirlik İş Bulma Platformu - Prisma Şema
+// =====================================================================
+// Bu şema hem SQLite (geliştirme) hem PostgreSQL (production) ile çalışır.
+//
+// Geliştirme (mevcut):
+//   - SQLite kullanır (file:/home/z/my-project/db/custom.db)
+//   - Değişiklik için: bun run db:push
+//
+// Production (PostgreSQL):
+//   1. Supabase (https://supabase.com) veya Neon (https://neon.tech) hesabı aç
+//   2. .env dosyasında:
+//      - provider = "postgresql" yap (aşağıda)
+//      - DATABASE_URL = postgresql://user:pass@host:5432/db?schema=public
+//   3. Çalıştır: bun run db:push (veya prisma migrate dev --name init)
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Geliştirme: sqlite | Production: postgresql
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== KULLANICI ====================
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  phone        String?  @unique
+  password     String?  // Google OAuth kullanıcılarında null olabilir
+  fullName     String
+  role         String   @default("WORKER") // WORKER | EMPLOYER | ADMIN
+  avatarUrl    String?
+  bio          String?
+
+  // OAuth
+  googleId     String?  @unique
+  provider     String   @default("LOCAL") // LOCAL | GOOGLE
+
+  // Konum bilgileri
+  city         String?
+  district     String?
+  latitude     Float?
+  longitude    Float?
+  address      String?
+
+  // İş arayan profili
+  skills       String?  // JSON array of skill names
+  experienceYears Int?
+  hourlyWageMin   Float?
+  hourlyWageMax   Float?
+  isAvailable     Boolean @default(true)
+  ratingAvg       Float   @default(0)
+  ratingCount     Int     @default(0)
+
+  // İşveren profili
+  companyName     String?
+  companyTaxId    String?
+  isVerified      Boolean @default(false)
+
+  // Güvenlik
+  emailVerified   Boolean @default(false)
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret String?  // TOTP secret (encrypted)
+  twoFactorBackupCodes String? // JSON array of backup codes
+
+  // Moderasyon & Askıya Alma
+  isSuspended         Boolean  @default(false)
+  suspendedUntil      DateTime? // null = süresiz (kalıcı ban)
+  suspensionReason    String?
+  suspendedById       String?  // Admin ID
+  suspendedAt         DateTime?
+  warningCount        Int      @default(0)
+  flagCount           Int      @default(0)
+  lastFlagAt          DateTime?
+  isPermanentlyBanned Boolean  @default(false)
+  bannedAt            DateTime?
+  bannedReason        String?
+  bannedById          String?
+
+  // Meta
+  fcmToken        String? // Mobil push notification token
+  lastActiveAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Cüzdan (Wallet)
+  walletBalance   Float    @default(0) // Mevcut bakiye (TRY)
+  walletCurrency  String   @default("TRY")
+  walletUpdatedAt DateTime?
+
+  // İlişkiler
+  jobsPosted      Job[]
+  applications    Application[]
+  conversations   ConversationParticipant[]
+  messages        Message[]
+  reviewsGiven    Review[]      @relation("ReviewReviewer")
+  reviewsReceived Review[]      @relation("ReviewReceiver")
+  notifications   Notification[]
+  savedJobs       SavedJob[]
+  passwordResets  PasswordReset[]
+  emailVerifications EmailVerification[]
+  moderationFlagsSent ModerationFlag[] @relation("FlaggedUser")
+  auditActions        AuditLog[]       @relation("AdminActor")
+  suspensionsIssued   Suspension[]     @relation("SuspensionAdmin")
+  suspensionsReceived Suspension[]     @relation("SuspensionUser")
+  verificationRequests VerificationRequest[]
+  paymentsReceived    Payment[]        @relation("PaymentWorker")
+  paymentsIssued      Payment[]        @relation("PaymentEmployer")
+  walletTransactions  WalletTransaction[] @relation("WalletOwner")
+  walletTransfersSent WalletTransaction[] @relation("WalletTransferSender")
+  walletTransfersReceived WalletTransaction[] @relation("WalletTransferReceiver")
+  walletQrPaymentsGenerated WalletQrPayment[] @relation("WalletQrGenerator")
+  walletQrPaymentsScanned  WalletQrPayment[] @relation("WalletQrScanner")
+  depositRequests    DepositRequest[] @relation("DepositRequestUser")
+  withdrawalRequests WithdrawalRequest[] @relation("WithdrawalRequestUser")
+  notificationSettings NotificationSettings? @relation("NotificationSettingsUser")
+  supportTickets     SupportTicket[] @relation("SupportTicketUser")
+  broadcastsCreated  Broadcast[] @relation("BroadcastAdmin")
+  accountDeletion    AccountDeletion? @relation("AccountDeletionUser")
+
+  @@index([role])
+  @@index([city])
+  @@index([latitude, longitude])
+  @@index([googleId])
+  @@index([isSuspended])
+  @@index([isPermanentlyBanned])
+}
+
+// ==================== ŞİFRE SIFIRLAMA ====================
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique // E-posta ile gönderilen token
+  code      String   // 6 haneli kod (SMS/e-posta)
+  expiresAt DateTime
+  usedAt    DateTime?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([code])
+}
+
+// ==================== E-POSTA DOĞRULAMA ====================
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email     String   // Doğrulanacak e-posta
+  code      String   // 6 haneli kod
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([code])
+}
+
+// ==================== İŞ İLANI ====================
+model Job {
+  id            String   @id @default(cuid())
+  employerId    String
+  employer      User     @relation(fields: [employerId], references: [id], onDelete: Cascade)
+
+  title         String
+  description   String
+  category      String   // INSAAT | RESTAURANT | TEMIZLIK | NAKLIYE | TARIM | DIGER
+  requiredSkills String? // JSON array
+
+  // Tarih ve saat
+  workDate      DateTime
+  startTime     String   // "08:00"
+  endTime       String   // "17:00"
+  durationHours Float    // 9
+
+  // Ücret
+  wageAmount    Float
+  wageType      String   @default("DAILY") // HOURLY | DAILY | FIXED
+  currency      String   @default("TRY")
+  isWageNegotiable Boolean @default(false)
+
+  // Konum
+  city          String
+  district      String
+  address       String?
+  latitude      Float
+  longitude     Float
+  locationNote  String?
+
+  // Kapasite
+  openingsTotal Int      @default(1) // Kaç kişi aranıyor
+  openingsFilled Int     @default(0) // Kaç kişi yerleştirildi
+
+  // Durum
+  status        String   @default("OPEN") // OPEN | FILLED | CLOSED | CANCELLED
+  urgency       String   @default("NORMAL") // LOW | NORMAL | HIGH | URGENT
+
+  // Admin onayı (yönetim paneli için)
+  approvalStatus String  @default("APPROVED") // PENDING | APPROVED | REJECTED
+  approvalNote   String?
+  approvedById   String?
+  approvedAt     DateTime?
+  rejectedAt     DateTime?
+
+  // Emanet (Escrow) Sistemi
+  // İşveren iş oluştururken ücreti emanete koyar (cüzdanından düşülür)
+  // İş tamamlandığında işçiye aktarılır, iptal/ihtilaf durumunda işverene iade edilir
+  escrowAmount    Float    @default(0)  // Emanete alınan tutar
+  escrowStatus    String   @default("NONE") // NONE | HELD | RELEASED | REFUNDED | DISPUTED
+  escrowHeldAt    DateTime?  // Emanete alındığı zaman
+  escrowReleasedAt DateTime? // İşçiye aktarıldığı zaman
+  escrowRefundedAt DateTime? // İşverene iade edildiği zaman
+
+  // Meta
+  viewCount     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // İlişkiler
+  applications  Application[]
+  savedBy       SavedJob[]
+  reviews       Review[]
+  conversations Conversation[]
+  payments      Payment[]
+
+  @@index([employerId])
+  @@index([status])
+  @@index([approvalStatus])
+  @@index([category])
+  @@index([city, district])
+  @@index([workDate])
+  @@index([latitude, longitude])
+}
+
+// ==================== BAŞVURU ====================
+model Application {
+  id          String   @id @default(cuid())
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  workerId    String
+  worker      User     @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  status      String   @default("PENDING")
+  // PENDING | ACCEPTED | REJECTED | WITHDRAWN | COMPLETED | NO_SHOW
+
+  message     String?  // Başvuru notu
+  proposedWage Float?  // İşçi ücret teklifi (pazarlık varsa)
+
+  // İşveren notu
+  employerNote String?
+  rating       Int?    // 1-5 işveren verdiği puan
+  ratedAt      DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  respondedAt DateTime?
+  completedAt DateTime?
+
+  // İlişkiler
+  conversations Conversation[]
+  reviews        Review[]
+  payments       Payment[]
+  qrCheckins     QrCheckin[]
+
+  @@unique([jobId, workerId])
+  @@index([jobId])
+  @@index([workerId])
+  @@index([status])
+}
+
+// ==================== MESAJLAŞMA ====================
+model Conversation {
+  id          String   @id @default(cuid())
+  jobId       String?  // İlan bazlı sohbet
+  job         Job?     @relation(fields: [jobId], references: [id])
+  applicationId String?
+  application Application? @relation(fields: [applicationId], references: [id])
+
+  type        String   @default("DIRECT") // DIRECT | JOB_GROUP
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages    Message[]
+
+  @@index([jobId])
+}
+
+model ConversationParticipant {
+  id              String   @id @default(cuid())
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt      DateTime?
+  createdAt       DateTime @default(now())
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id              String   @id @default(cuid())
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId        String
+  sender          User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  content         String   // Alıcıya gösterilen (filtrelenmiş) içerik
+  originalContent String?  // Admin görür: filtreden önceki ham içerik
+  isFiltered      Boolean  @default(false)
+  filterReasons   String?  // JSON: [{type, severity, match}]
+  type            String   @default("TEXT") // TEXT | IMAGE | LOCATION | SYSTEM
+  metadata        String?  // JSON
+
+  // Moderasyon
+  isAutoBlocked   Boolean  @default(false) // Mesaj tamamen engellendiyse
+  isReviewed      Boolean  @default(false)
+  reviewedById    String?
+  reviewedAt      DateTime?
+
+  createdAt       DateTime @default(now())
+
+  // İlişkiler
+  flags           ModerationFlag[]
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@index([isFiltered])
+  @@index([isAutoBlocked])
+}
+
+// ==================== DEĞERLENDİRME ====================
+model Review {
+  id          String   @id @default(cuid())
+  jobId       String?
+  job         Job?     @relation(fields: [jobId], references: [id])
+  applicationId String?
+  application Application? @relation(fields: [applicationId], references: [id])
+
+  reviewerId  String
+  reviewer    User     @relation("ReviewReviewer", fields: [reviewerId], references: [id])
+  receiverId  String
+  receiver    User     @relation("ReviewReceiver", fields: [receiverId], references: [id])
+
+  rating      Int      // 1-5
+  comment     String?
+  reviewType  String   // WORKER_TO_EMPLOYER | EMPLOYER_TO_WORKER
+
+  createdAt   DateTime @default(now())
+
+  @@index([receiverId])
+  @@index([reviewerId])
+}
+
+// ==================== BİLDİRİM ====================
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type        String   // JOB_APPLIED | APPLICATION_ACCEPTED | APPLICATION_REJECTED | NEW_MESSAGE | JOB_REMINDER | JOB_NEARBY
+  title       String
+  body        String
+  data        String?  // JSON payload
+
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+// ==================== KAYDEDİLEN İŞLER ====================
+model SavedJob {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, jobId])
+  @@index([userId])
+}
+
+// ==================== MODERASYON BAYRAĞI ====================
+// Sohbet mesajı yakalanan bir kural ihlali için oluşturulan kayıt
+model ModerationFlag {
+  id            String   @id @default(cuid())
+  messageId     String
+  message       Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  conversationId String
+  senderId      String
+  sender        User     @relation("FlaggedUser", fields: [senderId], references: [id], onDelete: Cascade)
+
+  // İhlal detayı
+  violationType String   // PROFANITY | PHONE | EMAIL | URL | SOCIAL_HANDLE | IBAN | ADDRESS | SPAM | OTHER
+  severity      String   // LOW | MEDIUM | HIGH | CRITICAL
+  matchedText   String   // Yakalanan metin parçası (maskelenmiş)
+  ruleId        String?  // Hangi kural tetikledi (null = builtin)
+
+  // Durum
+  status        String   @default("PENDING") // PENDING | REVIEWED | DISMISSED | ACTION_TAKEN
+  action        String?  // WARNING | SUSPENSION | BAN | NONE
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewNote    String?
+
+  // Meta
+  createdAt     DateTime @default(now())
+
+  @@index([senderId])
+  @@index([status])
+  @@index([severity])
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+// ==================== ASKIYA ALMA KAYDI ====================
+// Bir kullanıcının tüm askıya alma/ban geçmişi
+model Suspension {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation("SuspensionUser", fields: [userId], references: [id], onDelete: Cascade)
+  adminId       String
+  admin         User     @relation("SuspensionAdmin", fields: [adminId], references: [id])
+
+  type          String   // TEMPORARY | PERMANENT | WARNING
+  reason        String
+  durationHours Int?     // TEMPORARY için saat cinsinden süre
+  startsAt      DateTime @default(now())
+  endsAt        DateTime? // null = kalıcı
+  liftedAt      DateTime?
+  liftedById    String?
+  liftedReason  String?
+  relatedFlagId String?
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([adminId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ==================== AUDIT LOG ====================
+// Yönetici panelinde yapılan tüm işlemlerin kaydı
+model AuditLog {
+  id            String   @id @default(cuid())
+  actorId       String
+  actor         User     @relation("AdminActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  action        String   // USER_SUSPEND | USER_UNSUSPEND | USER_BAN | USER_UNBAN | FLAG_RESOLVE |
+                         // FLAG_DISMISS | RULE_UPDATE | ADMIN_LOGIN | USER_DELETE | MESSAGE_DELETE
+  targetType    String   // USER | MESSAGE | FLAG | RULE | CONVERSATION
+  targetId      String?
+  metadata      String?  // JSON: ek bilgi (reason, duration, vb.)
+  ipAddress     String?
+  userAgent     String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+// ==================== MODERASYON KURALI ====================
+// Yönetici tarafından özelleştirilebilir moderasyon kuralları
+model ModerationRule {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String   // PROFANITY | PHONE | EMAIL | URL | SOCIAL_HANDLE | IBAN | CUSTOM_REGEX | KEYWORD
+  pattern     String   // Regex veya keyword
+  severity    String   @default("MEDIUM") // LOW | MEDIUM | HIGH | CRITICAL
+  action      String   @default("FILTER") // FILTER | BLOCK | FLAG_ONLY
+  isEnabled   Boolean  @default(true)
+  isSystem    Boolean  @default(false) // Sistem kuralı (silinemez)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([isEnabled])
+}
+
+// ==================== ÖDEME ====================
+// İş tamamlandığında işverenden işçiye ödeme kaydı
+// İş akışı:
+//   1. İşveren işi "COMPLETED" yapar → otomatik PENDING ödeme oluşturulur
+//   2. Admin ödemeyi "APPROVED" veya "REJECTED" yapar
+//   3. İşveren ödemeyi "PAID" (ödendi) olarak işaretler
+//   4. İşçi "RECEIVED" (aldı) onaylar → işlem kapanır
+model Payment {
+  id              String   @id @default(cuid())
+  applicationId   String
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  jobId           String
+  job             Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  workerId        String
+  worker          User     @relation("PaymentWorker", fields: [workerId], references: [id], onDelete: Cascade)
+  employerId      String
+  employer        User     @relation("PaymentEmployer", fields: [employerId], references: [id], onDelete: Cascade)
+
+  amount          Float    // Ödenecek tutar (TRY)
+  currency        String   @default("TRY")
+  wageType        String   // HOURLY | DAILY | FIXED
+
+  // Durum
+  status          String   @default("PENDING")
+  // PENDING:    İşçi tamamlandı, ödeme bekliyor
+  // APPROVED:   Admin ödemeyi onayladı (ödemeye hazır)
+  // REJECTED:   Admin ödemeyi reddetti (gerekçe gerekli)
+  // PAID:       İşveren ödediğini beyan etti
+  // RECEIVED:   İşçi aldığını onayladı (kapanmış)
+  // DISPUTED:   İtiraz var (admin incelemesinde)
+
+  // Onay/ret bilgileri
+  adminApprovedById String?
+  adminApprovedAt   DateTime?
+  adminRejectedAt   DateTime?
+  rejectionReason   String?
+
+  // Ödeme bilgileri
+  paidAt          DateTime?
+  receivedAt      DateTime?
+  paidMethod      String?  // CASH | BANK_TRANSFER | DIGITAL
+  paidNote        String?  // İşveren notu (dekont no vb.)
+
+  // İtiraz
+  disputedAt      DateTime?
+  disputedById    String?
+  disputeReason   String?
+
+  // Meta
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([applicationId])
+  @@index([jobId])
+  @@index([workerId])
+  @@index([employerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==================== İŞVEREN DOĞRULAMA TALEBİ ====================
+// İşverenlerin belge yükleyip "onaylı" rozeti için başvurusu
+model VerificationRequest {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type          String   // COMPANY | IDENTITY | TAX
+  documentUrl   String   // Yüklenen belge URL (base64 veya cloudinary)
+  documentNote  String?  // İşverenin eklediği not
+
+  // Durum
+  status        String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewNote    String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==================== QR İLE İŞE BAŞLAMA ====================
+// İşveren, kabul ettiği işçi için check-in QR kodu üretir.
+// İşçi QR'ı tarayarak işe başladığını doğrular (IN_PROGRESS).
+// İş bitiminde check-out QR ile iş tamamlanır (COMPLETED + payment).
+//
+// Akış:
+//   1. İşveren application'ı ACCEPTED yapar (zaten var)
+//   2. İş günü geldiğinde işveren CHECK_IN QR üretir (kısa süreli, tek kullanımlık)
+//   3. İşçi QR'ı tarar → application status = IN_PROGRESS
+//   4. İş bitiminde işveren CHECK_OUT QR üretir
+//   5. İşçi tarar → application status = COMPLETED + payment otomatik oluşur
+model QrCheckin {
+  id              String   @id @default(cuid())
+  applicationId   String
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  jobId           String
+  workerId        String
+  employerId      String
+
+  // QR detayları
+  token           String   @unique // Tek kullanımlık token (crypto.randomBytes)
+  type            String   // CHECK_IN | CHECK_OUT
+  qrImageDataUrl  String   // Base64 PNG görsel (frontend direkt gösterir)
+
+  // Durum
+  status          String   @default("ACTIVE") // ACTIVE | USED | EXPIRED
+  expiresAt       DateTime // 5 dakika geçerli
+  usedAt          DateTime?
+  scannedById     String?  // Kim taradı (genelde worker ama employer da tarayabilir)
+
+  // Meta
+  createdAt       DateTime @default(now())
+
+  @@index([applicationId])
+  @@index([token])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==================== SİTE AYARLARI (BAKIM MODU) ====================
+// Tek satırlık bir kayıt (id="singleton"). Bakım modu, mesaj, iletişim bilgileri.
+// Admin panelinden açılıp kapatılır. Bakım modu açıkken:
+//   - Normal kullanıcılar ana sayfada bakım ekranı görür
+//   - Tüm API istekleri (auth/maintenance/admin hariç) 503 döner
+//   - Admin kullanıcıları her şeye erişebilir
+model SiteSettings {
+  id              String   @id @default("singleton")  // her zaman "singleton"
+
+  // Bakım modu
+  maintenanceMode     Boolean  @default(false)
+  maintenanceTitle    String   @default("Bakım Çalışması Devam Ediyor")
+  maintenanceMessage  String   @default("Daha iyi bir deneyim sunabilmek için sistemimizi güncelliyoruz. Kısa süre sonra tekrar hizmetinizde olacağız.")
+  maintenanceEndTime  DateTime? // Tahmini bitiş zamanı (opsiyonel)
+  maintenanceStartedAt DateTime? // Bakım başlangıç zamanı (otomatik)
+  maintenanceUpdatedById String? // Son güncelleyen admin
+
+  // İletişim bilgileri (bakım ekranında gösterilir)
+  contactEmail      String?  // destek@gunubirlik.com
+  contactPhone      String?  // +90 850 123 45 67
+  contactWhatsapp   String?  // https://wa.me/908501234567
+  contactInstagram  String?  // https://instagram.com/gunubirlik
+  contactTwitter    String?  // https://twitter.com/gunubirlik
+  contactWebsite    String?  // https://gunubirlik.com
+
+  // Ek meta
+  siteName          String   @default("Günübirlik İş Bul")
+  updatedAt         DateTime @updatedAt
+}
+
+// ==================== CÜZDAN İŞLEM GEÇMİŞİ ====================
+// Kullanıcıların cüzdan bakiye işlemleri:
+//  - DEPOSIT: Bakiye yükleme (admin veya ödeme sistemi ile)
+//  - WITHDRAW: Bakiye çekme (kullanıcı banka hesabına)
+//  - TRANSFER: Kullanıcılar arası transfer (işveren → işçi ödeme)
+//  - QR_PAYMENT: QR ile ödeme (işveren QR üretir, işçi tarar)
+//  - JOB_PAYMENT: İş ücreti ödemesi (COMPLETED job sonrası)
+//  - REFUND: İade
+//  - FEE: Komisyon kesintisi
+//  - BONUS: Bonus (kayıt, davet vb.)
+model WalletTransaction {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation("WalletOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  // İşlem detayları
+  type            String   // DEPOSIT | WITHDRAW | TRANSFER | QR_PAYMENT | JOB_PAYMENT | REFUND | FEE | BONUS
+  amount          Float    // Pozitif: bakiyeye eklendi, negatif: bakiyeden düşüldü
+  balanceAfter    Float    // İşlem sonrası bakiye (kayıt için)
+  currency        String   @default("TRY")
+
+  // Açıklama
+  description     String
+  status          String   @default("COMPLETED") // PENDING | COMPLETED | FAILED | CANCELLED
+
+  // Transfer için karşı taraf
+  counterpartyId  String?  // TRANSFER/QR_PAYMENT için diğer kullanıcı
+  counterparty    User?    @relation("WalletTransferReceiver", fields: [counterpartyId], references: [id])
+  senderId        String?  // TRANSFER gönderen (counterparty'nin ters yönü için)
+  sender          User?    @relation("WalletTransferSender", fields: [senderId], references: [id])
+
+  // İlişkili kayıtlar
+  jobId           String?  // JOB_PAYMENT için
+  applicationId   String?  // JOB_PAYMENT için
+  paymentId       String?  // Payment kaydı ile ilişki
+  qrPaymentId     String?  // WalletQrPayment ile ilişki
+
+  // Meta
+  reference       String?  // Harici referans (dekont no, transaction ID vb.)
+  note            String?  // Kullanıcı notu
+  ipAddress       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([counterpartyId])
+  @@index([createdAt])
+}
+
+// ==================== QR İLE CÜZDAN ÖDEMESİ ====================
+// İşveren, işçiye ödeme yapmak için QR üretir.
+// İşçi QR'ı tarar → bakiye transferi gerçekleşir.
+//
+// Akış:
+//   1. İşveren "QR ile Öde" butonuna tıklar, tutar girer
+//   2. POST /api/v1/wallet/qr-pay/generate → QR kodu üretir (5 dk geçerli)
+//   3. İşçi QR'ı tarar (kamera ile)
+//   4. POST /api/v1/wallet/qr-pay/scan → token doğrulanır
+//   5. İşveren bakiyesinden düşülür, işçi bakiyesine eklenir
+//   6. WalletTransaction kaydı oluşturulur (her iki taraf için)
+model WalletQrPayment {
+  id              String   @id @default(cuid())
+  token           String   @unique // Tek kullanımlık token (crypto.randomBytes)
+
+  // Taraflar
+  generatorId     String   // QR üreten (genelde işveren, ödeyen)
+  generator       User     @relation("WalletQrGenerator", fields: [generatorId], references: [id])
+  scannerId       String?  // QR tarayan (genelde işçi, alan) - scan sonrası set edilir
+  scanner         User?    @relation("WalletQrScanner", fields: [scannerId], references: [id])
+
+  // Ödeme detayları
+  amount          Float    // Ödenecek tutar (TRY)
+  currency        String   @default("TRY")
+  description     String   // Ödeme açıklaması (örn: "İnşaat işçisi ücreti")
+
+  // QR görseli
+  qrImageDataUrl  String   // Base64 PNG görsel
+
+  // Durum
+  status          String   @default("ACTIVE") // ACTIVE | USED | EXPIRED | CANCELLED
+  expiresAt       DateTime // 5 dakika geçerli
+  usedAt          DateTime?
+
+  // İlişkili işlem
+  transactionId   String?  // Scan sonrası oluşturulan WalletTransaction ID
+
+  // Meta
+  createdAt       DateTime @default(now())
+
+  @@index([token])
+  @@index([generatorId])
+  @@index([scannerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==================== PARA YATIRMA TALEBİ ====================
+// Kullanıcı kendi bankasından hesaba para yatırmak için talep oluşturur
+// Admin EFT/Havale geldiğini onaylar → bakiyeye yansır
+model DepositRequest {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation("DepositRequestUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  amount          Float    // Yatırılacak tutar (TRY)
+  currency        String   @default("TRY")
+
+  // Gönderen banka bilgileri (kullanıcının kendi bankası)
+  senderName      String   // Ad Soyad
+  senderIban      String   // IBAN numarası
+  senderBank      String?  // Banka adı (opsiyonel)
+  senderNote      String?  // Açıklama (opsiyonel)
+
+  // Durum
+  status          String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewedById    String?
+  reviewedAt      DateTime?
+  reviewNote      String?
+
+  // İlişkili işlem (onay sonrası oluşturulan WalletTransaction)
+  transactionId   String?
+
+  // Meta
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==================== PARA ÇEKME TALEBİ ====================
+// Kullanıcı cüzdan bakiyesini kendi banka hesabına çekmek için talep oluşturur
+// Admin onaylar → bakiyeden düşülür, kullanıcıya bilgi verilir
+model WithdrawalRequest {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation("WithdrawalRequestUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  amount          Float    // Çekilecek tutar (TRY)
+  currency        String   @default("TRY")
+
+  // Alıcı banka bilgileri (kullanıcının banka hesabı)
+  recipientName   String   // Ad Soyad
+  recipientIban   String   // IBAN numarası
+  recipientBank   String?  // Banka adı (opsiyonel)
+  recipientNote   String?  // Açıklama (opsiyonel)
+
+  // Durum
+  status          String   @default("PENDING") // PENDING | APPROVED | REJECTED | COMPLETED
+  reviewedById    String?
+  reviewedAt      DateTime?
+  reviewNote      String?
+  completedAt     DateTime? // Admin ödemeyi yaptığını işaretler
+
+  // İlişkili işlem (onay sonrası oluşturulan WalletTransaction)
+  transactionId   String?
+
+  // Meta
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==================== BİLDİRİM AYARLARI ====================
+// Kullanıcı bazlı bildirim tercihleri — her kategori ayrı açılıp kapanabilir
+// Mobil uygulama da bu API'yi kullanacak
+model NotificationSettings {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation("NotificationSettingsUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  // İş bildirimleri
+  jobApplied        Boolean @default(true) // İş başvurusu alındı (işveren)
+  applicationAccepted Boolean @default(true) // Başvuru onaylandı (işçi)
+  applicationRejected Boolean @default(true) // Başvuru reddedildi (işçi)
+  jobReminder       Boolean @default(true) // İş hatırlatması
+  jobNearby         Boolean @default(true) // Yakında yeni iş ilanı
+
+  // Mesaj bildirimleri
+  newMessage        Boolean @default(true) // Yeni mesaj
+
+  // Ödeme bildirimleri
+  paymentReceived   Boolean @default(true) // Ödeme alındı
+  paymentApproved   Boolean @default(true) // Ödeme onaylandı
+  paymentRejected   Boolean @default(true) // Ödeme reddedildi
+  walletDeposit     Boolean @default(true) // Bakiye yüklendi
+  walletWithdraw    Boolean @default(true) // Para çekme durumu
+
+  // QR / İş akışı bildirimleri
+  workStarted       Boolean @default(true) // İşe başlandı (QR check-in)
+  workCompleted     Boolean @default(true) // İş tamamlandı (QR check-out)
+  escrowDisputed    Boolean @default(true) // İş ihtilafı
+
+  // Sistem bildirimleri
+  systemUpdate      Boolean @default(true) // Sistem güncellemesi
+  maintenance       Boolean @default(true) // Bakım modu bildirimi
+  promotional       Boolean @default(true) // Promosyon / duyuru
+
+  // Push anahtarı — tüm push'ları kapat
+  pushEnabled       Boolean @default(true) // Genel push aç/kapa
+
+  // Meta
+  updatedAt         DateTime @updatedAt
+  createdAt         DateTime @default(now())
+}
+
+// ==================== E-POSTA OTP / DOĞRULAMA ====================
+// OneSignal Email ile OTP gönderilir, kullanıcı doğrular
+// Tipler:
+//  EMAIL_ACTIVATION — Kayıt sonrası hesap aktivasyonu
+//  PASSWORD_RESET — Şifre sıfırlama
+//  EMAIL_CHANGE — E-posta değişikliği doğrulaması
+//  LOGIN_VERIFY — Şüpheli giriş için ek doğrulama
+//  PHONE_VERIFY — Telefon değişikliği doğrulaması
+model EmailOtp {
+  id          String   @id @default(cuid())
+  userId      String?
+  email       String   // OTP'nin gönderildiği e-posta
+  code        String   // 6 haneli kod
+  type        String   // EMAIL_ACTIVATION | PASSWORD_RESET | EMAIL_CHANGE | LOGIN_VERIFY | PHONE_VERIFY
+  expiresAt   DateTime // 10 dakika geçerli
+  usedAt      DateTime?
+  attempts    Int      @default(0) // Yanlış deneme sayısı (max 5)
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([email])
+  @@index([code])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ==================== DESTEK TALEBİ ====================
+model SupportTicket {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("SupportTicketUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  category    String   // COMPLAINT | SUGGESTION | BUG | ACCOUNT | PAYMENT | OTHER
+  subject     String
+  message     String
+  priority    String   @default("NORMAL") // LOW | NORMAL | HIGH | URGENT
+
+  // Durum
+  status      String   @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED | CLOSED
+  adminReply  String?
+  repliedById String?
+  repliedAt   DateTime?
+
+  // Meta
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
+}
+
+// =================--- BROADCAST (Toplu Mail + Push) ====================
+model Broadcast {
+  id          String   @id @default(cuid())
+  adminId     String
+  admin       User     @relation("BroadcastAdmin", fields: [adminId], references: [id])
+
+  title       String   // Bildirim başlığı
+  message     String   // Kısa mesaj (push için)
+  htmlContent String   // HTML içerik (mail için)
+  type        String   // UPDATE | HOLIDAY | MAINTENANCE | PROMOTION | ANNOUNCEMENT | CUSTOM
+
+  // Hedef
+  target      String   @default("ALL") // ALL | WORKERS | EMPLOYERS | ADMINS | SPECIFIC
+  targetUserIds String? // JSON array (SPECIFIC için)
+
+  // Kanal
+  sendEmail   Boolean  @default(true)
+  sendPush    Boolean  @default(true)
+
+  // Şablon
+  isTemplate  Boolean  @default(false)
+  templateName String?
+
+  // Durum
+  status      String   @default("DRAFT") // DRAFT | SENT | SCHEDULED
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  sentCount   Int      @default(0) // Kaç kişiye gitti
+
+  // Meta
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ==================== HESAP SİLME TALEBİ ====================
+model AccountDeletion {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation("AccountDeletionUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  reason      String   // Kullanıcının silme sebebi
+  feedback    String?  // Ek geri bildirim
+
+  // Durum
+  status      String   @default("PENDING") // PENDING | APPROVED | REJECTED | COMPLETED
+  reviewedById String?
+  reviewedAt  DateTime?
+  reviewNote  String?
+  deletedAt   DateTime?
+
+  // Meta
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
