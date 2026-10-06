@@ -15,7 +15,7 @@ export const GET = withErrorHandler(async () => {
       conversations: ['/api/v1/conversations', '/api/v1/conversations/[id]/messages'],
       notifications: ['/api/v1/notifications', '/api/v1/notifications/read-all'],
       users: ['/api/v1/users/[id]'],
-      websocket: 'wss://<host>/?XTransformPort=3004',
+      websocket: 'Supabase Realtime WebSocket (wss://dyiqfounesugdljzzebh.supabase.co/realtime/v1/websocket)',
     },
   })
 })

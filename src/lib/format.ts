@@ -88,33 +88,33 @@ export function categoryIcon(category: string): string {
 export function urgencyLabel(urgency: string): { text: string; color: string } {
   switch (urgency) {
     case 'URGENT':
-      return { text: 'Acil', color: 'bg-red-100 text-red-700 border-red-300' }
+      return { text: 'Acil', color: 'bg-red-100 dark:bg-red-950/70 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700/60' }
     case 'HIGH':
-      return { text: 'Yüksek Öncelik', color: 'bg-orange-100 text-orange-700 border-orange-300' }
+      return { text: 'Yüksek Öncelik', color: 'bg-orange-100 dark:bg-orange-950/70 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700/60' }
     case 'NORMAL':
-      return { text: 'Normal', color: 'bg-emerald-100 text-emerald-700 border-emerald-300' }
+      return { text: 'Normal', color: 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/60' }
     case 'LOW':
-      return { text: 'Düşük', color: 'bg-blue-100 text-blue-700 border-blue-300' }
+      return { text: 'Düşük', color: 'bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700/60' }
     default:
-      return { text: urgency, color: 'bg-gray-100 text-gray-700' }
+      return { text: urgency, color: 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700' }
   }
 }
 
 export function statusLabel(status: string): { text: string; color: string } {
   const map: Record<string, { text: string; color: string }> = {
-    PENDING: { text: 'Beklemede', color: 'bg-yellow-100 text-yellow-800' },
-    ACCEPTED: { text: 'Onaylandı', color: 'bg-green-100 text-green-800' },
-    REJECTED: { text: 'Reddedildi', color: 'bg-red-100 text-red-800' },
-    WITHDRAWN: { text: 'Geri Çekildi', color: 'bg-gray-100 text-gray-800' },
-    IN_PROGRESS: { text: 'İşe Başladı', color: 'bg-indigo-100 text-indigo-800' },
-    COMPLETED: { text: 'Tamamlandı', color: 'bg-blue-100 text-blue-800' },
-    NO_SHOW: { text: 'Gelmedi', color: 'bg-red-100 text-red-800' },
-    OPEN: { text: 'Açık', color: 'bg-green-100 text-green-800' },
-    FILLED: { text: 'Doldu', color: 'bg-blue-100 text-blue-800' },
-    CLOSED: { text: 'Kapandı', color: 'bg-gray-100 text-gray-800' },
-    CANCELLED: { text: 'İptal Edildi', color: 'bg-red-100 text-red-800' },
+    PENDING: { text: 'Beklemede', color: 'bg-yellow-100 dark:bg-yellow-950/70 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700/60' },
+    ACCEPTED: { text: 'Onaylandı', color: 'bg-green-100 dark:bg-emerald-950/70 text-green-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/60' },
+    REJECTED: { text: 'Reddedildi', color: 'bg-red-100 dark:bg-red-950/70 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700/60' },
+    WITHDRAWN: { text: 'Geri Çekildi', color: 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-300 border-gray-300 dark:border-slate-700' },
+    IN_PROGRESS: { text: 'İşe Başladı', color: 'bg-indigo-100 dark:bg-indigo-950/70 text-indigo-800 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700/60' },
+    COMPLETED: { text: 'Tamamlandı', color: 'bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700/60' },
+    NO_SHOW: { text: 'Gelmedi', color: 'bg-red-100 dark:bg-red-950/70 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700/60' },
+    OPEN: { text: 'Açık', color: 'bg-green-100 dark:bg-emerald-950/70 text-green-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/60' },
+    FILLED: { text: 'Doldu', color: 'bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700/60' },
+    CLOSED: { text: 'Kapandı', color: 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-300 border-gray-300 dark:border-slate-700' },
+    CANCELLED: { text: 'İptal Edildi', color: 'bg-red-100 dark:bg-red-950/70 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700/60' },
   }
-  return map[status] || { text: status, color: 'bg-gray-100 text-gray-800' }
+  return map[status] || { text: status, color: 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-slate-300' }
 }
 
 export function initials(name?: string): string {

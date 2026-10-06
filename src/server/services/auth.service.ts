@@ -106,7 +106,7 @@ export class AuthService {
       where: { email: dto.email.toLowerCase() },
     })
 
-    if (!user || !verifyPassword(dto.password, user.password)) {
+    if (!user || !user.password || !verifyPassword(dto.password, user.password)) {
       throw new ApiError('E-posta veya şifre hatalı.', 401)
     }
 

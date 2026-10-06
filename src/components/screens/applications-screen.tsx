@@ -172,35 +172,38 @@ export default function ApplicationsScreen() {
         <p className="text-gray-600 mt-1 text-xs sm:text-sm">İş başvurularınızı takip edin, QR ile işe başlayın</p>
       </div>
 
-      {/* Filter Tabs - Scrollable */}
-      <div className="mb-4 -mx-3 sm:mx-0 px-3 sm:px-0 overflow-x-auto no-scrollbar">
-        <div className="flex gap-1.5 min-w-min">
+      {/* Filter Tabs - 3D Tactile Buttons */}
+      <div className="mb-5 -mx-3 sm:mx-0 px-3 sm:px-0 overflow-x-auto no-scrollbar">
+        <div className="flex gap-2 min-w-min pb-1">
           {[
             { v: 'ALL', l: 'Tümü', c: statusCounts.ALL },
             { v: 'PENDING', l: 'Beklemede', c: statusCounts.PENDING },
             { v: 'ACCEPTED', l: 'Onaylandı', c: statusCounts.ACCEPTED },
             { v: 'IN_PROGRESS', l: 'İşe Başladı', c: statusCounts.IN_PROGRESS },
             { v: 'COMPLETED', l: 'Tamamlandı', c: statusCounts.COMPLETED },
-          ].map((t) => (
-            <button
-              key={t.v}
-              onClick={() => setStatusFilter(t.v)}
-              className={`flex-shrink-0 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
-                statusFilter === t.v
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {t.l}
-              {t.c > 0 && (
-                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                  statusFilter === t.v ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {t.c}
-                </span>
-              )}
-            </button>
-          ))}
+          ].map((t) => {
+            const isActive = statusFilter === t.v
+            return (
+              <button
+                key={t.v}
+                onClick={() => setStatusFilter(t.v)}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
+                  isActive
+                    ? 'btn-3d-emerald btn-3d-pill z-10'
+                    : 'btn-3d-white btn-3d-pill text-slate-700'
+                }`}
+              >
+                <span>{t.l}</span>
+                {t.c > 0 && (
+                  <span className={`ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-black ${
+                    isActive ? 'bg-white/25 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                  }`}>
+                    {t.c}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -213,20 +216,20 @@ export default function ApplicationsScreen() {
         </div>
       ) : apps.length === 0 ? (
         /* Empty State */
-        <Card className="border-dashed border-2 border-gray-200 bg-gradient-to-br from-gray-50 to-white">
+        <Card className="border-dashed border-2 border-gray-200 dark:border-white/10 bg-gradient-to-br from-gray-50 to-white dark:from-slate-900/90 dark:to-slate-950/90 shadow-sm">
           <CardContent className="p-6 sm:p-12 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-100 mb-4">
-              <FileText className="w-8 h-8 text-emerald-600" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-200/50 dark:border-emerald-800/50 mb-4 shadow-sm">
+              <FileText className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <h3 className="font-semibold text-gray-900 mb-1 text-base sm:text-lg">
+            <h3 className="font-semibold text-gray-900 dark:text-slate-100 mb-1 text-base sm:text-lg">
               {statusFilter === 'ALL' ? 'Henüz başvurunuz yok' : 'Bu durumda başvuru yok'}
             </h3>
-            <p className="text-gray-500 mb-5 text-sm max-w-xs mx-auto">
+            <p className="text-gray-500 dark:text-slate-400 mb-5 text-sm max-w-xs mx-auto">
               {statusFilter === 'ALL'
                 ? 'İş ilanlarına göz atıp ilk başvurunuzu yapın.'
                 : 'Farklı bir filtre deneyin.'}
             </p>
-            <Button className="bg-emerald-600 hover:bg-emerald-700 h-11 px-6 text-sm" onClick={() => go('home')}>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 h-11 px-6 text-sm text-white" onClick={() => go('home')}>
               <Briefcase className="w-4 h-4 mr-2" />
               İşleri Keşfet
             </Button>
@@ -244,7 +247,7 @@ export default function ApplicationsScreen() {
             return (
               <Card
                 key={app.id}
-                className="overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-300"
+                className="overflow-hidden border border-gray-200 dark:border-white/10 dark:bg-slate-900/90 card-3d-spatial hover:shadow-lg transition-all duration-300"
               >
                 {/* Status Color Bar */}
                 <div className={`h-1 ${
@@ -259,26 +262,26 @@ export default function ApplicationsScreen() {
                 <CardContent className="p-3 sm:p-4">
                   {/* Job Header */}
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center text-lg sm:text-2xl flex-shrink-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-950 dark:to-teal-900 border border-emerald-300/40 dark:border-emerald-700/40 flex items-center justify-center text-lg sm:text-2xl flex-shrink-0">
                       {categoryIcon(job.category)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <button
                         onClick={() => go('job-detail', { jobId: job.id })}
-                        className="font-semibold text-gray-900 hover:text-emerald-700 transition-colors text-left text-sm sm:text-base line-clamp-1"
+                        className="font-semibold text-gray-900 dark:text-slate-100 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors text-left text-sm sm:text-base line-clamp-1"
                       >
                         {job.title}
                       </button>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs">
-                        <span className="flex items-center gap-1 font-semibold text-emerald-700">
+                        <span className="flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400">
                           <Wallet className="w-3 h-3" />
                           {formatWage(job.wageAmount, job.wageType)}
                         </span>
-                        <span className="flex items-center gap-1 text-gray-500">
+                        <span className="flex items-center gap-1 text-gray-500 dark:text-slate-400">
                           <Calendar className="w-3 h-3" />
                           {daysUntil(job.workDate)}
                         </span>
-                        <span className="flex items-center gap-1 text-gray-500">
+                        <span className="flex items-center gap-1 text-gray-500 dark:text-slate-400">
                           <MapPin className="w-3 h-3" />
                           <span className="truncate max-w-[100px]">{job.district}, {job.city}</span>
                         </span>
@@ -287,12 +290,12 @@ export default function ApplicationsScreen() {
                     <Badge
                       variant="outline"
                       className={`flex-shrink-0 text-[10px] sm:text-xs font-semibold ${
-                        app.status === 'PENDING' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                        app.status === 'ACCEPTED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                        app.status === 'IN_PROGRESS' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                        app.status === 'COMPLETED' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                        app.status === 'REJECTED' || app.status === 'NO_SHOW' ? 'bg-red-50 text-red-700 border-red-200' :
-                        'bg-gray-50 text-gray-700 border-gray-200'
+                        app.status === 'PENDING' ? 'bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60' :
+                        app.status === 'ACCEPTED' ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60' :
+                        app.status === 'IN_PROGRESS' ? 'bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/60' :
+                        app.status === 'COMPLETED' ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/60' :
+                        app.status === 'REJECTED' || app.status === 'NO_SHOW' ? 'bg-red-50 dark:bg-red-950/70 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800/60' :
+                        'bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
                       }`}
                     >
                       {statusLabel(app.status).text}
@@ -317,14 +320,14 @@ export default function ApplicationsScreen() {
                                     isDone
                                       ? 'bg-emerald-500 text-white'
                                       : isCurrent
-                                      ? 'bg-indigo-500 text-white ring-2 ring-indigo-100 animate-pulse'
-                                      : 'bg-gray-100 text-gray-400'
+                                      ? 'bg-indigo-500 text-white ring-2 ring-indigo-100 dark:ring-indigo-900 animate-pulse'
+                                      : 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500'
                                   }`}
                                 >
                                   <Icon className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
                                 </div>
                                 <span className={`text-[7px] sm:text-[9px] font-medium text-center leading-tight ${
-                                  isDone ? 'text-emerald-700' : isCurrent ? 'text-indigo-700' : 'text-gray-400'
+                                  isDone ? 'text-emerald-700 dark:text-emerald-400' : isCurrent ? 'text-indigo-700 dark:text-indigo-400' : 'text-gray-400 dark:text-slate-500'
                                 }`}>
                                   {shortLabels[i] || step.label}
                                 </span>
@@ -332,7 +335,7 @@ export default function ApplicationsScreen() {
                               {/* Connector Line */}
                               {i < JOB_STEPS.length - 1 && (
                                 <div className={`flex-1 h-0.5 mx-0.5 sm:mx-1 mb-3 rounded-full ${
-                                  isDone ? 'bg-emerald-400' : 'bg-gray-200'
+                                  isDone ? 'bg-emerald-400 dark:bg-emerald-600' : 'bg-gray-200 dark:bg-slate-800'
                                 }`} />
                               )}
                             </div>
@@ -346,10 +349,10 @@ export default function ApplicationsScreen() {
                   {isNegative && (
                     <div className={`mt-3 p-2.5 rounded-lg text-xs sm:text-sm ${
                       app.status === 'REJECTED' || app.status === 'NO_SHOW'
-                        ? 'bg-red-50 text-red-700'
-                        : 'bg-gray-50 text-gray-600'
+                        ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-900/40'
+                        : 'bg-gray-50 dark:bg-slate-800/60 text-gray-600 dark:text-slate-300 border border-transparent dark:border-white/10'
                     }`}>
-                      {app.status === 'REJECTED' && '❌ Başvurunuz reddedildi.'}
+                      {app.status === 'REJECTED' && (app.employerNote ? `⚠️ ${app.employerNote}` : '❌ Başvurunuz reddedildi veya iş iptal edildi.')}
                       {app.status === 'NO_SHOW' && '❌ İş gününe gelinmedi olarak işaretlendi.'}
                       {app.status === 'WITHDRAWN' && 'ℹ️ Başvurunuzu geri çektiniz.'}
                     </div>
@@ -357,7 +360,7 @@ export default function ApplicationsScreen() {
 
                   {/* Durum bazlı bilgi kutusu */}
                   {app.status === 'ACCEPTED' && (
-                    <div className="mt-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 flex items-start gap-2">
+                    <div className="mt-2 p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 rounded-lg text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
                       <QrCode className="w-4 h-4 mt-0.5 shrink-0" />
                       <div>
                         <p className="font-semibold">İşvereniniz QR ile işe başlatacak</p>
@@ -366,7 +369,7 @@ export default function ApplicationsScreen() {
                     </div>
                   )}
                   {app.status === 'IN_PROGRESS' && (
-                    <div className="mt-2 p-2.5 bg-indigo-50 border border-indigo-200 rounded-lg text-xs text-indigo-800 flex items-start gap-2">
+                    <div className="mt-2 p-2.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 rounded-lg text-xs text-indigo-800 dark:text-indigo-300 flex items-start gap-2">
                       <Clock className="w-4 h-4 mt-0.5 shrink-0 animate-pulse" />
                       <div>
                         <p className="font-semibold">İş devam ediyor</p>
@@ -375,7 +378,7 @@ export default function ApplicationsScreen() {
                     </div>
                   )}
                   {app.status === 'COMPLETED' && (
-                    <div className="mt-2 p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 flex items-start gap-2">
+                    <div className="mt-2 p-2.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 rounded-lg text-xs text-blue-800 dark:text-blue-300 flex items-start gap-2">
                       <Wallet className="w-4 h-4 mt-0.5 shrink-0" />
                       <div>
                         <p className="font-semibold">Ödeme onay bekliyor</p>
@@ -385,21 +388,21 @@ export default function ApplicationsScreen() {
                   )}
 
                   {/* Employer info */}
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-                    <Avatar className="w-7 h-7 flex-shrink-0 border border-gray-200">
-                      <AvatarFallback className="text-[10px] bg-emerald-100 text-emerald-700 font-semibold">
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-white/10">
+                    <Avatar className="w-7 h-7 flex-shrink-0 border border-gray-200 dark:border-white/10">
+                      <AvatarFallback className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold">
                         {initials(job.employer?.companyName || job.employer?.fullName)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                      <span className="text-xs text-gray-700 truncate font-medium">
+                      <span className="text-xs text-gray-700 dark:text-slate-300 truncate font-medium">
                         {job.employer?.companyName || job.employer?.fullName}
                       </span>
                       {job.employer?.isVerified && (
                         <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
                       )}
                     </div>
-                    <span className="text-[11px] text-gray-400 flex-shrink-0">
+                    <span className="text-[11px] text-gray-400 dark:text-slate-500 flex-shrink-0">
                       {formatDate(app.createdAt)}
                     </span>
                   </div>
@@ -412,7 +415,7 @@ export default function ApplicationsScreen() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 h-10 text-xs sm:text-sm border-gray-200 hover:bg-gray-50"
+                          className="flex-1 h-10 text-xs sm:text-sm border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-slate-800 dark:text-slate-200"
                           onClick={() => handleSendMessage(job)}
                         >
                           <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
@@ -421,7 +424,7 @@ export default function ApplicationsScreen() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-10 px-3 text-xs sm:text-sm text-red-600 border-red-200 hover:bg-red-50"
+                          className="h-10 px-3 text-xs sm:text-sm text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/40"
                           onClick={() => handleWithdraw(app.id)}
                         >
                           <XCircle className="w-3.5 h-3.5 mr-1.5" />
@@ -436,7 +439,7 @@ export default function ApplicationsScreen() {
                       <>
                         <Button
                           size="sm"
-                          className="flex-1 h-10 text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700"
+                          className="flex-1 h-10 text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white"
                           onClick={() => handleSendMessage(job)}
                         >
                           <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
@@ -445,7 +448,7 @@ export default function ApplicationsScreen() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-10 px-3 text-xs sm:text-sm border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                          className="h-10 px-3 text-xs sm:text-sm border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
                           onClick={() => setQrScanOpen(true)}
                         >
                           <QrCode className="w-3.5 h-3.5 mr-1.5" />
@@ -461,7 +464,7 @@ export default function ApplicationsScreen() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 h-10 text-xs sm:text-sm border-gray-200 hover:bg-gray-50"
+                          className="flex-1 h-10 text-xs sm:text-sm border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-slate-800 dark:text-slate-200"
                           onClick={() => handleSendMessage(job)}
                         >
                           <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
@@ -470,7 +473,7 @@ export default function ApplicationsScreen() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-10 px-3 text-xs sm:text-sm border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                          className="h-10 px-3 text-xs sm:text-sm border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
                           onClick={() => setQrScanOpen(true)}
                         >
                           <QrCode className="w-3.5 h-3.5 mr-1.5" />
@@ -484,7 +487,7 @@ export default function ApplicationsScreen() {
                     {app.status === 'COMPLETED' && !app.rating && (
                       <Button
                         size="sm"
-                        className="flex-1 h-10 text-xs sm:text-sm bg-amber-500 hover:bg-amber-600"
+                        className="flex-1 h-10 text-xs sm:text-sm bg-amber-500 hover:bg-amber-600 text-white font-medium"
                         onClick={() => go('job-detail', { jobId: job.id })}
                       >
                         <Star className="w-3.5 h-3.5 mr-1.5" />
@@ -492,9 +495,9 @@ export default function ApplicationsScreen() {
                       </Button>
                     )}
                     {app.status === 'COMPLETED' && app.rating && (
-                      <div className="flex-1 flex items-center justify-center gap-1 px-3 h-10 bg-gray-50 rounded-lg">
+                      <div className="flex-1 flex items-center justify-center gap-1 px-3 h-10 bg-gray-50 dark:bg-slate-800/80 rounded-lg border border-transparent dark:border-white/10">
                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-xs text-gray-600">Puanladınız: {app.rating}/5</span>
+                        <span className="text-xs text-gray-600 dark:text-slate-300">Puanladınız: {app.rating}/5</span>
                       </div>
                     )}
 
@@ -503,7 +506,7 @@ export default function ApplicationsScreen() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1 h-10 text-xs sm:text-sm border-gray-200 hover:bg-gray-50"
+                        className="flex-1 h-10 text-xs sm:text-sm border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-slate-800 dark:text-slate-200"
                         onClick={() => go('job-detail', { jobId: job.id })}
                       >
                         İlanı Görüntüle

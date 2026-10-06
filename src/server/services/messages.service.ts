@@ -265,8 +265,14 @@ export class MessagesService {
       }
     }
 
-    // 8. Engellenmediyse alıcıya bildir
+    // 8. Engellenmediyse alıcıya bildir ve konuşma kanalına Supabase Realtime ile anlık ilet
+    const transformed = this.transformMessage(message, filterResult.hasViolations)
+
     if (!isAutoBlocked) {
+      import('@/server/lib/realtime').then(({ broadcastToConversation }) => {
+        broadcastToConversation(conversationId, 'message:new', transformed).catch(() => {})
+      })
+
       const otherParticipants = await db.conversationParticipant.findMany({
         where: { conversationId, userId: { not: senderId } },
       })
@@ -281,7 +287,7 @@ export class MessagesService {
       }
     }
 
-    return this.transformMessage(message, filterResult.hasViolations)
+    return transformed
   }
 
   async listConversations(userId: string) {

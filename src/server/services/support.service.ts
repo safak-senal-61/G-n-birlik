@@ -7,7 +7,7 @@ import { db } from '@/lib/db'
 import { createNotification, safeJsonParse } from '@/server/lib/auth'
 import { ApiError } from './auth.service'
 
-const ONESIGNAL_APP_ID = '6bddc78e-79e7-4701-9e46-6fca772e402a'
+const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || '6bddc78e-79e7-4701-9e46-6fca772e402a'
 
 // ================================================================
 // SUPPORT SERVICE
@@ -196,49 +196,28 @@ export class BroadcastService {
       }
     }
 
-    // 2. WebSocket toplu broadcast — online kullanıcılara anlık toast
-    //    Non-blocking: hata olsa bile bekleme, diğer kanallara devam et
-    //    WS server kapalıysa fetch hata verir ama try/catch ile yakalanır
+    // 2. Supabase Realtime toplu broadcast — online kullanıcılara anlık toast
     try {
-      const WS_INTERNAL_URL = process.env.WS_INTERNAL_URL || 'http://localhost:3005'
-      const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY || 'gunubirlik_internal_2024'
-      const controller = new AbortController()
-      const wsTimeout = setTimeout(() => controller.abort(), 5000) // 5 sn timeout
-
-      const res = await fetch(`${WS_INTERNAL_URL}/internal/broadcast`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Internal-Key': INTERNAL_API_KEY,
-        },
-        body: JSON.stringify({
-          userIds: users.map((u) => u.id),
-          type: broadcast.type,
-          title: broadcast.title,
-          body: broadcast.message,
-          data: { broadcastId },
-        }),
-        signal: controller.signal,
+      const { broadcastToAll } = await import('@/server/lib/realtime')
+      await broadcastToAll('notification:new', {
+        type: broadcast.type,
+        title: broadcast.title,
+        body: broadcast.message,
+        data: { broadcastId },
       })
-      clearTimeout(wsTimeout)
-
-      if (res.ok) {
-        const result = await res.json()
-        channels.ws = result.delivered || 0
-        console.log(`[Broadcast] WS iletileri: ${result.onlineCount}/${result.targetCount} online, ${result.delivered} socket`)
-      }
+      channels.ws = users.length
+      console.log(`[Broadcast] Supabase Realtime yayını tamamlandı (${users.length} alıcı)`)
     } catch (e: any) {
-      // WS server kapalı olabilir — kritik değil, DB'ye zaten kaydedildi
-      console.warn(`[Broadcast] WS sunucusu kapalı veya erişilemiyor (atlanıyor): ${e?.message || e}`)
+      console.warn(`[Broadcast] Realtime yayını hatası: ${e?.message || e}`)
     }
 
     // 3. Email gönder — OneSignal Email API ile
     //    OneSignal Email aktive edilmemişse 400 hatası döner — ama bizim için kritik değil
-    //    DB'ye zaten kaydedildi, push da gönderildi
     if (broadcast.sendEmail && users.length > 0) {
-      const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY
+      const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || ''
       if (ONESIGNAL_REST_API_KEY) {
         try {
+          const authHeader = (ONESIGNAL_REST_API_KEY.startsWith('os_v2_') ? 'Key ' : 'Bearer ') + ONESIGNAL_REST_API_KEY
           // Tüm geçerli e-postaları topla
           const emails = users.filter((u) => u.email).map((u) => u.email)
 
@@ -253,7 +232,7 @@ export class BroadcastService {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${ONESIGNAL_REST_API_KEY}`,
+                    'Authorization': authHeader,
                   },
                   body: JSON.stringify({
                     app_id: ONESIGNAL_APP_ID,

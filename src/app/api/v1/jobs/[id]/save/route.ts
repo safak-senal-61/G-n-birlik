@@ -10,5 +10,6 @@ export const POST = withErrorHandler(async (req: NextRequest, ctx: any) => {
   if (error || !user) return error || fail('Yetkisiz.', 401)
 
   const result = await jobsService.saveJob(user.userId, id)
-  return ok(result, result.removed ? 'İlan kayıtlardan kaldırıldı.' : 'İlan kaydedildi.')
+  const isRemoved = 'removed' in result && Boolean((result as any).removed)
+  return ok(result, isRemoved ? 'İlan kayıtlardan kaldırıldı.' : 'İlan kaydedildi.')
 })

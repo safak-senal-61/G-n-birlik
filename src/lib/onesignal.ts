@@ -1,6 +1,6 @@
 /**
  * OneSignal Helper — Client side
- * Kullanıcı login/logout olduğunda OneSignal'a tag ekle/kaldır
+ * Kullanıcı login/logout olduğunda OneSignal'a login, tag ekle/kaldır, email bağla
  * Tüm çağrılar try/catch ile sarmalanır — hata durumunda sessizce devam eder
  */
 
@@ -13,33 +13,47 @@ declare global {
 
 /**
  * Kullanıcı login olduğunda çağrılır
- * OneSignalDeferred push ile tag ekle (init sonrası otomatik çalışır)
+ * OneSignalDeferred push ile login, email ve tag ekle (init sonrası otomatik çalışır)
  */
-export async function registerOneSignalUser(userId: string, role: string) {
-  if (typeof window === 'undefined') return
+function isOneSignalSupported(): boolean {
+  if (typeof window === 'undefined') return false
+  const hostname = window.location.hostname
+  return hostname === 'gunubirlik.space-z.ai' || hostname.endsWith('.space-z.ai')
+}
+
+/**
+ * Kullanıcı login olduğunda çağrılır
+ * OneSignalDeferred push ile login, email ve tag ekle (init sonrası otomatik çalışır)
+ */
+export async function registerOneSignalUser(userId: string, role: string, email?: string) {
+  if (!isOneSignalSupported()) return
 
   try {
-    if (window.OneSignalDeferred) {
-      window.OneSignalDeferred.push(async function (OneSignal: any) {
-        try {
-          await OneSignal.User.addTag('user_id', userId)
-          await OneSignal.User.addTag('role', role)
-          console.log('[OneSignal] User registered:', userId, role)
-        } catch (e) {
-          console.warn('[OneSignal] Tag ekleme hatası (deferred):', e)
-        }
-      })
-    } else if (window.OneSignal) {
+    const applyUser = async (OneSignal: any) => {
       try {
-        await window.OneSignal.User.addTag('user_id', userId)
-        await window.OneSignal.User.addTag('role', role)
-        console.log('[OneSignal] User registered:', userId, role)
-      } catch (e) {
-        console.warn('[OneSignal] Tag ekleme hatası:', e)
+        if (!OneSignal) return
+        if (typeof OneSignal.login === 'function') {
+          await OneSignal.login(userId).catch(() => {})
+        }
+        if (OneSignal.User) {
+          await OneSignal.User.addTag?.('user_id', userId)?.catch?.(() => {})
+          await OneSignal.User.addTag?.('role', role)?.catch?.(() => {})
+          if (email && typeof OneSignal.User.addEmail === 'function') {
+            await OneSignal.User.addEmail(email)?.catch?.(() => {})
+          }
+        }
+      } catch {
+        // Sessizce devam et
       }
     }
-  } catch (e) {
-    console.warn('[OneSignal] Register error:', e)
+
+    if (window.OneSignalDeferred) {
+      window.OneSignalDeferred.push(applyUser)
+    } else if (window.OneSignal) {
+      await applyUser(window.OneSignal)
+    }
+  } catch {
+    // Sessizce devam et
   }
 }
 
@@ -47,29 +61,39 @@ export async function registerOneSignalUser(userId: string, role: string) {
  * Kullanıcı logout olduğunda çağrılır
  */
 export async function unregisterOneSignalUser() {
-  if (typeof window === 'undefined') return
+  if (!isOneSignalSupported()) return
 
   try {
-    if (window.OneSignalDeferred) {
-      window.OneSignalDeferred.push(async function (OneSignal: any) {
-        try {
-          await OneSignal.User.removeTag('user_id')
-          await OneSignal.User.removeTag('role')
-          console.log('[OneSignal] User unregistered')
-        } catch (e) {
-          console.warn('[OneSignal] Tag silme hatası (deferred):', e)
-        }
-      })
-    } else if (window.OneSignal) {
+    const applyLogout = async (OneSignal: any) => {
       try {
-        await window.OneSignal.User.removeTag('user_id')
-        await window.OneSignal.User.removeTag('role')
-        console.log('[OneSignal] User unregistered')
-      } catch (e) {
-        console.warn('[OneSignal] Tag silme hatası:', e)
+        if (!OneSignal) return
+        // OneSignal Web SDK v16: Sadece OneSignal hazırsa ve metot varsa güvenle dene
+        if (typeof OneSignal.logout === 'function') {
+          try {
+            await OneSignal.logout()
+          } catch {
+            // SDK başlatılmamışsa veya oturum yoksa sessizce geç
+          }
+        }
+        if (OneSignal.User) {
+          try {
+            await OneSignal.User.removeTag?.('user_id')?.catch?.(() => {})
+            await OneSignal.User.removeTag?.('role')?.catch?.(() => {})
+          } catch {
+            // Sessizce geç
+          }
+        }
+      } catch {
+        // Sessizce devam et
       }
     }
-  } catch (e) {
-    console.warn('[OneSignal] Unregister error:', e)
+
+    if (window.OneSignalDeferred) {
+      window.OneSignalDeferred.push(applyLogout)
+    } else if (window.OneSignal) {
+      await applyLogout(window.OneSignal)
+    }
+  } catch {
+    // Sessizce devam et
   }
 }

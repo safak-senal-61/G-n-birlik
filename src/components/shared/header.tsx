@@ -21,12 +21,15 @@ import {
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Briefcase, Bell, MessageSquare, User as UserIcon, LogOut, Menu, X, Plus, Heart, FileText, BookOpen, LayoutGrid, ChevronLeft, Wallet, LifeBuoy, Share2, QrCode, Copy, Check } from 'lucide-react'
+import { Briefcase, Bell, MessageSquare, User as UserIcon, LogOut, Menu, X, Plus, Heart, FileText, BookOpen, LayoutGrid, ChevronLeft, ChevronDown, Wallet, LifeBuoy, Share2, QrCode, Copy, Check, Sparkles } from 'lucide-react'
 import { initials } from '@/lib/format'
 import { useEffect, useState } from 'react'
 import { notificationsApi } from '@/lib/api'
 import { usePathname } from 'next/navigation'
 import { toast } from 'sonner'
+import { ThemeToggle } from '@/components/shared/theme-toggle'
+import Logo from '@/components/shared/logo'
+import { WhatsAppIcon, TelegramIcon, TwitterXIcon } from '@/components/shared/social-icons'
 
 export default function Header() {
   const { user, logout } = useAuth()
@@ -70,6 +73,10 @@ export default function Header() {
     if (!user) return
     const loadUnread = async () => {
       try {
+        if (view === 'notifications') {
+          setUnreadCount(0)
+          return
+        }
         const res = await notificationsApi.list(true)
         setUnreadCount(res.unreadCount)
       } catch {}
@@ -78,6 +85,16 @@ export default function Header() {
     const interval = setInterval(loadUnread, 30000)
     return () => clearInterval(interval)
   }, [user, view])
+
+  // Bildirimler sayfasına girildiğinde veya okundu eventi tetiklendiğinde sayacı hemen sıfırla
+  useEffect(() => {
+    if (view === 'notifications') {
+      setUnreadCount(0)
+    }
+    const handleRead = () => setUnreadCount(0)
+    window.addEventListener('notifications-read', handleRead)
+    return () => window.removeEventListener('notifications-read', handleRead)
+  }, [view])
 
   if (!user) return null
 
@@ -100,144 +117,170 @@ export default function Header() {
   const visibleNav = navItems.filter((n) => !n.roles || n.roles.includes(user.role))
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-gray-200">
-      <div className="container mx-auto px-3 sm:px-4">
-        <div className="flex items-center justify-between h-14 sm:h-16 gap-2">
-          {/* Logo */}
+    <header className="fixed top-2 sm:top-3.5 left-0 right-0 z-50 px-2.5 sm:px-4 transition-all pointer-events-none">
+      <div className="max-w-7xl mx-auto rounded-2xl sm:rounded-full acrylic-3d border border-white/70 dark:border-white/10 shadow-[0_8px_32px_rgba(15,23,42,0.18),0_1px_0_0_rgba(255,255,255,0.85)] px-3 sm:px-4 py-1.5 sm:py-2 pointer-events-auto">
+        <div className="flex items-center justify-between h-10 sm:h-11 gap-2">
+          {/* Logo & Brand */}
           <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
-            {history.length > 0 && (
-              <Button variant="ghost" size="icon" onClick={back} className="h-10 w-10 flex-shrink-0" title="Geri">
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-            )}
             <button
+              type="button"
               onClick={() => go('home')}
-              className="flex items-center gap-2 hover:opacity-80 transition min-w-0"
+              className="flex items-center group transition-transform active:scale-95 min-w-0 text-left flex-shrink-0"
+              title="Günübirlik — Ana Sayfa"
+              aria-label="Günübirlik — Ana Sayfa"
             >
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-emerald-600 flex items-center justify-center flex-shrink-0">
-                <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </div>
-              <span className="hidden sm:block font-bold text-base lg:text-lg text-gray-900 truncate">
-                Günübirlik İş Bul
-              </span>
+              <Logo size="md" variant="full" />
             </button>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center min-w-0">
-            {visibleNav.slice(0, 7).map((item) => (
-              <Button
-                key={item.key}
-                variant={view === item.key ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => go(item.key)}
-                className={
-                  view === item.key
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                    : 'text-gray-700'
-                }
-              >
-                <item.icon className="w-4 h-4 mr-1.5" />
-                <span className="truncate">{item.label}</span>
-                {item.key === 'notifications' && unreadCount > 0 && (
-                  <Badge className="ml-1.5 bg-red-500 text-white text-xs px-1.5 min-w-[18px] h-[18px] flex items-center justify-center">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </Badge>
-                )}
-              </Button>
-            ))}
+          {/* Desktop Navigation - 3D Inset Tactile Pill Bar */}
+          <nav className="hidden lg:flex items-center p-1 rounded-full inset-3d gap-1 min-w-0" aria-label="Ana Gezinti Menüsü">
+            {visibleNav.slice(0, 7).map((item) => {
+              const isActive = view === item.key
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => go(item.key)}
+                  aria-label={item.label}
+                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 whitespace-nowrap transition-all duration-150 ${
+                    isActive
+                      ? 'btn-3d-emerald rounded-full shadow-sm z-10'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-emerald-800 dark:hover:text-emerald-400 hover:bg-white/90 dark:hover:bg-slate-800/80'
+                  }`}
+                >
+                  <item.icon className={`w-3.5 h-3.5 transition-colors ${isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400'}`} />
+                  <span>{item.label}</span>
+                  {item.key === 'notifications' && unreadCount > 0 && (
+                    <span className="ml-1 bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full min-w-[16px] h-[16px] flex items-center justify-center shadow-[0_2px_6px_rgba(244,63,94,0.4)] animate-pulse">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </nav>
 
-          {/* User Menu */}
-          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-            {/* Share Site button — siteyi paylaş / preview linki al */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10"
-              onClick={() => setShareOpen(true)}
-              title="Siteyi Paylaş"
-            >
-              <Share2 className="w-5 h-5" />
-            </Button>
-
-            {/* Wallet button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 relative"
+          {/* User Menu & Action Tools */}
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {/* Wallet Button Chip - 3D Tactile */}
+            <button
+              type="button"
               onClick={() => go('wallet')}
-              title="Cüzdan"
+              className="btn-3d-white btn-3d-pill flex items-center gap-1.5 px-3 py-1.5 text-emerald-800 dark:text-emerald-300 text-xs font-bold"
+              title="Cüzdanım"
+              aria-label="Cüzdanım"
             >
-              <Wallet className="w-5 h-5" />
-            </Button>
+              <Wallet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 drop-shadow-xs" />
+              <span className="hidden sm:inline">Cüzdan</span>
+            </button>
 
-            {/* Quick notifications button - mobile */}
+            {/* Dark Mode Theme Toggle - 3D Tactile */}
+            <ThemeToggle variant="icon" />
+
+            {/* Quick notifications button - mobile 3D */}
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden h-10 w-10 relative"
+              className="lg:hidden h-9 w-9 rounded-full relative hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-300 active:scale-95"
               onClick={() => go('notifications')}
+              aria-label="Bildirimler"
             >
-              <Bell className="w-5 h-5" />
+              <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
-                <Badge className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] px-1.5 min-w-[16px] h-[16px] flex items-center justify-center">
+                <Badge className="absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[9px] px-1 min-w-[15px] h-[15px] flex items-center justify-center rounded-full shadow-[0_2px_4px_rgba(244,63,94,0.4)]">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </Badge>
               )}
             </Button>
 
+            {/* Mobile Menu Toggle Button */}
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden h-10 w-10"
+              className="lg:hidden h-9 w-9 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-300 active:scale-95"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
 
+            {/* User Dropdown Pill Menu - 3D Spatial */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="hidden lg:flex items-center gap-2 hover:bg-gray-100 rounded-full p-1 transition">
-                  <Avatar className="w-9 h-9 border border-emerald-200">
-                    <AvatarFallback className="bg-emerald-100 text-emerald-700 font-semibold">
+                <button
+                  type="button"
+                  className="hidden lg:flex items-center gap-2 pl-1 pr-3 py-1 rounded-full card-3d-spatial hover:shadow-md transition-shadow group cursor-pointer"
+                  aria-label="Kullanıcı Menüsü"
+                >
+                  <Avatar className="w-7 h-7 border-2 border-emerald-500/50 shadow-[0_2px_6px_rgba(16,185,129,0.3)]">
+                    <AvatarFallback className="bg-gradient-to-tr from-emerald-100 to-teal-100 dark:from-emerald-950 dark:to-teal-900 text-emerald-800 dark:text-emerald-300 font-extrabold text-[11px]">
                       {initials(user.fullName)}
                     </AvatarFallback>
                   </Avatar>
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs font-bold text-gray-800 dark:text-slate-100 max-w-[85px] truncate leading-tight group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                      {user.fullName.split(' ')[0]}
+                    </span>
+                    <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 leading-none">
+                      {user.role === 'WORKER' ? 'İş Arayan' : user.role === 'EMPLOYER' ? 'İşveren' : 'Yönetici'}
+                    </span>
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-transform group-data-[state=open]:rotate-180" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 sm:w-64">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col">
-                    <span className="font-semibold truncate">{user.fullName}</span>
-                    <span className="text-xs text-gray-500 truncate">{user.email}</span>
-                    <Badge variant="outline" className="mt-1 w-fit">
-                      {user.role === 'WORKER' ? 'İş Arayan' : user.role === 'EMPLOYER' ? 'İşveren' : 'Admin'}
-                    </Badge>
+              <DropdownMenuContent align="end" sideOffset={8} className="w-72 sm:w-80 rounded-2xl shadow-2xl border border-slate-200/90 dark:border-white/10 p-2 bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-100 backdrop-blur-2xl">
+                <DropdownMenuLabel className="p-3 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 dark:from-slate-800/90 dark:via-emerald-950/40 dark:to-slate-800/90 rounded-xl mb-1.5 border border-emerald-100/70 dark:border-white/10">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10 border-2 border-emerald-400 dark:border-emerald-500 shadow-xs">
+                      <AvatarFallback className="bg-emerald-600 text-white font-black text-sm">
+                        {initials(user.fullName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="font-extrabold text-sm text-slate-900 dark:text-slate-100 truncate">{user.fullName}</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</span>
+                      <Badge variant="outline" className="mt-1 w-fit text-[9px] border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 bg-white/80 dark:bg-slate-900/80 py-0.5 px-2 font-bold">
+                        {user.role === 'WORKER' ? '👷 İş Arayan' : user.role === 'EMPLOYER' ? '🏢 İşveren' : '🛡️ Yönetici'}
+                      </Badge>
+                    </div>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => go('profile')}>
-                  <UserIcon className="w-4 h-4 mr-2" />
-                  Profilim
+                <DropdownMenuSeparator className="my-1 dark:bg-slate-800" />
+                <DropdownMenuItem onClick={() => go('profile')} className="rounded-xl text-xs font-semibold cursor-pointer py-2.5 px-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/90 focus:bg-slate-100 dark:focus:bg-slate-800/90 transition-all flex items-center">
+                  <UserIcon className="w-4 h-4 mr-2.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Profilim</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => go('wallet')}>
-                  <Wallet className="w-4 h-4 mr-2" />
-                  Cüzdanım
+                <DropdownMenuItem onClick={() => go('wallet')} className="rounded-xl text-xs font-semibold cursor-pointer py-2.5 px-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/90 focus:bg-slate-100 dark:focus:bg-slate-800/90 transition-all flex items-center">
+                  <Wallet className="w-4 h-4 mr-2.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Cüzdanım</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => go('notifications')}>
-                  <Bell className="w-4 h-4 mr-2" />
-                  Bildirimler
-                  {unreadCount > 0 && <Badge className="ml-auto bg-red-500">{unreadCount}</Badge>}
+                <DropdownMenuItem onClick={() => go('notifications')} className="rounded-xl text-xs font-semibold cursor-pointer py-2.5 px-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/90 focus:bg-slate-100 dark:focus:bg-slate-800/90 transition-all flex items-center">
+                  <Bell className="w-4 h-4 mr-2.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Bildirimler</span>
+                  {unreadCount > 0 && <Badge className="ml-auto bg-rose-500 text-white text-[10px] py-0 px-1.5 font-bold shadow-xs">{unreadCount}</Badge>}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => go('api-docs')}>
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  API Dokümantasyonu
+                <DropdownMenuItem onClick={() => go('help')} className="rounded-xl text-xs font-semibold cursor-pointer py-2.5 px-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/90 focus:bg-slate-100 dark:focus:bg-slate-800/90 transition-all flex items-center">
+                  <LifeBuoy className="w-4 h-4 mr-2.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Yardım & Destek</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => logout()} className="text-red-600">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Çıkış Yap
+                {['EMPLOYER', 'ADMIN'].includes(user.role) && (
+                  <DropdownMenuItem onClick={() => go('api-docs')} className="rounded-xl text-xs font-semibold cursor-pointer py-2.5 px-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/90 focus:bg-slate-100 dark:focus:bg-slate-800/90 transition-all flex items-center">
+                    <BookOpen className="w-4 h-4 mr-2.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span>API Dokümantasyonu</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator className="my-1.5 dark:bg-slate-800" />
+                <div className="px-2.5 py-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Görünüm Teması</span>
+                  </div>
+                  <ThemeToggle variant="segmented" className="w-full" />
+                </div>
+                <DropdownMenuSeparator className="my-1.5 dark:bg-slate-800" />
+                <DropdownMenuItem onClick={() => logout()} className="rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40 focus:bg-red-50 dark:focus:bg-red-950/40 cursor-pointer py-2.5 px-3 transition-all flex items-center">
+                  <LogOut className="w-4 h-4 mr-2.5 text-red-500 dark:text-red-400 shrink-0" />
+                  <span>Çıkış Yap</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -246,53 +289,71 @@ export default function Header() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200 py-3 space-y-1 max-h-[calc(100vh-3.5rem)] overflow-y-auto">
+          <div className="lg:hidden border-t border-gray-200/80 dark:border-slate-800 py-3 space-y-1 max-h-[calc(100vh-3.5rem)] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
             {/* User info at top of mobile menu */}
-            <div className="flex items-center gap-3 px-2 pb-3 mb-2 border-b border-gray-100">
-              <Avatar className="w-10 h-10 border border-emerald-200 flex-shrink-0">
-                <AvatarFallback className="bg-emerald-100 text-emerald-700 font-semibold text-sm">
+            <div className="flex items-center gap-3 p-2.5 mb-2 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 dark:from-emerald-950/40 dark:via-slate-900/50 dark:to-blue-950/40 border border-emerald-100 dark:border-emerald-900/30">
+              <Avatar className="w-10 h-10 border border-emerald-300 flex-shrink-0 shadow-xs">
+                <AvatarFallback className="bg-emerald-600 text-white font-bold text-sm">
                   {initials(user.fullName)}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <div className="font-semibold text-sm truncate">{user.fullName}</div>
-                <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                <div className="font-bold text-sm text-gray-900 dark:text-white truncate">{user.fullName}</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{user.email}</div>
               </div>
-              <Badge variant="outline" className="text-xs flex-shrink-0">
-                {user.role === 'WORKER' ? 'İş Arayan' : user.role === 'EMPLOYER' ? 'İşveren' : 'Admin'}
+              <Badge variant="outline" className="text-[10px] border-emerald-300 text-emerald-800 dark:text-emerald-300 bg-white dark:bg-slate-900 font-semibold py-0.5 px-2 flex-shrink-0">
+                {user.role === 'WORKER' ? 'İş Arayan' : user.role === 'EMPLOYER' ? 'İşveren' : 'Yönetici'}
               </Badge>
             </div>
 
-            {visibleNav.map((item) => (
-              <Button
-                key={item.key}
-                variant={view === item.key ? 'default' : 'ghost'}
-                onClick={() => {
-                  go(item.key)
-                  setMobileMenuOpen(false)
-                }}
-                className={`w-full justify-start h-11 ${
-                  view === item.key ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''
-                }`}
-              >
-                <item.icon className="w-4 h-4 mr-2 flex-shrink-0" />
-                <span className="truncate">{item.label}</span>
-                {item.key === 'notifications' && unreadCount > 0 && (
-                  <Badge className="ml-auto bg-red-500">{unreadCount}</Badge>
-                )}
-              </Button>
-            ))}
-            <Button
-              variant="ghost"
+            {visibleNav.map((item) => {
+              const isActive = view === item.key
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => {
+                    go(item.key)
+                    setMobileMenuOpen(false)
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    isActive
+                      ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
+                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100/90 dark:hover:bg-slate-800/80 hover:text-emerald-700 dark:hover:text-emerald-400'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400'}`} />
+                    <span className="truncate">{item.label}</span>
+                  </div>
+                  {item.key === 'notifications' && unreadCount > 0 && (
+                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full min-w-[16px] h-[16px] flex items-center justify-center ${
+                      isActive ? 'bg-white text-emerald-800' : 'bg-rose-500 text-white'
+                    }`}>
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+
+            {/* Tema Tercihi (Mobil) */}
+            <div className="p-3 my-2 rounded-xl bg-gray-50/80 dark:bg-slate-900/60 border border-gray-200/60 dark:border-white/5 space-y-2">
+              <span className="text-xs font-bold text-gray-700 dark:text-slate-300">Tema Tercihi</span>
+              <ThemeToggle variant="segmented" className="w-full" />
+            </div>
+
+            <button
+              type="button"
               onClick={() => {
                 logout()
                 setMobileMenuOpen(false)
               }}
-              className="w-full justify-start h-11 text-red-600"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors mt-2 border-t border-gray-100 dark:border-slate-800 pt-3"
             >
-              <LogOut className="w-4 h-4 mr-2 flex-shrink-0" />
+              <LogOut className="w-4 h-4 flex-shrink-0 text-red-500" />
               Çıkış Yap
-            </Button>
+            </button>
           </div>
         )}
       </div>
@@ -312,27 +373,28 @@ export default function Header() {
 
           <div className="space-y-4 py-2">
             {/* URL Preview */}
-            <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border">
+            <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-white/10">
               <Input
                 value={siteUrl}
                 readOnly
-                className="flex-1 h-10 bg-white text-sm"
+                className="flex-1 h-10 bg-white dark:bg-slate-800 text-sm dark:text-slate-100 dark:border-white/10"
                 onClick={(e) => (e.target as HTMLInputElement).select()}
               />
               <Button
                 size="icon"
                 variant="outline"
-                className="h-10 w-10 flex-shrink-0"
+                className="h-10 w-10 flex-shrink-0 dark:border-white/10 dark:hover:bg-slate-800"
                 onClick={handleCopyLink}
                 title="Linki Kopyala"
+                aria-label="Linki Kopyala"
               >
-                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                {copied ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
 
             {/* Native Share Button (mobilde WhatsApp/Telegram vb. açar) */}
             <Button
-              className="w-full h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+              className="w-full h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold"
               onClick={handleNativeShare}
             >
               <Share2 className="w-5 h-5 mr-2" />
@@ -345,34 +407,40 @@ export default function Header() {
                 href={`https://wa.me/?text=${encodeURIComponent('Günübirlik İş Bul — Türkiye\'nin günübirlik iş bulma platformu! ' + siteUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center gap-1 p-3 rounded-lg border hover:bg-green-50 transition"
+                className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-gray-200 dark:border-white/10 hover:border-emerald-500/50 hover:bg-emerald-50/60 dark:hover:bg-emerald-950/30 transition-all text-gray-700 dark:text-slate-200 group"
               >
-                <span className="text-2xl">💬</span>
-                <span className="text-xs font-medium text-gray-700">WhatsApp</span>
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-transform group-hover:scale-110">
+                  <WhatsAppIcon className="w-4 h-4 fill-current" />
+                </div>
+                <span className="text-[11px] font-semibold">WhatsApp</span>
               </a>
               <a
                 href={`https://t.me/share/url?url=${encodeURIComponent(siteUrl)}&text=${encodeURIComponent('Günübirlik İş Bul')}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center gap-1 p-3 rounded-lg border hover:bg-blue-50 transition"
+                className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-gray-200 dark:border-white/10 hover:border-blue-500/50 hover:bg-blue-50/60 dark:hover:bg-blue-950/30 transition-all text-gray-700 dark:text-slate-200 group"
               >
-                <span className="text-2xl">✈️</span>
-                <span className="text-xs font-medium text-gray-700">Telegram</span>
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-500 dark:text-blue-400 flex items-center justify-center transition-transform group-hover:scale-110">
+                  <TelegramIcon className="w-4 h-4 fill-current" />
+                </div>
+                <span className="text-[11px] font-semibold">Telegram</span>
               </a>
               <a
                 href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Günübirlik İş Bul — Türkiye\'nin günübirlik iş bulma platformu!')}&url=${encodeURIComponent(siteUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center gap-1 p-3 rounded-lg border hover:bg-gray-50 transition"
+                className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-gray-200 dark:border-white/10 hover:border-slate-500/50 hover:bg-slate-100/70 dark:hover:bg-slate-800/50 transition-all text-gray-700 dark:text-slate-200 group"
               >
-                <span className="text-2xl">🐦</span>
-                <span className="text-xs font-medium text-gray-700">X (Twitter)</span>
+                <div className="w-8 h-8 rounded-lg bg-slate-500/10 dark:bg-slate-500/20 text-slate-800 dark:text-slate-200 flex items-center justify-center transition-transform group-hover:scale-110">
+                  <TwitterXIcon className="w-3.5 h-3.5 fill-current" />
+                </div>
+                <span className="text-[11px] font-semibold">X (Twitter)</span>
               </a>
             </div>
 
             {/* QR Kod ile hızlı erişim */}
-            <div className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
-              <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
+            <div className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-slate-900 rounded-lg border border-emerald-200 dark:border-emerald-800/40">
+              <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
                 <QrCode className="w-4 h-4" />
                 QR Kod ile Eriş
               </div>
@@ -381,7 +449,7 @@ export default function Header() {
                 alt="QR Kod"
                 className="w-44 h-44 bg-white p-2 rounded-lg shadow-sm"
               />
-              <p className="text-xs text-emerald-700 text-center">
+              <p className="text-xs text-emerald-700 dark:text-emerald-400 text-center">
                 Telefon kamerasıyla tara, siteye anında eriş
               </p>
             </div>

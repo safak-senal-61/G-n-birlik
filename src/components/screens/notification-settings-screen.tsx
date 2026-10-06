@@ -136,16 +136,16 @@ export default function NotificationSettingsScreen() {
       {/* Header */}
       <div className="mb-4 sm:mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
             Bildirim Ayarları
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1">Bildirim tercihlerinizi yönetin</p>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mt-1">Bildirim tercihlerinizi yönetin</p>
         </div>
         <Button
           variant="outline"
           size="sm"
-          className="text-xs"
+          className="text-xs dark:bg-slate-800 dark:border-white/10 dark:text-slate-200 dark:hover:bg-slate-700"
           onClick={handleReset}
           disabled={resetting}
         >
@@ -155,24 +155,24 @@ export default function NotificationSettingsScreen() {
       </div>
 
       {/* Genel Push Anahtarı */}
-      <Card className={`mb-3 sm:mb-4 border-2 ${settings.pushEnabled ? 'border-indigo-200 bg-indigo-50/50' : 'border-gray-200 bg-gray-50'}`}>
+      <Card className={`mb-3 sm:mb-4 border-2 ${settings.pushEnabled ? 'border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/50 dark:bg-indigo-950/40' : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-slate-900'}`}>
         <CardContent className="p-3 sm:p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                settings.pushEnabled ? 'bg-indigo-100' : 'bg-gray-200'
+                settings.pushEnabled ? 'bg-indigo-100 dark:bg-indigo-950/80' : 'bg-gray-200 dark:bg-slate-800'
               }`}>
                 {settings.pushEnabled ? (
-                  <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
+                  <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
                 ) : (
-                  <BellOff className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500" />
+                  <BellOff className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 dark:text-slate-400" />
                 )}
               </div>
               <div className="min-w-0">
-                <p className="font-semibold text-sm sm:text-base text-gray-900">
+                <p className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">
                   Tüm Bildirimler
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
                   {settings.pushEnabled ? 'Aktif — tüm bildirimler açık' : 'Kapalı — hiçbir bildirim alınmaz'}
                 </p>
               </div>
@@ -187,7 +187,7 @@ export default function NotificationSettingsScreen() {
 
       {/* Tüm push kapalıysa uyarı */}
       {!settings.pushEnabled && (
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 mb-3 sm:mb-4 text-center">
+        <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs text-amber-700 dark:text-amber-300 mb-3 sm:mb-4 text-center">
           🔕 Tüm bildirimler kapalı. Bildirim almak için yukarıdaki anahtarı açın.
         </div>
       )}
@@ -199,7 +199,7 @@ export default function NotificationSettingsScreen() {
         <SettingGroup
           icon={Briefcase}
           title="İş Bildirimleri"
-          color="bg-blue-100 text-blue-600"
+          color="bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300"
           items={[
             { key: 'jobApplied', label: 'Yeni İş Başvurusu', desc: 'İlanınıza başvuru geldiğinde' },
             { key: 'applicationAccepted', label: 'Başvuru Onaylandı', desc: 'Başvurunuz onaylandığında' },
@@ -215,7 +215,7 @@ export default function NotificationSettingsScreen() {
         <SettingGroup
           icon={MessageSquare}
           title="Mesaj Bildirimleri"
-          color="bg-pink-100 text-pink-600"
+          color="bg-pink-100 dark:bg-pink-950/60 text-pink-600 dark:text-pink-300"
           items={[
             { key: 'newMessage', label: 'Yeni Mesaj', desc: 'Size yeni mesaj geldiğinde' },
           ]}
@@ -227,7 +227,7 @@ export default function NotificationSettingsScreen() {
         <SettingGroup
           icon={Wallet}
           title="Ödeme & Cüzdan"
-          color="bg-emerald-100 text-emerald-600"
+          color="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300"
           items={[
             { key: 'paymentReceived', label: 'Ödeme Alındı', desc: 'Cüzdanınıza para geldiğinde' },
             { key: 'paymentApproved', label: 'Ödeme Onaylandı', desc: 'Ödeme talebiniz onaylandığında' },
@@ -243,7 +243,7 @@ export default function NotificationSettingsScreen() {
         <SettingGroup
           icon={QrCode}
           title="İş Akışı & QR"
-          color="bg-indigo-100 text-indigo-600"
+          color="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300"
           items={[
             { key: 'workStarted', label: 'İşe Başlandı', desc: 'QR ile işe başlatıldığında' },
             { key: 'workCompleted', label: 'İş Tamamlandı', desc: 'QR ile iş tamamlandığında' },
@@ -257,7 +257,7 @@ export default function NotificationSettingsScreen() {
         <SettingGroup
           icon={Settings}
           title="Sistem & Duyurular"
-          color="bg-slate-100 text-slate-600"
+          color="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
           items={[
             { key: 'systemUpdate', label: 'Sistem Güncellemesi', desc: 'Yeni özellikler ve güncellemeler' },
             { key: 'maintenance', label: 'Bakım Bildirimi', desc: 'Sistem bakımı ve planlı kesintiler' },
@@ -269,8 +269,8 @@ export default function NotificationSettingsScreen() {
       </div>
 
       {/* Alt bilgi */}
-      <div className="mt-6 p-3 bg-gray-50 rounded-xl text-center">
-        <p className="text-[11px] text-gray-400">
+      <div className="mt-6 p-3 bg-gray-50 dark:bg-slate-900/60 dark:border dark:border-white/10 rounded-xl text-center">
+        <p className="text-[11px] text-gray-400 dark:text-slate-400">
           🔔 Ayarlarınız anında kaydedilir. Mobil uygulama da aynı ayarları kullanır.
         </p>
       </div>
@@ -297,22 +297,22 @@ function SettingGroup({
   onToggle: (key: keyof Settings, value: boolean) => void
 }) {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden dark:bg-slate-900/90 dark:border-white/10">
       {/* Group Header */}
-      <div className="flex items-center gap-2.5 px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border-b border-gray-100">
+      <div className="flex items-center gap-2.5 px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-slate-850 border-b border-gray-100 dark:border-white/10">
         <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center ${color}`}>
           <Icon className="w-4 h-4" />
         </div>
-        <h3 className="font-semibold text-sm sm:text-base text-gray-900">{title}</h3>
+        <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">{title}</h3>
       </div>
 
       {/* Items */}
-      <div className="divide-y divide-gray-50">
+      <div className="divide-y divide-gray-50 dark:divide-slate-800">
         {items.map((item) => (
           <div key={item.key} className="flex items-center justify-between gap-3 px-3 sm:px-4 py-2.5 sm:py-3">
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-900">{item.label}</p>
-              <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5">{item.desc}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{item.label}</p>
+              <p className="text-[11px] sm:text-xs text-gray-500 dark:text-slate-400 mt-0.5">{item.desc}</p>
             </div>
             <Switch
               checked={settings[item.key] as boolean}

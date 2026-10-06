@@ -51,7 +51,7 @@ async function request<T>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string> || {}),
   }
 
   // Mobil token desteği (web'de cookie yeterli)
@@ -86,13 +86,171 @@ async function request<T>(
   return json.data as T
 }
 
+// ====================================================================
+// Akıllı İstemci Önbelleği (Client-Side Memory Cache & SWR)
+// ====================================================================
+export interface RequestOptions extends RequestInit {
+  bypassCache?: boolean
+  ttl?: number
+}
+
+interface CacheEntry<T = any> {
+  data: T
+  timestamp: number
+  ttl: number
+}
+
+// In-Memory GET Cache
+const apiCache = new Map<string, CacheEntry>()
+// Aktif (in-flight) istekleri tekilleştirme (Promise deduplication)
+const inFlightRequests = new Map<string, Promise<any>>()
+
+// Endpoint'lere göre varsayılan TTL (Milisaniye)
+const DEFAULT_TTL = 30 * 1000 // 30 saniye
+const CACHE_CONFIGS: Array<{ pattern: RegExp; ttl: number }> = [
+  { pattern: /^\/jobs(\?|$)/, ttl: 45 * 1000 }, // 45 saniye
+  { pattern: /^\/jobs\/[a-zA-Z0-9_-]+$/, ttl: 60 * 1000 }, // 1 dakika (ilan detayı)
+  { pattern: /^\/wallet\/balance/, ttl: 30 * 1000 }, // 30 saniye
+  { pattern: /^\/wallet\/transactions/, ttl: 45 * 1000 },
+  { pattern: /^\/wallet\/deposit-requests/, ttl: 30 * 1000 },
+  { pattern: /^\/wallet\/withdraw-requests/, ttl: 30 * 1000 },
+  { pattern: /^\/auth\/me/, ttl: 60 * 1000 },
+  { pattern: /^\/auth\/security-info/, ttl: 60 * 1000 },
+  { pattern: /^\/notifications(\?|$)/, ttl: 30 * 1000 },
+  { pattern: /^\/conversations(\?|$)/, ttl: 20 * 1000 },
+  { pattern: /^\/geocode\//, ttl: 10 * 60 * 1000 }, // 10 dakika
+]
+
+function getTtlForPath(path: string): number {
+  for (const cfg of CACHE_CONFIGS) {
+    if (cfg.pattern.test(path)) return cfg.ttl
+  }
+  return DEFAULT_TTL
+}
+
+function clearCacheMatching(pattern: RegExp) {
+  for (const key of apiCache.keys()) {
+    if (pattern.test(key)) {
+      apiCache.delete(key)
+    }
+  }
+}
+
+export function invalidateCache(mutatedPath: string) {
+  if (mutatedPath.startsWith('/jobs') || mutatedPath.startsWith('/saved')) {
+    clearCacheMatching(/^\/jobs/)
+  } else if (mutatedPath.startsWith('/wallet')) {
+    clearCacheMatching(/^\/wallet/)
+  } else if (mutatedPath.startsWith('/notifications')) {
+    clearCacheMatching(/^\/notifications/)
+  } else if (mutatedPath.startsWith('/applications')) {
+    clearCacheMatching(/^\/applications/)
+    clearCacheMatching(/^\/jobs/)
+  } else if (mutatedPath.startsWith('/conversations')) {
+    clearCacheMatching(/^\/conversations/)
+  } else if (mutatedPath.startsWith('/auth') || mutatedPath.startsWith('/users')) {
+    clearCacheMatching(/^\/auth/)
+    clearCacheMatching(/^\/users/)
+  } else {
+    const prefix = mutatedPath.split('/')[1]
+    if (prefix) {
+      clearCacheMatching(new RegExp(`^\\/${prefix}`))
+    }
+  }
+}
+
+async function cachedGet<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const cacheKey = path
+  const now = Date.now()
+  const bypass = options.bypassCache === true
+
+  if (!bypass) {
+    const cached = apiCache.get(cacheKey)
+    if (cached) {
+      const isFresh = now - cached.timestamp < cached.ttl
+      if (isFresh) {
+        // Taze önbellek: Ağ isteği atmadan 0ms içinde anında dön!
+        return cached.data as T
+      }
+
+      // Stale-While-Revalidate: Ömrü yeni dolmuşsa kullanıcıyı bekletme, eskiyi anında dön ve arka planda tazele
+      if (now - cached.timestamp < cached.ttl * 4) {
+        if (!inFlightRequests.has(cacheKey)) {
+          const bgPromise = request<T>(path, { ...options, method: 'GET' })
+            .then((freshData) => {
+              apiCache.set(cacheKey, {
+                data: freshData,
+                timestamp: Date.now(),
+                ttl: options.ttl || getTtlForPath(path),
+              })
+              return freshData
+            })
+            .catch(() => {})
+            .finally(() => {
+              inFlightRequests.delete(cacheKey)
+            })
+          inFlightRequests.set(cacheKey, bgPromise)
+        }
+        return cached.data as T
+      }
+    }
+
+    // Aynı anda giden mükerrer istekleri tek bir ağ çağrısında birleştir
+    if (inFlightRequests.has(cacheKey)) {
+      return inFlightRequests.get(cacheKey)! as Promise<T>
+    }
+  }
+
+  const reqPromise = request<T>(path, { ...options, method: 'GET' })
+    .then((data) => {
+      if (!bypass) {
+        apiCache.set(cacheKey, {
+          data,
+          timestamp: Date.now(),
+          ttl: options.ttl || getTtlForPath(path),
+        })
+      }
+      return data
+    })
+    .finally(() => {
+      inFlightRequests.delete(cacheKey)
+    })
+
+  if (!bypass) {
+    inFlightRequests.set(cacheKey, reqPromise)
+  }
+
+  return reqPromise
+}
+
 export const api = {
-  get: <T = any>(path: string) => request<T>(path, { method: 'GET' }),
-  post: <T = any>(path: string, body?: any) =>
-    request<T>(path, { method: 'POST', body: JSON.stringify(body || {}) }),
-  put: <T = any>(path: string, body?: any) =>
-    request<T>(path, { method: 'PUT', body: JSON.stringify(body || {}) }),
-  delete: <T = any>(path: string) => request<T>(path, { method: 'DELETE' }),
+  get: <T = any>(path: string, options?: RequestOptions) => cachedGet<T>(path, options),
+  post: async <T = any>(path: string, body?: any) => {
+    const res = await request<T>(path, { method: 'POST', body: JSON.stringify(body || {}) })
+    invalidateCache(path)
+    return res
+  },
+  put: async <T = any>(path: string, body?: any) => {
+    const res = await request<T>(path, { method: 'PUT', body: JSON.stringify(body || {}) })
+    invalidateCache(path)
+    return res
+  },
+  delete: async <T = any>(path: string) => {
+    const res = await request<T>(path, { method: 'DELETE' })
+    invalidateCache(path)
+    return res
+  },
+  invalidate: (pattern: string | RegExp) => {
+    if (typeof pattern === 'string') {
+      clearCacheMatching(new RegExp(`^${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`))
+    } else {
+      clearCacheMatching(pattern)
+    }
+  },
+  clearCache: () => {
+    apiCache.clear()
+    inFlightRequests.clear()
+  },
 }
 
 // ====================================================================
@@ -175,6 +333,8 @@ export const jobsApi = {
     workDateFrom?: string
     workDateTo?: string
     sortBy?: string
+    employerId?: string
+    status?: string
   } = {}) => {
     const q = new URLSearchParams()
     Object.entries(params).forEach(([k, v]) => {
@@ -329,4 +489,17 @@ export const walletApi = {
     api.get<any>(`/wallet/withdraw-requests?page=${page}`),
 }
 
+// ====================================================================
+// Geocode API
+// ====================================================================
+export const geocodeApi = {
+  reverse: (lat: number, lng: number) =>
+    api.get<any>(`/geocode/reverse?lat=${lat}&lng=${lng}`),
+  search: (query: string, limit = 5) =>
+    api.get<any[]>(`/geocode/search?q=${encodeURIComponent(query)}&limit=${limit}`),
+  suggest: (query: string, limit = 5) =>
+    api.get<any[]>(`/geocode/suggest?q=${encodeURIComponent(query)}&limit=${limit}`),
+}
+
 export { ApiError }
+

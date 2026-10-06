@@ -6,22 +6,25 @@ import { useApp } from '@/lib/app-store'
 import { on, connectSocket, getSocket } from '@/lib/socket'
 import Header from '@/components/shared/header'
 import AuthScreen from '@/components/screens/auth-screen'
-import JobsListScreen from '@/components/screens/jobs-list-screen'
-import JobDetailScreen from '@/components/screens/job-detail-screen'
-import PostJobScreen from '@/components/screens/post-job-screen'
-import MyJobsScreen from '@/components/screens/my-jobs-screen'
-import ApplicationsScreen from '@/components/screens/applications-screen'
-import MessagesScreen from '@/components/screens/messages-screen'
-import ProfileScreen from '@/components/screens/profile-screen'
-import NotificationsScreen from '@/components/screens/notifications-screen'
-import SavedJobsScreen from '@/components/screens/saved-jobs-screen'
-import ApiDocsScreen from '@/components/screens/api-docs-screen'
-import WalletScreen from '@/components/screens/wallet-screen'
-import NotificationSettingsScreen from '@/components/screens/notification-settings-screen'
-import HelpScreen from '@/components/screens/help-screen'
-import MaintenanceScreen from '@/components/maintenance-screen'
+import dynamic from 'next/dynamic'
+
+const JobsListScreen = dynamic(() => import('@/components/screens/jobs-list-screen'))
+const JobDetailScreen = dynamic(() => import('@/components/screens/job-detail-screen'))
+const PostJobScreen = dynamic(() => import('@/components/screens/post-job-screen'))
+const MyJobsScreen = dynamic(() => import('@/components/screens/my-jobs-screen'))
+const ApplicationsScreen = dynamic(() => import('@/components/screens/applications-screen'))
+const MessagesScreen = dynamic(() => import('@/components/screens/messages-screen'))
+const ProfileScreen = dynamic(() => import('@/components/screens/profile-screen'))
+const NotificationsScreen = dynamic(() => import('@/components/screens/notifications-screen'))
+const SavedJobsScreen = dynamic(() => import('@/components/screens/saved-jobs-screen'))
+const ApiDocsScreen = dynamic(() => import('@/components/screens/api-docs-screen'))
+const WalletScreen = dynamic(() => import('@/components/screens/wallet-screen'))
+const NotificationSettingsScreen = dynamic(() => import('@/components/screens/notification-settings-screen'))
+const HelpScreen = dynamic(() => import('@/components/screens/help-screen'))
+const MaintenanceScreen = dynamic(() => import('@/components/maintenance-screen'))
 import { Bell, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
+import Logo from '@/components/shared/logo'
 
 export default function Home() {
   const { user, token, isLoading, isAuthenticated, initialize } = useAuth()
@@ -30,46 +33,30 @@ export default function Home() {
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [maintenanceChecked, setMaintenanceChecked] = useState(false)
 
-  // Bakım modu kontrolü (auth'dan önce)
+  // Bakım modu ve auth kontrolü (paralel ve gecikmesiz)
   useEffect(() => {
-    const checkMaintenance = async () => {
-      try {
-        const res = await fetch('/api/v1/maintenance/status', { cache: 'no-store' })
-        const json = await res.json()
+    // 1. Bakım kontrolü
+    fetch('/api/v1/maintenance/status', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((json) => {
         if (json.success && json.data?.maintenanceMode) {
           setMaintenanceMode(true)
         }
-      } catch {
-        // Hata durumunda bakım modunu kapalı say
-      } finally {
-        setMaintenanceChecked(true)
-      }
-    }
-    checkMaintenance()
-  }, [])
+      })
+      .catch(() => {})
+      .finally(() => setMaintenanceChecked(true))
 
-  // Bakım modu açıksa bakım ekranı göster (admin'ler hariç)
-  useEffect(() => {
-    if (maintenanceMode && user?.role === 'ADMIN') {
-      // Admin bakım modunda da erişebilir
-      return
-    }
-  }, [maintenanceMode, user])
-
-  // İlk açılışta kimlik kontrolü
-  useEffect(() => {
-    if (!maintenanceChecked) return
+    // 2. Auth kontrolü
     initialize().finally(() => setAuthChecked(true))
-  }, [initialize, maintenanceChecked])
+  }, [initialize])
 
-  // WebSocket global olay dinleyicileri (bildirim, mesaj)
+  // Supabase Realtime global olay dinleyicileri (bildirim, başvuru, mesaj)
   useEffect(() => {
-    if (!token) return
+    if (!user) return
+    const authToken = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
 
-    // Token varsa WebSocket bağla
-    if (!getSocket()?.connected) {
-      connectSocket(token)
-    }
+    // Supabase Realtime bağla
+    connectSocket(authToken || user.id)
 
     const offNotification = on('notification:new', (data: any) => {
       toast(data.title, {
@@ -99,48 +86,31 @@ export default function Home() {
       offAppNotification?.()
       offJobNearby?.()
     }
-  }, [token])
-
-  // Bakım modu yükleniyor
-  if (!maintenanceChecked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4 animate-pulse">
-            <svg className="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-          </div>
-          <p className="text-slate-300 font-medium">Kontrol ediliyor...</p>
-        </div>
-      </div>
-    )
-  }
+  }, [user])
 
   // Bakım modu açıksa ve kullanıcı admin değilse bakım ekranı göster
   if (maintenanceMode && user?.role !== 'ADMIN') {
     return <MaintenanceScreen />
   }
 
-  // Auth yüklenirken loading screen (sadece ilk initialize'da, register/login sırasında değil)
-  if (!authChecked) {
+  // Token doğrulanırken bekleme ekranı (yalnızca önceden token kaydedilmişse gösterilir)
+  const hasStoredToken = typeof window !== 'undefined' ? !!localStorage.getItem('auth_token') : false
+  if (!authChecked && hasStoredToken) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-600 mb-4 animate-pulse">
-            <svg className="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
+        <div className="text-center flex flex-col items-center">
+          <div className="mb-4 animate-bounce">
+            <Logo size="lg" variant="full" />
           </div>
-          <p className="text-gray-600 font-medium">Günübirlik İş Bul yükleniyor...</p>
+          <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
+            <span>Günübirlik İş Bul yükleniyor...</span>
+          </div>
         </div>
       </div>
     )
   }
 
-  // Admin bakım modunda bile bir uyarı göster (ama erişime izin ver)
   // Auth değilse login ekranı
   if (!isAuthenticated || !user) {
     return <AuthScreen />
@@ -148,14 +118,15 @@ export default function Home() {
 
   // Header + ana içerik
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="w-full min-h-screen flex flex-col bg-slate-50/70 dark:bg-slate-950 relative selection:bg-emerald-500 selection:text-white transition-colors duration-300">
+
       {maintenanceMode && user?.role === 'ADMIN' && (
-        <div className="bg-amber-500 text-amber-950 text-xs font-medium px-4 py-2 text-center">
+        <div className="relative z-50 bg-amber-500/90 backdrop-blur-md text-amber-950 text-xs font-bold px-4 py-2 text-center border-b border-amber-600/30 shadow-sm">
           ⚠️ Bakım modu aktif. Sadece admin olarak erişebiliyorsunuz. Normal kullanıcılar bakım ekranı görüyor.
         </div>
       )}
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 relative z-10 pt-20 sm:pt-22">
         {view === 'home' && <JobsListScreen />}
         {view === 'job-detail' && <JobDetailScreen />}
         {view === 'post-job' && <PostJobScreen />}
@@ -170,9 +141,13 @@ export default function Home() {
         {view === 'help' && <HelpScreen />}
         {view === 'api-docs' && <ApiDocsScreen />}
       </main>
-      <footer className="mt-auto bg-white border-t border-gray-200 py-4 px-4 text-center text-xs text-gray-500">
-        <p>© 2024 Günübirlik İş Bul — Konum Bazlı Günlük İş Platformu</p>
-        <p className="mt-1">Next.js + Prisma + PostgreSQL + WebSocket • REST API + WebSocket</p>
+      <footer className="mt-auto relative z-10 acrylic-3d border-t border-slate-200/60 dark:border-white/5 py-3.5 px-4 text-xs text-gray-500 dark:text-gray-400">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+          <Logo size="sm" variant="full" />
+          <p className="font-medium text-[11px] text-gray-500 dark:text-gray-400">
+            © 2026 Günübirlik İş Bul • Konum Bazlı Günlük İş Platformu
+          </p>
+        </div>
       </footer>
     </div>
   )

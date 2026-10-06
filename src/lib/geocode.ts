@@ -13,18 +13,22 @@ export interface ReverseGeocodeResult {
   displayName: string
   /** Sokak + kapı no: "Moda Cad. No:42" */
   street?: string
+  /** Kapı / Bina No: "42" veya "15C" */
+  houseNumber?: string
   /** Mahalle: "Caferağa Mahallesi" */
   neighbourhood?: string
-  /** İlçe: "Kadıköy" */
+  /** İlçe: "Kadıköy" veya "Ortahisar" */
   district?: string
-  /** Şehir: "İstanbul" */
+  /** Şehir: "İstanbul" veya "Trabzon" */
   city?: string
   /** Eyalet/İl: "İstanbul" */
   state?: string
-  /** Ülka: "Türkiye" */
+  /** Ülke: "Türkiye" */
   country?: string
   /** Posta kodu: "34710" */
   postcode?: string
+  /** Input için derlenmiş açık adres: "Caferağa Mah., Moda Cad. No:42" */
+  formattedAddress?: string
 }
 
 // Basit in-memory cache (5 dakika)
@@ -61,22 +65,57 @@ export async function reverseGeocode(
   const data = await res.json()
   const addr = data.address || {}
 
+  const road = addr.road || addr.pedestrian || addr.footway || addr.cycleway || addr.path || ''
+  const houseNumber = addr.house_number || ''
+  const streetWithNumber = road ? (houseNumber ? `${road} No:${houseNumber}` : road) : ''
+
+  const neighbourhood =
+    addr.neighbourhood ||
+    addr.quarter ||
+    (addr.suburb && addr.suburb !== addr.town && addr.suburb !== addr.county ? addr.suburb : '') ||
+    addr.residential ||
+    ''
+
+  const rawDistrict =
+    addr.town ||
+    addr.county ||
+    addr.city_district ||
+    addr.borough ||
+    (addr.suburb !== neighbourhood ? addr.suburb : '') ||
+    ''
+
+  const rawCity = addr.province || addr.city || addr.state || addr.municipality || ''
+  const cleanCity = rawCity.replace(/ (İli|Ili|Province|Büyükşehir Belediyesi)$/i, '').trim()
+  const cleanDistrict = rawDistrict.replace(/ (İlçesi|Ilcesi|District)$/i, '').trim()
+
+  const formattedParts: string[] = []
+  if (neighbourhood) {
+    formattedParts.push(neighbourhood.replace(/ Mahallesi$/i, ' Mah.'))
+  }
+  if (streetWithNumber) {
+    formattedParts.push(streetWithNumber)
+  }
+
+  const formattedAddress =
+    formattedParts.join(', ') ||
+    (data.display_name ? data.display_name.split(',').slice(0, 3).join(', ').trim() : '')
+
   const result: ReverseGeocodeResult = {
     displayName: data.display_name || '',
-    street: addr.road || addr.pedestrian || addr.footway || addr.cycleway || addr.path,
-    neighbourhood:
-      addr.neighbourhood || addr.suburb || addr.quarter || addr.city_district || addr.residential,
-    district: addr.city_district || addr.borough || addr.county || addr.suburb,
-    city: addr.city || addr.town || addr.village || addr.municipality,
+    street: streetWithNumber || undefined,
+    houseNumber: houseNumber || undefined,
+    neighbourhood: neighbourhood || undefined,
+    district: cleanDistrict || undefined,
+    city: cleanCity || undefined,
     state: addr.state,
     country: addr.country,
     postcode: addr.postcode,
+    formattedAddress: formattedAddress || undefined,
   }
 
-  // Türkiye için district/city düzeltmesi
-  // Nominatim bazen "İstanbul"u state olarak veriyor, city boş kalıyor
+  // Türkiye için fallback
   if (!result.city && result.state) {
-    result.city = result.state
+    result.city = result.state.replace(/ (İli|Ili|Province)$/i, '').trim()
   }
 
   cache.set(cacheKey, { data: result, ts: Date.now() })

@@ -17,8 +17,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import {
   MapPin, Search, SlidersHorizontal, Map as MapIcon, List, Star, Clock, Users,
   Loader2, Navigation, X, Briefcase, Building2, Calendar, Wallet, Sparkles, TrendingUp,
-  Crosshair, RefreshCw, CheckCircle2,
+  Crosshair, RefreshCw, CheckCircle2, ShieldCheck, Zap,
 } from 'lucide-react'
+import { Card3D } from '@/components/shared/card-3d'
+import { InteractiveHero3D } from '@/components/landing/interactive-hero-3d'
 import {
   formatWage, formatDate, categoryLabel, categoryIcon, urgencyLabel, daysUntil,
   formatDistance, initials,
@@ -41,6 +43,17 @@ const JobMap = dynamic(() => import('@/components/shared/job-map'), {
     </div>
   ),
 })
+
+const TURKEY_CITIES = [
+  'Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Amasya', 'Ankara', 'Antalya', 'Ardahan', 'Artvin',
+  'Aydın', 'Balıkesir', 'Bartın', 'Batman', 'Bayburt', 'Bilecik', 'Bingöl', 'Bitlis', 'Bolu', 'Burdur',
+  'Bursa', 'Çanakkale', 'Çankırı', 'Çorum', 'Denizli', 'Diyarbakır', 'Düzce', 'Edirne', 'Elazığ', 'Erzincan',
+  'Erzurum', 'Eskişehir', 'Gaziantep', 'Giresun', 'Gümüşhane', 'Hakkâri', 'Hatay', 'Iğdır', 'Isparta', 'İstanbul',
+  'İzmir', 'Kahramanmaraş', 'Karabük', 'Karaman', 'Kars', 'Kastamonu', 'Kayseri', 'Kilis', 'Kırıkkale', 'Kırklareli',
+  'Kırşehir', 'Kocaeli', 'Konya', 'Kütahya', 'Malatya', 'Manisa', 'Mardin', 'Mersin', 'Muğla', 'Muş',
+  'Nevşehir', 'Niğde', 'Ordu', 'Osmaniye', 'Rize', 'Sakarya', 'Samsun', 'Şanlıurfa', 'Siirt', 'Sinop',
+  'Sivas', 'Şırnak', 'Tekirdağ', 'Tokat', 'Trabzon', 'Tunceli', 'Uşak', 'Van', 'Yalova', 'Yozgat', 'Zonguldak'
+]
 
 interface JobItem {
   id: string
@@ -83,7 +96,7 @@ export default function JobsListScreen() {
   // Filtreler
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('ALL')
-  const [city, setCity] = useState('İstanbul')
+  const [city, setCity] = useState('')
   const [district, setDistrict] = useState('')
   const [sortBy, setSortBy] = useState('NEWEST')
   const [useMyLocation, setUseMyLocation] = useState(false)
@@ -111,7 +124,7 @@ export default function JobsListScreen() {
         params.radiusKm = radiusKm
         params.sortBy = 'NEAREST'
       } else {
-        if (city) params.city = city
+        if (city && city !== 'ALL') params.city = city
         if (district) params.district = district
       }
 
@@ -200,131 +213,123 @@ export default function JobsListScreen() {
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl">
-      {/* Hero - Sadece ana sayfada ve kullanıcı işçi ise */}
-      {user?.role === 'WORKER' && page === 1 && !search && (
-        <div className="mb-5 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-5 sm:p-6 text-white overflow-hidden relative">
-          <div className="absolute right-0 top-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20" />
-          <div className="absolute right-12 bottom-0 w-24 h-24 bg-white/10 rounded-full -mb-12" />
-          <div className="relative">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1">
-              Merhaba {user.fullName.split(' ')[0]}! 👋
-            </h1>
-            <p className="text-emerald-50 text-sm sm:text-base">Konumunuza en yakın günlük işleri keşfedin</p>
-            {!useMyLocation && (
-              <Button
-                size="sm"
-                variant="secondary"
-                className="mt-3 bg-white text-emerald-700 hover:bg-emerald-50"
+      {/* 21st.dev + Three.js + Framer Motion 3D Master Hero */}
+      {page === 1 && !search && (
+        <div className="mb-8">
+          <InteractiveHero3D
+            totalJobs={total || jobs.length}
+            onExploreClick={() => {
+              const el = document.getElementById('jobs-search-section')
+              if (el) el.scrollIntoView({ behavior: 'smooth' })
+            }}
+          />
+        </div>
+      )}
+
+      {/* Target anchor for smooth scroll from 3D Hero */}
+      <div id="jobs-search-section" className="scroll-mt-6" />
+
+      {/* Konum Kartı - 3D Spatial */}
+      {useMyLocation && myCoords && (
+        <div className="mb-5 card-3d-spatial rounded-2xl border-blue-300/80 bg-gradient-to-r from-blue-50/90 via-sky-50/60 to-emerald-50/80 p-4 shadow-md preserve-3d">
+          <div className="flex items-start gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center flex-shrink-0 shadow-[0_4px_12px_rgba(37,99,235,0.35)] border-t border-white/40 border-b-2 border-blue-800 translate-z-4">
+              <Navigation className="w-5 h-5 text-white animate-pulse" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-extrabold text-slate-900 text-sm">Mevcut Canlı Konumunuz</span>
+                <span className="badge-3d-emerald px-2 py-0.5 rounded-full text-[10px] font-black">GPS AKTİF</span>
+              </div>
+              {myLocation ? (
+                <>
+                  <p className="text-sm text-slate-800 font-bold">
+                    {myLocation.neighbourhood
+                      ? myLocation.neighbourhood.replace(' Mahallesi', ' Mah.')
+                      : myLocation.district || 'Bilinmeyen mahalle'}
+                    {myLocation.district && `, ${myLocation.district}`}
+                  </p>
+                  <p className="text-xs text-slate-600 mt-0.5 font-medium">
+                    {myLocation.street && <span>{myLocation.street} • </span>}
+                    {myLocation.city}
+                    {myLocation.state && myLocation.state !== myLocation.city && `, ${myLocation.state}`}
+                    {myLocation.postcode && ` • ${myLocation.postcode}`}
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-1 font-mono">
+                    {myCoords.lat.toFixed(5)}, {myCoords.lng.toFixed(5)} • ±{radiusKm}km radar
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-slate-600 flex items-center gap-1.5 font-medium">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" /> Adres hesaplanıyor...
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col gap-1.5 flex-shrink-0">
+              <button
+                type="button"
+                className="btn-3d-white btn-3d-pill px-3 py-1 text-xs font-bold flex items-center gap-1"
                 onClick={getLocation}
                 disabled={locating}
               >
-                {locating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Crosshair className="w-4 h-4 mr-2" />}
-                Konumumu Kullan
-              </Button>
-            )}
+                <RefreshCw className={`w-3 h-3 ${locating ? 'animate-spin' : ''}`} />
+                Yenile
+              </button>
+              <button
+                type="button"
+                className="btn-3d-white btn-3d-pill px-3 py-1 text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1"
+                onClick={clearLocation}
+              >
+                <X className="w-3 h-3" />
+                Kapat
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Konum Kartı - Konum algılandığında göster */}
-      {useMyLocation && myCoords && (
-        <Card className="mb-4 border-blue-200 bg-gradient-to-br from-blue-50 to-emerald-50">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                <Navigation className="w-5 h-5 text-blue-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-gray-900 text-sm">Mevcut Konumunuz</span>
-                  <Badge className="bg-blue-100 text-blue-700 text-[10px]">GPS Aktif</Badge>
-                </div>
-                {myLocation ? (
-                  <>
-                    <p className="text-sm text-gray-800 font-medium">
-                      {myLocation.neighbourhood
-                        ? myLocation.neighbourhood.replace(' Mahallesi', ' Mah.')
-                        : myLocation.district || 'Bilinmeyen mahalle'}
-                      {myLocation.district && `, ${myLocation.district}`}
-                    </p>
-                    <p className="text-xs text-gray-600 mt-0.5">
-                      {myLocation.street && <span>{myLocation.street} • </span>}
-                      {myLocation.city}
-                      {myLocation.state && myLocation.state !== myLocation.city && `, ${myLocation.state}`}
-                      {myLocation.postcode && ` • ${myLocation.postcode}`}
-                    </p>
-                    <p className="text-[10px] text-gray-500 mt-1 font-mono">
-                      {myCoords.lat.toFixed(5)}, {myCoords.lng.toFixed(5)} • ±{radiusKm}km
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-600 flex items-center gap-1">
-                    <Loader2 className="w-3 h-3 animate-spin" /> Adres hesaplanıyor...
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-col gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2 text-xs"
-                  onClick={getLocation}
-                  disabled={locating}
-                >
-                  <RefreshCw className={`w-3 h-3 mr-1 ${locating ? 'animate-spin' : ''}`} />
-                  Yenile
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2 text-xs text-red-600"
-                  onClick={clearLocation}
-                >
-                  <X className="w-3 h-3 mr-1" />
-                  Kapat
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Arama ve Görünüm Değiştirme - Mobil Uyumlu */}
-      <div className="mb-4 space-y-3">
+      {/* Arama ve Görünüm Değiştirme - 3D Tactile */}
+      <div className="mb-5 space-y-3.5">
         <div className="flex gap-2">
-          <div className="relative flex-1 min-w-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <div className="relative flex-1 min-w-0 inset-3d rounded-2xl flex items-center">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-700" />
             <Input
-              placeholder="İş ara... (garson, inşaat, temizlik)"
+              placeholder="İş ara... (garson, inşaat, kurye, temizlik)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-12 text-base"
+              className="pl-10 h-12 text-sm sm:text-base border-0 bg-transparent shadow-none focus-visible:ring-0 text-slate-900 placeholder:text-slate-400 font-medium"
             />
             {search && (
               <button
+                type="button"
                 onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                aria-label="Aramayı Temizle"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          {/* Mobilde filtreler Sheet olarak açılır */}
+          {/* Mobilde filtreler Sheet */}
           <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="h-12 w-12 md:hidden flex-shrink-0">
+              <button
+                type="button"
+                aria-label="Filtreler"
+                className="btn-3d-white h-12 w-12 rounded-2xl md:hidden flex items-center justify-center flex-shrink-0 text-slate-700 dark:text-slate-200"
+              >
                 <SlidersHorizontal className="w-4 h-4" />
-              </Button>
+              </button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="max-h-[90vh] flex flex-col p-0">
-              <SheetHeader className="px-5 pt-5 pb-3 border-b border-gray-100 flex-row items-center justify-between space-y-0">
-                <SheetTitle className="text-base font-bold flex items-center gap-2">
-                  <SlidersHorizontal className="w-4 h-4 text-emerald-600" />
+            <SheetContent side="bottom" className="max-h-[90vh] flex flex-col p-0 rounded-t-3xl dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
+              <SheetHeader className="px-5 pt-5 pb-3 border-b border-gray-100 dark:border-white/10 flex-row items-center justify-between space-y-0">
+                <SheetTitle className="text-base font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                  <SlidersHorizontal className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   Filtreler
                 </SheetTitle>
-                {(city !== 'İstanbul' || district || sortBy !== 'NEWEST' || useMyLocation) && (
-                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">
+                {(city || district || sortBy !== 'NEWEST' || useMyLocation) && (
+                  <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60 text-[10px]">
                     Aktif
                   </Badge>
                 )}
@@ -342,12 +347,12 @@ export default function JobsListScreen() {
                 />
               </div>
               {/* Sticky action buttons */}
-              <div className="border-t border-gray-100 p-3 flex gap-2 bg-white sticky bottom-0">
-                <Button
-                  variant="outline"
-                  className="flex-1 h-11"
+              <div className="border-t border-gray-100 dark:border-white/10 p-3 flex gap-2 bg-white dark:bg-slate-900 sticky bottom-0">
+                <button
+                  type="button"
+                  className="btn-3d-white flex-1 h-11 rounded-xl text-sm font-bold"
                   onClick={() => {
-                    setCity('İstanbul')
+                    setCity('')
                     setDistrict('')
                     setSortBy('NEWEST')
                     if (useMyLocation) clearLocation()
@@ -355,66 +360,74 @@ export default function JobsListScreen() {
                   }}
                 >
                   Temizle
-                </Button>
-                <Button
-                  className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-700"
+                </button>
+                <button
+                  type="button"
+                  className="btn-3d-emerald flex-1 h-11 rounded-xl text-sm font-bold"
                   onClick={() => {
                     setFiltersOpen(false)
                     toast.success('Filtreler uygulandı')
                   }}
                 >
                   Uygula
-                </Button>
+                </button>
               </div>
             </SheetContent>
           </Sheet>
 
-          {/* Desktop'ta filtre butonu (toggle) */}
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-12 w-12 hidden md:flex flex-shrink-0"
+          {/* Desktop'ta filtre butonu (toggle) - 3D */}
+          <button
+            type="button"
+            className="btn-3d-white h-12 w-12 rounded-2xl hidden md:flex items-center justify-center flex-shrink-0 text-slate-700"
             onClick={() => setFiltersOpen(!filtersOpen)}
+            title="Detaylı Filtreler"
           >
             <SlidersHorizontal className="w-4 h-4" />
-          </Button>
+          </button>
 
-          {/* Görünüm değiştirme */}
-          <Button
-            variant={view === 'list' ? 'default' : 'outline'}
-            size="icon"
-            className="h-12 w-12 flex-shrink-0"
+          {/* Görünüm Değiştirme (Liste / Harita) - 3D Tactile */}
+          <button
+            type="button"
+            className={`h-12 w-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all ${
+              view === 'list' ? 'btn-3d-emerald' : 'btn-3d-white text-slate-700'
+            }`}
             onClick={() => setView('list')}
+            title="Liste Görünümü"
           >
             <List className="w-4 h-4" />
-          </Button>
-          <Button
-            variant={view === 'map' ? 'default' : 'outline'}
-            size="icon"
-            className={`h-12 w-12 flex-shrink-0 ${view === 'map' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+          </button>
+          <button
+            type="button"
+            className={`h-12 w-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all ${
+              view === 'map' ? 'btn-3d-emerald' : 'btn-3d-white text-slate-700'
+            }`}
             onClick={() => setView('map')}
+            title="Harita Görünümü"
           >
             <MapIcon className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
 
-        {/* Hızlı kategori filtreleri - Mobil yatay scroll */}
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
-          {categories.map((cat) => (
-            <button
-              key={cat.value}
-              onClick={() => setCategory(cat.value)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition flex-shrink-0 ${
-                category === cat.value
-                  ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/30'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-95'
-              }`}
-            >
-              <span className="text-base">{cat.icon}</span>
-              {cat.label}
-            </button>
-          ))}
-          {/* Sağ padding için boşluk */}
+        {/* Hızlı kategori filtreleri - 3D Tactile Buttons */}
+        <div className="flex gap-2.5 overflow-x-auto pb-2 no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
+          {categories.map((cat) => {
+            const isActive = category === cat.value
+            return (
+              <button
+                key={cat.value}
+                type="button"
+                onClick={() => setCategory(cat.value)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+                  isActive
+                    ? 'btn-3d-emerald btn-3d-pill z-10'
+                    : 'btn-3d-white btn-3d-pill text-slate-700'
+                }`}
+              >
+                <span className="text-base">{cat.icon}</span>
+                <span>{cat.label}</span>
+              </button>
+            )
+          })}
           <div className="flex-shrink-0 w-1 sm:hidden" />
         </div>
 
@@ -438,16 +451,29 @@ export default function JobsListScreen() {
 
         {/* Sonuç sayısı ve hızlı işlemler */}
         <div className="flex items-center justify-between text-sm text-gray-600 flex-wrap gap-2">
-          <span className="flex items-center gap-2">
+          <span className="flex items-center gap-2 flex-wrap">
             <strong className="text-gray-900">{total}</strong> iş ilanı
+            {city && (
+              <Badge variant="outline" className="text-emerald-700 border-emerald-300 bg-emerald-50">
+                {city}
+              </Badge>
+            )}
             {useMyLocation && myCoords && (
-              <Badge variant="outline" className="text-blue-700 border-blue-300 bg-blue-50">
-                <MapPin className="w-3 h-3 mr-1" />
-                {radiusKm} km içinde
+              <Badge variant="outline" className="text-blue-700 border-blue-300 bg-blue-50 flex items-center gap-1.5 py-0.5">
+                <MapPin className="w-3 h-3" />
+                <span>{radiusKm} km içinde</span>
+                <button
+                  type="button"
+                  onClick={clearLocation}
+                  className="w-4 h-4 rounded-full hover:bg-blue-200/60 inline-flex items-center justify-center text-blue-700 hover:text-red-600 font-bold text-xs"
+                  title="Konum filtresini kaldır ve tüm Türkiye ilanlarını gör"
+                >
+                  ×
+                </button>
               </Badge>
             )}
           </span>
-          {(search || category !== 'ALL' || district || useMyLocation) && (
+          {(search || category !== 'ALL' || city || district || useMyLocation) && (
             <Button
               variant="ghost"
               size="sm"
@@ -455,6 +481,7 @@ export default function JobsListScreen() {
               onClick={() => {
                 setSearch('')
                 setCategory('ALL')
+                setCity('')
                 setDistrict('')
                 if (useMyLocation) clearLocation()
               }}
@@ -497,17 +524,18 @@ export default function JobsListScreen() {
       {/* Empty State */}
       {!loading && jobs.length === 0 && (
         <div className="text-center py-16">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-4">
-            <Search className="w-10 h-10 text-gray-400" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 dark:bg-slate-800 mb-4">
+            <Search className="w-10 h-10 text-gray-400 dark:text-slate-400" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">İlan bulunamadı</h3>
-          <p className="text-gray-600 mb-4 max-w-md mx-auto">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">İlan bulunamadı</h3>
+          <p className="text-gray-600 dark:text-slate-300 mb-4 max-w-md mx-auto">
             {useMyLocation
               ? `${radiusKm} km mesafede uygun ilan yok. Mesafeyi artırmayı deneyin.`
               : 'Arama kriterlerinizi değiştirip tekrar deneyin.'}
           </p>
           <Button
             variant="outline"
+            className="dark:bg-slate-800 dark:border-white/10 dark:text-slate-200 dark:hover:bg-slate-700"
             onClick={() => {
               setSearch('')
               setCategory('ALL')
@@ -536,24 +564,24 @@ function FilterPanel({
       {/* Konum bazlı arama - öne çıkar */}
       <div className={`rounded-xl border-2 transition-all ${
         useMyLocation
-          ? 'border-emerald-300 bg-gradient-to-br from-emerald-50 to-teal-50'
-          : 'border-gray-200 bg-gray-50/50'
+          ? 'border-emerald-300 dark:border-emerald-700/60 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40'
+          : 'border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-slate-850'
       }`}>
         <div className="p-3 sm:p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                useMyLocation ? 'bg-emerald-500' : 'bg-gray-300'
+                useMyLocation ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-slate-700'
               }`}>
-                <Crosshair className={`w-4 h-4 ${useMyLocation ? 'text-white' : 'text-gray-600'}`} />
+                <Crosshair className={`w-4 h-4 ${useMyLocation ? 'text-white' : 'text-gray-600 dark:text-slate-300'}`} />
               </div>
               <div>
-                <div className="text-sm font-semibold text-gray-900">Konum Bazlı Arama</div>
-                <div className="text-[11px] text-gray-500">GPS ile yakındaki işler</div>
+                <div className="text-sm font-semibold text-gray-900 dark:text-white">Konum Bazlı Arama</div>
+                <div className="text-[11px] text-gray-500 dark:text-slate-400">GPS ile yakındaki işler</div>
               </div>
             </div>
             {useMyLocation && (
-              <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">
+              <Badge className="bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 text-[10px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse" />
                 Aktif
               </Badge>
@@ -565,7 +593,7 @@ function FilterPanel({
             variant={useMyLocation ? 'default' : 'outline'}
             onClick={onGetLocation}
             disabled={locating}
-            className={`w-full h-11 ${useMyLocation ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+            className={`w-full h-11 ${useMyLocation ? 'bg-emerald-600 hover:bg-emerald-700' : 'dark:bg-slate-800 dark:border-white/10 dark:text-slate-200 dark:hover:bg-slate-700'}`}
           >
             {locating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Crosshair className="w-4 h-4 mr-2" />}
             {locating ? 'Konum alınıyor...' : useMyLocation ? 'Konumum Aktif ✓' : 'Konumumu Al'}
@@ -573,7 +601,7 @@ function FilterPanel({
 
           {useMyLocation && (
             <div className="mt-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-              <Label className="text-xs font-semibold text-gray-700">Mesafe (km)</Label>
+              <Label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Mesafe (km)</Label>
               <div className="grid grid-cols-3 gap-2">
                 {[5, 10, 25, 50, 100, 250].map((r) => (
                   <button
@@ -583,7 +611,7 @@ function FilterPanel({
                     className={`py-2 rounded-lg text-sm font-medium transition-all ${
                       radiusKm === r
                         ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'bg-white border border-gray-200 text-gray-700 hover:border-emerald-300'
+                        : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-slate-200 hover:border-emerald-300 dark:hover:border-emerald-700'
                     }`}
                   >
                     {r} km
@@ -591,7 +619,7 @@ function FilterPanel({
                 ))}
               </div>
               <div className="flex items-center justify-between pt-2">
-                <p className="text-[11px] text-gray-500">
+                <p className="text-[11px] text-gray-500 dark:text-slate-400">
                   Şehir/ilçe filtreleri devre dışı
                 </p>
                 <Button
@@ -599,7 +627,7 @@ function FilterPanel({
                   variant="ghost"
                   size="sm"
                   onClick={onClearLocation}
-                  className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40"
                 >
                   <X className="w-3 h-3 mr-1" />
                   Kapat
@@ -613,13 +641,14 @@ function FilterPanel({
       {/* Şehir ve İlçe */}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label className="text-xs font-semibold text-gray-700">Şehir</Label>
-          <Select value={city} onValueChange={setCity} disabled={useMyLocation}>
-            <SelectTrigger className={`h-11 ${useMyLocation ? 'opacity-50' : ''}`}>
-              <SelectValue />
+          <Label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Şehir</Label>
+          <Select value={city || 'ALL'} onValueChange={(val) => setCity(val === 'ALL' ? '' : val)} disabled={useMyLocation}>
+            <SelectTrigger className={`h-11 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100 ${useMyLocation ? 'opacity-50' : ''}`}>
+              <SelectValue placeholder="Tüm Türkiye" />
             </SelectTrigger>
-            <SelectContent>
-              {['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Adana', 'Konya'].map((c) => (
+            <SelectContent className="max-h-60 dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
+              <SelectItem value="ALL">🌐 Tüm Türkiye (Tümü)</SelectItem>
+              {TURKEY_CITIES.map((c) => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectContent>
@@ -627,25 +656,25 @@ function FilterPanel({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs font-semibold text-gray-700">İlçe</Label>
+          <Label className="text-xs font-semibold text-gray-700 dark:text-slate-300">İlçe</Label>
           <Input
             placeholder="İlçe adı"
             value={district}
             onChange={(e) => setDistrict(e.target.value)}
             disabled={useMyLocation}
-            className={`h-11 ${useMyLocation ? 'opacity-50' : ''}`}
+            className={`h-11 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100 ${useMyLocation ? 'opacity-50' : ''}`}
           />
         </div>
       </div>
 
       {/* Sıralama */}
       <div className="space-y-1.5">
-        <Label className="text-xs font-semibold text-gray-700">Sıralama</Label>
+        <Label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Sıralama</Label>
         <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="h-11">
+          <SelectTrigger className="h-11 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
             <SelectItem value="NEWEST">📅 En Yeni</SelectItem>
             <SelectItem value="OLDEST">📂 En Eski</SelectItem>
             <SelectItem value="WAGE_HIGH">💰 Ücret (Yüksek→Düşük)</SelectItem>
@@ -688,110 +717,126 @@ function JobCard({ job, onClick }: { job: JobItem; onClick: () => void }) {
   const isUrgent = job.urgency === 'URGENT'
   const isHigh = job.urgency === 'HIGH'
 
-  // Kategori renkleri
-  const categoryColors: Record<string, string> = {
-    INSAAT: 'bg-amber-100 text-amber-700',
-    RESTAURANT: 'bg-red-100 text-red-700',
-    TEMIZLIK: 'bg-cyan-100 text-cyan-700',
-    NAKLIYE: 'bg-violet-100 text-violet-700',
-    TARIM: 'bg-lime-100 text-lime-700',
-    TEKNIK: 'bg-sky-100 text-sky-700',
-    SAGLIK: 'bg-pink-100 text-pink-700',
-    DIGER: 'bg-gray-100 text-gray-700',
+  // Kategori renkleri & 3D bevels
+  const categoryStyles: Record<string, { bg: string; border: string }> = {
+    INSAAT: { bg: 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300', border: 'border-amber-300 dark:border-amber-700/60' },
+    RESTAURANT: { bg: 'bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300', border: 'border-rose-300 dark:border-rose-700/60' },
+    TEMIZLIK: { bg: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950/70 dark:text-cyan-300', border: 'border-cyan-300 dark:border-cyan-700/60' },
+    NAKLIYE: { bg: 'bg-violet-100 text-violet-800 dark:bg-violet-950/70 dark:text-violet-300', border: 'border-violet-300 dark:border-violet-700/60' },
+    TARIM: { bg: 'bg-lime-100 text-lime-800 dark:bg-lime-950/70 dark:text-lime-300', border: 'border-lime-300 dark:border-lime-700/60' },
+    TEKNIK: { bg: 'bg-sky-100 text-sky-800 dark:bg-sky-950/70 dark:text-sky-300', border: 'border-sky-300 dark:border-sky-700/60' },
+    SAGLIK: { bg: 'bg-pink-100 text-pink-800 dark:bg-pink-950/70 dark:text-pink-300', border: 'border-pink-300 dark:border-pink-700/60' },
+    DIGER: { bg: 'bg-slate-100 text-slate-800 dark:bg-slate-800/80 dark:text-slate-200', border: 'border-slate-300 dark:border-slate-700/60' },
   }
-  const catColor = categoryColors[job.category] || 'bg-emerald-100 text-emerald-700'
+  const catStyle = categoryStyles[job.category] || { bg: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300', border: 'border-emerald-300 dark:border-emerald-700/60' }
 
   return (
-    <Card
-      className={`group relative hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1 overflow-hidden ${
-        isUrgent
-          ? 'border-red-200 bg-gradient-to-br from-red-50/50 to-white'
-          : isHigh
-          ? 'border-orange-200 bg-gradient-to-br from-orange-50/30 to-white'
-          : 'border-gray-200 hover:border-emerald-300'
-      }`}
-      onClick={onClick}
-    >
-      {/* Aciliyet şeridi */}
-      {isUrgent && (
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-orange-500" />
-      )}
-      {isHigh && (
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-400 to-amber-400" />
-      )}
+    <Card3D maxTilt={5} scale={1} glare={true} className="h-full">
+      <div
+        className={`card-3d-spatial rounded-2xl h-full p-4 sm:p-5 flex flex-col justify-between group cursor-pointer overflow-hidden border ${
+          isUrgent
+            ? 'border-red-300/80 dark:border-red-800/60 bg-gradient-to-br from-red-50/40 dark:from-red-950/30 via-white dark:via-slate-900 to-white dark:to-slate-900'
+            : isHigh
+            ? 'border-orange-300/80 dark:border-orange-800/60 bg-gradient-to-br from-orange-50/30 dark:from-orange-950/30 via-white dark:via-slate-900 to-white dark:to-slate-900'
+            : 'border-slate-200/90 dark:border-white/10 hover:border-emerald-400/80 dark:hover:border-emerald-500/50'
+        }`}
+        onClick={onClick}
+      >
+        {/* Aciliyet 3D Üst Şerit */}
+        {isUrgent && (
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500 shadow-[0_2px_8px_rgba(239,68,68,0.4)]" />
+        )}
+        {isHigh && (
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-400" />
+        )}
 
-      <CardContent className="p-3 sm:p-4">
-        <div className="flex items-start gap-3">
-          <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0 transition-transform group-hover:scale-110 ${catColor}`}>
+        <div className="flex items-start gap-3.5 preserve-3d">
+          {/* 3D Extruded Kategori Rozeti */}
+          <div
+            className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${catStyle.bg} border-t border-white/80 dark:border-white/15 border-b-2 ${catStyle.border} shadow-[0_6px_14px_-2px_rgba(0,0,0,0.08),inset_0_1px_0_0_rgba(255,255,255,0.8)] dark:shadow-[0_6px_14px_-2px_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.1)] translate-z-4`}
+          >
             {categoryIcon(job.category)}
           </div>
 
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 preserve-3d">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold text-gray-900 line-clamp-1 text-sm sm:text-base">{job.title}</h3>
-              <Badge
-                variant="outline"
-                className={`${urgency.color} border flex-shrink-0 text-[10px] sm:text-xs px-1.5 py-0`}
+              <h3 className="font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors line-clamp-1 text-sm sm:text-base translate-z-2">
+                {job.title}
+              </h3>
+              <span
+                className={`flex-shrink-0 text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full font-bold translate-z-2 ${
+                  isUrgent
+                    ? 'badge-3d-urgent'
+                    : isHigh
+                    ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700/60 shadow-xs'
+                    : `${urgency.color} border`
+                }`}
               >
                 {urgency.text}
-              </Badge>
+              </span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1 flex-wrap">
-              <span className={`font-medium ${catColor.split(' ')[1]}`}>{categoryLabel(job.category)}</span>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-1 flex-wrap translate-z-2">
+              <span className="font-bold text-slate-700 dark:text-slate-300">{categoryLabel(job.category)}</span>
               <span>•</span>
-              <span className="flex items-center gap-0.5 truncate">
-                <MapPin className="w-3 h-3 flex-shrink-0" />
+              <span className="flex items-center gap-0.5 truncate text-slate-600 dark:text-slate-400">
+                <MapPin className="w-3 h-3 flex-shrink-0 text-slate-400" />
                 <span className="truncate">{job.district}, {job.city}</span>
               </span>
               {job.distanceKm !== undefined && (
                 <>
                   <span>•</span>
-                  <span className="text-emerald-600 font-medium flex items-center gap-0.5 flex-shrink-0 bg-emerald-50 px-1.5 py-0.5 rounded-full">
-                    <Navigation className="w-3 h-3" />
+                  <span className="text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-0.5 flex-shrink-0 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded-full shadow-2xs">
+                    <Navigation className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                     {formatDistance(job.distanceKm)}
                   </span>
                 </>
               )}
             </div>
 
-            <p className="text-sm text-gray-600 mt-2 line-clamp-2">{job.description}</p>
-
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 gap-2">
-              <div className="flex items-center gap-2 sm:gap-3 text-sm flex-wrap">
-                <div className="flex items-center gap-1 font-bold text-emerald-700">
-                  <Wallet className="w-3.5 h-3.5" />
-                  {formatWage(job.wageAmount, job.wageType)}
-                </div>
-                <div className="text-xs text-gray-500 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {daysUntil(job.workDate)}
-                </div>
-                {remaining > 0 && (
-                  <div className="text-xs text-gray-500 flex items-center gap-1">
-                    <Users className="w-3 h-3" />
-                    {remaining} kişi
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
-                <Avatar className="w-5 h-5">
-                  <AvatarFallback className="text-[10px] bg-emerald-100 text-emerald-700">
-                    {initials(job.employer?.companyName || job.employer?.fullName)}
-                  </AvatarFallback>
-                </Avatar>
-                {job.employer?.isVerified && (
-                  <span title="Onaylı işveren" className="text-blue-500">
-                    <CheckCircle2 className="w-3 h-3 fill-blue-100 text-blue-600" />
-                  </span>
-                )}
-              </div>
-            </div>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-2 line-clamp-2 leading-relaxed">
+              {job.description}
+            </p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Alt Bilgi & 3D Yevmiye Rozeti */}
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100/90 dark:border-white/10 gap-2 preserve-3d">
+          <div className="flex items-center gap-2 sm:gap-3 text-sm flex-wrap">
+            {/* 3D Tactile Yevmiye Rozeti */}
+            <div className="badge-3d-emerald px-3 py-1 rounded-xl text-xs sm:text-sm font-black flex items-center gap-1.5 translate-z-4">
+              <Wallet className="w-3.5 h-3.5 drop-shadow-xs" />
+              <span>{formatWage(job.wageAmount, job.wageType)}</span>
+            </div>
+
+            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium translate-z-2">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              {daysUntil(job.workDate)}
+            </div>
+
+            {remaining > 0 && (
+              <div className="text-[11px] text-slate-700 dark:text-slate-200 font-bold bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-white/10 px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-2xs translate-z-2">
+                <Users className="w-3 h-3 text-slate-500 dark:text-slate-400" />
+                {remaining} kişi
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 flex-shrink-0 translate-z-2">
+            <Avatar className="w-6 h-6 border border-emerald-500/30 shadow-2xs">
+              <AvatarFallback className="text-[10px] font-extrabold bg-gradient-to-tr from-emerald-100 to-teal-100 dark:from-emerald-950 dark:to-teal-900 text-emerald-800 dark:text-emerald-300">
+                {initials(job.employer?.companyName || job.employer?.fullName)}
+              </AvatarFallback>
+            </Avatar>
+            {job.employer?.isVerified && (
+              <span title="Onaylı işveren" className="text-blue-500 dark:text-blue-400">
+                <CheckCircle2 className="w-3.5 h-3.5 fill-blue-100 dark:fill-blue-950/60 text-blue-600 dark:text-blue-400" />
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </Card3D>
   )
 }
 
@@ -819,10 +864,10 @@ function MapView({
 
   if (jobs.length === 0) {
     return (
-      <div className="text-center py-16 bg-gray-50 rounded-xl">
-        <MapIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-        <p className="text-gray-600 mb-2">Gösterilecek iş ilanı yok.</p>
-        <p className="text-sm text-gray-500">Filtreleri değiştirip tekrar deneyin.</p>
+      <div className="text-center py-16 bg-gray-50 dark:bg-slate-900/60 dark:border dark:border-white/10 rounded-xl">
+        <MapIcon className="w-12 h-12 text-gray-400 dark:text-slate-500 mx-auto mb-3" />
+        <p className="text-gray-600 dark:text-slate-300 mb-2">Gösterilecek iş ilanı yok.</p>
+        <p className="text-sm text-gray-500 dark:text-slate-400">Filtreleri değiştirip tekrar deneyin.</p>
       </div>
     )
   }
@@ -831,7 +876,7 @@ function MapView({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
       {/* Harita */}
       <div className="lg:col-span-2">
-        <Card className="overflow-hidden border-gray-200 h-[400px] sm:h-[500px] lg:h-[600px]">
+        <Card className="overflow-hidden border-gray-200 dark:border-white/10 dark:bg-slate-900 h-[400px] sm:h-[500px] lg:h-[600px]">
           <CardContent className="p-0 h-full">
             <JobMap
               jobs={jobs}

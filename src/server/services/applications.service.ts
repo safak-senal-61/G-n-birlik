@@ -90,6 +90,10 @@ export class ApplicationsService {
             },
           },
         },
+        reviews: {
+          where: { reviewerId: workerId },
+          select: { id: true, rating: true, comment: true },
+        },
       },
     })
 
@@ -123,6 +127,10 @@ export class ApplicationsService {
             isAvailable: true,
           },
         },
+        reviews: {
+          where: { reviewerId: employerId },
+          select: { id: true, rating: true, comment: true },
+        },
       },
     })
 
@@ -139,6 +147,10 @@ export class ApplicationsService {
       include: {
         job: { select: { id: true, title: true, workDate: true, wageAmount: true, city: true, district: true } },
         worker: { select: { id: true, fullName: true, avatarUrl: true, ratingAvg: true, phone: true } },
+        reviews: {
+          where: { reviewerId: employerId },
+          select: { id: true, rating: true, comment: true },
+        },
       },
     })
 
@@ -253,7 +265,7 @@ export class ApplicationsService {
         userId: app.workerId,
         type: 'APPLICATION_ACCEPTED',
         title: 'Başvurunuz Onaylandı! 🎉',
-        body: `${app.job.employer ? '' : ''}"${app.job.title}" ilanına başvurunuz onaylandı.`,
+        body: `"${app.job.title}" ilanına başvurunuz onaylandı.`,
         data: { jobId: app.jobId, applicationId },
       })
     } else if (newStatus === 'REJECTED') {
@@ -334,10 +346,20 @@ export class ApplicationsService {
       data: { ratingAvg: Math.round(avg * 10) / 10, ratingCount: reviews.length },
     })
 
+    if (userRole === 'EMPLOYER') {
+      await db.application.update({
+        where: { id: applicationId },
+        data: { rating, ratedAt: new Date() },
+      })
+    }
+
     return review
   }
 
   private transformApplication(app: any) {
+    const myReview = app.reviews?.[0]
+    const ratingValue = myReview?.rating ?? app.rating ?? null
+    const hasRated = !!(myReview || app.rating != null)
     return {
       id: app.id,
       jobId: app.jobId,
@@ -348,7 +370,9 @@ export class ApplicationsService {
       message: app.message,
       proposedWage: app.proposedWage,
       employerNote: app.employerNote,
-      rating: app.rating,
+      rating: ratingValue,
+      myRating: ratingValue,
+      hasRated,
       ratedAt: app.ratedAt,
       createdAt: app.createdAt,
       updatedAt: app.updatedAt,

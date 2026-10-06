@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import { reverseGeocode, formatShortLocation, type ReverseGeocodeResult } from '@/lib/geocode'
 import { formatWage, categoryIcon, urgencyLabel, daysUntil, initials } from '@/lib/format'
 import { Loader2 } from 'lucide-react'

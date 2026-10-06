@@ -1,14 +1,19 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+
 User-agent: Googlebot
 Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
 
 User-agent: Bingbot
 Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
 
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
-User-agent: *
-Allow: /
+Sitemap: https://gunubirlik.space-z.ai/sitemap.xml

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth-store'
+import { WhatsAppIcon } from '@/components/shared/social-icons'
 
 const CATEGORIES = [
   { value: 'COMPLAINT', label: 'Şikayet', icon: AlertTriangle, color: 'text-red-600 bg-red-50' },
@@ -107,28 +108,28 @@ export default function HelpScreen() {
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-3xl">
-      <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 mb-4 sm:mb-6">
-        <LifeBuoy className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-4 sm:mb-6">
+        <LifeBuoy className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
         Yardım & Destek
       </h1>
 
       {/* İletişim Kartları */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
-        <ContactCard icon={Mail} label="E-posta" value="destek@gunubirlik.com" href="mailto:destek@gunubirlik.com" color="bg-blue-50 text-blue-600" />
-        <ContactCard icon={Phone} label="Telefon" value="0850 123 45 67" href="tel:08501234567" color="bg-emerald-50 text-emerald-600" />
-        <ContactCard icon={MessageCircle} label="WhatsApp" value="Mesaj Gönder" href="https://wa.me/908501234567" color="bg-green-50 text-green-600" />
-        <ContactCard icon={Globe} label="Web Sitesi" value="gunubirlik.com" href="https://gunubirlik.com" color="bg-purple-50 text-purple-600" />
+        <ContactCard icon={Mail} label="E-posta" value="destek@gunubirlik.com" href="mailto:destek@gunubirlik.com" color="bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300" />
+        <ContactCard icon={Phone} label="Telefon" value="0850 123 45 67" href="tel:08501234567" color="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300" />
+        <ContactCard icon={WhatsAppIcon} label="WhatsApp" value="Mesaj Gönder" href="https://wa.me/908501234567" color="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300" />
+        <ContactCard icon={Globe} label="Web Sitesi" value="gunubirlik.com" href="https://gunubirlik.com" color="bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300" />
       </div>
 
       {/* Destek Talebi Oluştur */}
-      <Card className="mb-4">
+      <Card className="mb-4 dark:bg-slate-900/90 dark:border-white/10">
         <CardContent className="p-3 sm:p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="font-semibold text-sm sm:text-base text-gray-900">Destek Talebi Oluştur</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Şikayet, öneri veya hata bildirin</p>
+              <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">Destek Talebi Oluştur</h3>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Şikayet, öneri veya hata bildirin</p>
             </div>
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 shrink-0" onClick={() => setTicketOpen(true)}>
+            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 font-semibold" onClick={() => setTicketOpen(true)}>
               <Send className="w-3.5 h-3.5 mr-1" /> Yeni Talep
             </Button>
           </div>
@@ -136,32 +137,32 @@ export default function HelpScreen() {
       </Card>
 
       {/* Taleplerim */}
-      <Card className="mb-4">
+      <Card className="mb-4 dark:bg-slate-900/90 dark:border-white/10">
         <CardHeader className="pb-2 p-3 sm:p-4">
-          <CardTitle className="text-sm sm:text-base">Taleplerim</CardTitle>
+          <CardTitle className="text-sm sm:text-base text-gray-900 dark:text-white">Taleplerim</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-4 text-center text-sm text-gray-400">Yükleniyor...</div>
+            <div className="p-4 text-center text-sm text-gray-400 dark:text-slate-500">Yükleniyor...</div>
           ) : tickets.length === 0 ? (
-            <div className="p-4 text-center text-sm text-gray-400">Henüz talep yok</div>
+            <div className="p-4 text-center text-sm text-gray-400 dark:text-slate-500">Henüz talep yok</div>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 dark:divide-slate-800">
               {tickets.map((t) => (
                 <div key={t.id} className="p-3 flex items-start gap-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{t.subject}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{t.category} · {new Date(t.createdAt).toLocaleDateString('tr-TR')}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{t.subject}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{t.category} · {new Date(t.createdAt).toLocaleDateString('tr-TR')}</p>
                     {t.adminReply && (
-                      <div className="mt-1.5 p-2 bg-emerald-50 rounded text-xs text-emerald-700">
+                      <div className="mt-1.5 p-2 bg-emerald-50 dark:bg-emerald-950/40 rounded text-xs text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
                         <strong>Yanıt:</strong> {t.adminReply}
                       </div>
                     )}
                   </div>
                   <Badge className={`text-[9px] flex-shrink-0 ${
-                    t.status === 'OPEN' ? 'bg-amber-100 text-amber-700' :
-                    t.status === 'RESOLVED' ? 'bg-emerald-100 text-emerald-700' :
-                    'bg-gray-100 text-gray-600'
+                    t.status === 'OPEN' ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300' :
+                    t.status === 'RESOLVED' ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300' :
+                    'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300'
                   }`}>
                     {t.status === 'OPEN' ? 'Açık' : t.status === 'RESOLVED' ? 'Çözüldü' : t.status}
                   </Badge>
@@ -173,19 +174,19 @@ export default function HelpScreen() {
       </Card>
 
       {/* SSS */}
-      <Card className="mb-4">
+      <Card className="mb-4 dark:bg-slate-900/90 dark:border-white/10">
         <CardHeader className="pb-2 p-3 sm:p-4">
-          <CardTitle className="text-sm sm:text-base">Sık Sorulan Sorular</CardTitle>
+          <CardTitle className="text-sm sm:text-base text-gray-900 dark:text-white">Sık Sorulan Sorular</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 dark:divide-slate-800">
             {FAQ.map((item, i) => (
               <details key={i} className="p-3 group">
-                <summary className="text-sm font-medium text-gray-900 cursor-pointer flex items-center gap-2">
+                <summary className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer flex items-center gap-2">
                   <HelpCircle className="w-4 h-4 text-indigo-500 shrink-0" />
                   {item.q}
                 </summary>
-                <p className="text-xs text-gray-600 mt-2 ml-6 leading-relaxed">{item.a}</p>
+                <p className="text-xs text-gray-600 dark:text-slate-300 mt-2 ml-6 leading-relaxed">{item.a}</p>
               </details>
             ))}
           </div>
@@ -193,16 +194,16 @@ export default function HelpScreen() {
       </Card>
 
       {/* Hesabı Sil */}
-      <Card className="border-red-200">
+      <Card className="border-red-200 dark:border-red-900/40 dark:bg-slate-900/90">
         <CardContent className="p-3 sm:p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="font-semibold text-sm sm:text-base text-red-700 flex items-center gap-1.5">
+              <h3 className="font-semibold text-sm sm:text-base text-red-700 dark:text-red-400 flex items-center gap-1.5">
                 <Trash2 className="w-4 h-4" /> Hesabımı Sil
               </h3>
-              <p className="text-xs text-gray-500 mt-0.5">Hesabınızı kalıcı olarak silmek için talep oluşturun</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Hesabınızı kalıcı olarak silmek için talep oluşturun</p>
             </div>
-            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 shrink-0" onClick={() => setDeleteOpen(true)}>
+            <Button size="sm" variant="outline" className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/60 hover:bg-red-50 dark:hover:bg-red-950/40 shrink-0" onClick={() => setDeleteOpen(true)}>
               Sil
             </Button>
           </div>
@@ -211,19 +212,19 @@ export default function HelpScreen() {
 
       {/* Ticket Dialog */}
       <Dialog open={ticketOpen} onOpenChange={setTicketOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
           <DialogHeader>
-            <DialogTitle>Destek Talebi</DialogTitle>
-            <DialogDescription>Şikayet, öneri veya hata bildirin</DialogDescription>
+            <DialogTitle className="text-gray-900 dark:text-white">Destek Talebi</DialogTitle>
+            <DialogDescription className="text-gray-500 dark:text-slate-400">Şikayet, öneri veya hata bildirin</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div>
-              <Label className="text-xs">Kategori</Label>
+              <Label className="text-xs text-gray-700 dark:text-slate-300">Kategori</Label>
               <div className="grid grid-cols-3 gap-1.5 mt-1">
                 {CATEGORIES.map((c) => (
                   <button key={c.value} onClick={() => setCategory(c.value)}
                     className={`p-2 rounded-lg text-[11px] font-medium border transition-all ${
-                      category === c.value ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-gray-50 border-gray-200 text-gray-600'
+                      category === c.value ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300' : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300'
                     }`}>
                     {c.label}
                   </button>
@@ -231,14 +232,14 @@ export default function HelpScreen() {
               </div>
             </div>
             <div>
-              <Label className="text-xs">Konu</Label>
-              <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Kısa başlık" className="h-10" />
+              <Label className="text-xs text-gray-700 dark:text-slate-300">Konu</Label>
+              <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Kısa başlık" className="h-10 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100" />
             </div>
             <div>
-              <Label className="text-xs">Mesaj</Label>
-              <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} placeholder="Detaylı açıklama..." />
+              <Label className="text-xs text-gray-700 dark:text-slate-300">Mesaj</Label>
+              <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} placeholder="Detaylı açıklama..." className="dark:bg-slate-950 dark:border-white/10 dark:text-slate-100" />
             </div>
-            <Button className="w-full bg-indigo-600 hover:bg-indigo-700" onClick={handleSubmitTicket} disabled={submitting}>
+            <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold" onClick={handleSubmitTicket} disabled={submitting}>
               {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
               Gönder
             </Button>
@@ -248,25 +249,25 @@ export default function HelpScreen() {
 
       {/* Delete Account Dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
           <DialogHeader>
-            <DialogTitle className="text-red-700 flex items-center gap-2">
+            <DialogTitle className="text-red-700 dark:text-red-400 flex items-center gap-2">
               <Trash2 className="w-5 h-5" /> Hesabımı Sil
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-gray-600 dark:text-slate-400">
               Bu işlem geri alınamaz. Talebiniz admin tarafından onaylandıktan sonra hesabınız ve tüm verileriniz silinir.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div>
-              <Label className="text-xs">Silme Sebebi</Label>
-              <Textarea value={deleteReason} onChange={(e) => setDeleteReason(e.target.value)} rows={2} placeholder="Neden hesabınızı silmek istiyorsunuz?" />
+              <Label className="text-xs text-gray-700 dark:text-slate-300">Silme Sebebi</Label>
+              <Textarea value={deleteReason} onChange={(e) => setDeleteReason(e.target.value)} rows={2} placeholder="Neden hesabınızı silmek istiyorsunuz?" className="dark:bg-slate-950 dark:border-white/10 dark:text-slate-100" />
             </div>
             <div>
-              <Label className="text-xs">Geri Bildirim (opsiyonel)</Label>
-              <Textarea value={deleteFeedback} onChange={(e) => setDeleteFeedback(e.target.value)} rows={2} placeholder="Bizi geliştirmek için önerileriniz..." />
+              <Label className="text-xs text-gray-700 dark:text-slate-300">Geri Bildirim (opsiyonel)</Label>
+              <Textarea value={deleteFeedback} onChange={(e) => setDeleteFeedback(e.target.value)} rows={2} placeholder="Bizi geliştirmek için önerileriniz..." className="dark:bg-slate-950 dark:border-white/10 dark:text-slate-100" />
             </div>
-            <Button className="w-full bg-red-600 hover:bg-red-700" onClick={handleDeleteAccount} disabled={deleteLoading}>
+            <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold" onClick={handleDeleteAccount} disabled={deleteLoading}>
               {deleteLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
               Silme Talebi Oluştur
             </Button>
@@ -280,13 +281,13 @@ export default function HelpScreen() {
 function ContactCard({ icon: Icon, label, value, href, color }: { icon: any; label: string; value: string; href: string; color: string }) {
   return (
     <a href={href} target="_blank" rel="noopener noreferrer"
-      className="flex flex-col items-center gap-1.5 p-2.5 sm:p-3 bg-white border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-sm transition-all">
+      className="flex flex-col items-center gap-1.5 p-2.5 sm:p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10 rounded-xl hover:border-indigo-300 dark:hover:border-indigo-700/60 hover:shadow-sm transition-all">
       <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center ${color}`}>
         <Icon className="w-4 h-4" />
       </div>
       <div className="text-center">
-        <p className="text-[10px] text-gray-500">{label}</p>
-        <p className="text-[11px] sm:text-xs font-medium text-gray-700 truncate max-w-full">{value}</p>
+        <p className="text-[10px] text-gray-500 dark:text-slate-400">{label}</p>
+        <p className="text-[11px] sm:text-xs font-medium text-gray-700 dark:text-slate-200 truncate max-w-full">{value}</p>
       </div>
     </a>
   )

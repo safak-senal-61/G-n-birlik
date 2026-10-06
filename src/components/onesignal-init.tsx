@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useAuth } from '@/lib/auth-store'
 
-const ONESIGNAL_APP_ID = '6bddc78e-79e7-4701-9e46-6fca772e402a'
+const ONESIGNAL_APP_ID = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || '6bddc78e-79e7-4701-9e46-6fca772e402a'
 const ONESIGNAL_SAFARI_WEB_ID = 'web.onesignal.auto.15375e9b-dec0-4164-84de-dd8ada8f8fb7'
 
 export default function OneSignalInit() {
@@ -13,31 +13,39 @@ export default function OneSignalInit() {
     if (typeof window === 'undefined') return
     if (!isAuthenticated || !user) return
 
+    const hostname = window.location.hostname
+    const isSupportedDomain = hostname === 'gunubirlik.space-z.ai' || hostname.endsWith('.space-z.ai')
+    if (!isSupportedDomain) {
+      return
+    }
+
     let initialized = false
 
     const setupOneSignal = async () => {
-      // SDK yüklü mü bekle
-      const waitForSDK = () => {
+      // SDK yüklü mü kontrol et, yoksa dinamik olarak yükle
+      const loadSDK = () => {
         return new Promise<void>((resolve) => {
-          let attempts = 0
-          const check = () => {
-            attempts++
-            if (attempts > 30) {
-              console.warn('[OneSignal] SDK yüklenemedi (30 deneme)')
-              resolve()
-              return
-            }
-            if ((window as any).OneSignal) {
-              resolve()
-            } else {
-              setTimeout(check, 300)
-            }
+          if ((window as any).OneSignal) {
+            resolve()
+            return
           }
-          check()
+          const existing = document.querySelector('script[src*="OneSignalSDK.page.js"]')
+          if (existing) {
+            existing.addEventListener('load', () => resolve(), { once: true })
+            setTimeout(resolve, 3000)
+            return
+          }
+          const script = document.createElement('script')
+          script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js'
+          script.async = true
+          script.onload = () => resolve()
+          script.onerror = () => resolve()
+          document.head.appendChild(script)
+          setTimeout(resolve, 4000)
         })
       }
 
-      await waitForSDK()
+      await loadSDK()
 
       const OneSignal = (window as any).OneSignal
       if (!OneSignal) {
@@ -85,10 +93,25 @@ export default function OneSignalInit() {
 
             console.log('[OneSignal] Init başarılı')
 
+            // Kullanıcı kimliği (external_id) ve e-posta bağlama
+            try {
+              if (user.id && OS.login) {
+                await OS.login(user.id)
+                console.log('[OneSignal] Logged in with external_id:', user.id)
+              }
+              if (user.email && OS.User?.addEmail) {
+                await OS.User.addEmail(user.email)
+                console.log('[OneSignal] Email linked:', user.email)
+              }
+            } catch (authErr) {
+              console.warn('[OneSignal] Auth link hatası:', authErr)
+            }
+
             // Tag'leri ekle — try/catch ile sarmala
             try {
               await OS.User.addTag('user_id', user.id)
               await OS.User.addTag('role', user.role || 'WORKER')
+              if (user.fullName) await OS.User.addTag('name', user.fullName)
               console.log('[OneSignal] Tag eklendi:', user.id, user.role)
             } catch (tagErr) {
               console.warn('[OneSignal] Tag ekleme hatası:', tagErr)
@@ -118,7 +141,7 @@ export default function OneSignalInit() {
               console.warn('[OneSignal] Permission API hatası:', permErr)
             }
           } catch (initErr) {
-            console.error('[OneSignal] Init hatası:', initErr)
+            console.warn('[OneSignal] Init uyarısı:', initErr)
             // Fallback: tag'leri yine eklemeye çalış
             try {
               await OS.User.addTag('user_id', user.id)
@@ -127,7 +150,7 @@ export default function OneSignalInit() {
           }
         })
       } catch (e) {
-        console.error('[OneSignal] Setup hatası:', e)
+        console.warn('[OneSignal] Setup uyarısı:', e)
       }
     }
 

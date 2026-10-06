@@ -47,11 +47,22 @@ export const useAuth = create<AuthState>((set, get) => ({
   isAuthenticated: false,
 
   initialize: async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
+    if (!token) {
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false })
+      return
+    }
     try {
       const user = await authApi.me()
-      set({ user, isAuthenticated: true, isLoading: false })
+      if (typeof window !== 'undefined' && user?.id) {
+        import('@/lib/onesignal').then(({ registerOneSignalUser }) => {
+          registerOneSignalUser(user.id, user.role, user.email)
+        })
+      }
+      set({ user, token, isAuthenticated: true, isLoading: false })
     } catch {
-      set({ user: null, isAuthenticated: false, isLoading: false })
+      if (typeof window !== 'undefined') localStorage.removeItem('auth_token')
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false })
     }
   },
 
@@ -70,10 +81,10 @@ export const useAuth = create<AuthState>((set, get) => ({
       }
       // WebSocket bağla
       connectSocket(result.token)
-      // OneSignal'a kayıt
+      // OneSignal'a kayıt (User ID, Role, Email)
       if (typeof window !== 'undefined') {
         import('@/lib/onesignal').then(({ registerOneSignalUser }) => {
-          registerOneSignalUser(result.user.id, result.user.role)
+          registerOneSignalUser(result.user.id, result.user.role, result.user.email)
         })
       }
       set({ user: result.user, token: result.token, isAuthenticated: true, isLoading: false })
@@ -91,10 +102,10 @@ export const useAuth = create<AuthState>((set, get) => ({
         localStorage.setItem('auth_token', result.token)
       }
       connectSocket(result.token)
-      // OneSignal'a kayıt
+      // OneSignal'a kayıt (User ID, Role, Email)
       if (typeof window !== 'undefined') {
         import('@/lib/onesignal').then(({ registerOneSignalUser }) => {
-          registerOneSignalUser(result.user.id, result.user.role)
+          registerOneSignalUser(result.user.id, result.user.role, result.user.email)
         })
       }
       set({ user: result.user, token: result.token, isAuthenticated: true, isLoading: false })
@@ -112,10 +123,10 @@ export const useAuth = create<AuthState>((set, get) => ({
         localStorage.setItem('auth_token', result.token)
       }
       connectSocket(result.token)
-      // OneSignal'a kayıt
+      // OneSignal'a kayıt (User ID, Role, Email)
       if (typeof window !== 'undefined') {
         import('@/lib/onesignal').then(({ registerOneSignalUser }) => {
-          registerOneSignalUser(result.user.id, result.user.role)
+          registerOneSignalUser(result.user.id, result.user.role, result.user.email)
         })
       }
       set({ user: result.user, token: result.token, isAuthenticated: true, isLoading: false })

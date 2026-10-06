@@ -27,7 +27,14 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import QrScannerCamera from '@/components/qr-scanner-camera'
+
+import {
+  TURKISH_BANKS,
+  BankInfo,
+  ModernBankCard,
+  BankSelector,
+  FixedTrIbanInput,
+} from '@/components/shared/bank-card'
 
 export default function WalletScreen() {
   const { user } = useAuth()
@@ -38,32 +45,30 @@ export default function WalletScreen() {
 
   // Dialog states
   const [withdrawOpen, setWithdrawOpen] = useState(false)
-  const [transferOpen, setTransferOpen] = useState(false)
-  const [qrGenerateOpen, setQrGenerateOpen] = useState(false)
-  const [qrScanOpen, setQrScanOpen] = useState(false)
   const [depositOpen, setDepositOpen] = useState(false)
 
-  // Withdraw (IBAN'lı)
+  // Withdraw (IBAN'lı) - İşçi için
   const [withdrawAmount, setWithdrawAmount] = useState('')
-  const [withdrawName, setWithdrawName] = useState('')
-  const [withdrawIban, setWithdrawIban] = useState('')
-  const [withdrawBank, setWithdrawBank] = useState('')
+  const [withdrawName, setWithdrawName] = useState(user?.fullName || '')
+  const [withdrawIbanDigits, setWithdrawIbanDigits] = useState('')
+  const [withdrawBank, setWithdrawBank] = useState<BankInfo | null>(TURKISH_BANKS[0])
+  const [withdrawCustomBank, setWithdrawCustomBank] = useState('')
 
-  // Deposit (IBAN'lı)
+  // Deposit (IBAN'lı) - İşveren için
   const [depositAmount, setDepositAmount] = useState('')
-  const [depositName, setDepositName] = useState('')
-  const [depositIban, setDepositIban] = useState('')
-  const [depositBank, setDepositBank] = useState('')
+  const [depositName, setDepositName] = useState(user?.fullName || '')
+  const [depositIbanDigits, setDepositIbanDigits] = useState('')
+  const [depositBank, setDepositBank] = useState<BankInfo | null>(TURKISH_BANKS[0])
+  const [depositCustomBank, setDepositCustomBank] = useState('')
 
-  const [transferRecipient, setTransferRecipient] = useState('')
-  const [transferAmount, setTransferAmount] = useState('')
-  const [transferDesc, setTransferDesc] = useState('')
-  const [qrAmount, setQrAmount] = useState('')
-  const [qrDesc, setQrDesc] = useState('')
-  const [qrToken, setQrToken] = useState('')
-  const [generatedQr, setGeneratedQr] = useState<any>(null)
   const [actionLoading, setActionLoading] = useState(false)
-  const [walletQrCameraMode, setWalletQrCameraMode] = useState(false)
+
+  useEffect(() => {
+    if (user?.fullName) {
+      if (!depositName) setDepositName(user.fullName)
+      if (!withdrawName) setWithdrawName(user.fullName)
+    }
+  }, [user])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -87,20 +92,27 @@ export default function WalletScreen() {
 
   const handleWithdraw = async () => {
     const amount = parseFloat(withdrawAmount)
-    if (!amount || amount < 50) { toast.error('Minimum 50₺'); return }
-    if (!withdrawName || withdrawName.trim().length < 3) { toast.error('Ad Soyad gerekli'); return }
-    if (!withdrawIban || withdrawIban.trim().length < 10) { toast.error('Geçerli IBAN gerekli'); return }
+    if (!amount || amount < 50) { toast.error('Minimum 50₺ çekim yapabilirsiniz'); return }
+    if (amount > balance) { toast.error('Yetersiz bakiye! Mevcut bakiyeniz: ' + balance + '₺'); return }
+    if (!withdrawName || withdrawName.trim().length < 3) { toast.error('Lütfen Ad Soyad giriniz'); return }
+    if (withdrawIbanDigits.length !== 24) { toast.error('Lütfen 24 haneli geçerli IBAN numarasını eksiksiz girin (TR sabittir)'); return }
+    
+    const bankName = withdrawBank?.id === 'other' ? withdrawCustomBank : withdrawBank?.name
+    if (!bankName) { toast.error('Lütfen banka seçiniz'); return }
+
+    const fullIban = `TR${withdrawIbanDigits}`
     setActionLoading(true)
     try {
       await walletApi.createWithdrawRequest({
         amount,
-        recipientName: withdrawName,
-        recipientIban: withdrawIban,
-        recipientBank: withdrawBank || undefined,
+        recipientName: withdrawName.trim(),
+        recipientIban: fullIban,
+        recipientBank: bankName,
       })
       toast.success('Çekme talebi oluşturuldu! 3-5 iş günü içinde sonuçlanacak.')
       setWithdrawOpen(false)
-      setWithdrawAmount(''); setWithdrawName(''); setWithdrawIban(''); setWithdrawBank('')
+      setWithdrawAmount('')
+      setWithdrawIbanDigits('')
       await load()
     } catch (e: any) { toast.error('Hata', { description: e.message }) }
     finally { setActionLoading(false) }
@@ -108,92 +120,29 @@ export default function WalletScreen() {
 
   const handleDeposit = async () => {
     const amount = parseFloat(depositAmount)
-    if (!amount || amount < 50) { toast.error('Minimum 50₺'); return }
-    if (!depositName || depositName.trim().length < 3) { toast.error('Ad Soyad gerekli'); return }
-    if (!depositIban || depositIban.trim().length < 10) { toast.error('Geçerli IBAN gerekli'); return }
+    if (!amount || amount < 50) { toast.error('Minimum 50₺ yatırabilirsiniz'); return }
+    if (!depositName || depositName.trim().length < 3) { toast.error('Lütfen Ad Soyad giriniz'); return }
+    if (depositIbanDigits.length !== 24) { toast.error('Lütfen 24 haneli geçerli IBAN numarasını eksiksiz girin (TR sabittir)'); return }
+
+    const bankName = depositBank?.id === 'other' ? depositCustomBank : depositBank?.name
+    if (!bankName) { toast.error('Lütfen banka seçiniz'); return }
+
+    const fullIban = `TR${depositIbanDigits}`
     setActionLoading(true)
     try {
       await walletApi.createDepositRequest({
         amount,
-        senderName: depositName,
-        senderIban: depositIban,
-        senderBank: depositBank || undefined,
+        senderName: depositName.trim(),
+        senderIban: fullIban,
+        senderBank: bankName,
       })
       toast.success('Yatırma talebi oluşturuldu! EFT/Havale yapıldıktan sonra admin onayı ile bakiyenize yansıyacaktır.')
       setDepositOpen(false)
-      setDepositAmount(''); setDepositName(''); setDepositIban(''); setDepositBank('')
+      setDepositAmount('')
+      setDepositIbanDigits('')
       await load()
     } catch (e: any) { toast.error('Hata', { description: e.message }) }
     finally { setActionLoading(false) }
-  }
-
-  const handleTransfer = async () => {
-    const amount = parseFloat(transferAmount)
-    if (!transferRecipient) {
-      toast.error('Alıcı ID gerekli')
-      return
-    }
-    if (!amount || amount < 10) {
-      toast.error('Minimum transfer 10₺')
-      return
-    }
-    setActionLoading(true)
-    try {
-      await walletApi.transfer(transferRecipient, amount, transferDesc)
-      toast.success('Transfer başarılı!')
-      setTransferOpen(false)
-      setTransferRecipient('')
-      setTransferAmount('')
-      setTransferDesc('')
-      await load()
-    } catch (e: any) {
-      toast.error('Transfer hatası', { description: e.message })
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  const handleQrGenerate = async () => {
-    const amount = parseFloat(qrAmount)
-    if (!amount || amount <= 0) {
-      toast.error('Geçerli tutar girin')
-      return
-    }
-    if (!qrDesc || qrDesc.trim().length < 3) {
-      toast.error('Açıklama en az 3 karakter')
-      return
-    }
-    setActionLoading(true)
-    try {
-      const result = await walletApi.generateQrPayment(amount, qrDesc.trim())
-      setGeneratedQr(result)
-      toast.success('QR ödeme kodu oluşturuldu! 5 dakika geçerli.')
-    } catch (e: any) {
-      toast.error('QR oluşturma hatası', { description: e.message })
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  const handleQrScan = async () => {
-    if (!qrToken || qrToken.length < 10) {
-      toast.error('Geçerli QR token girin')
-      return
-    }
-    setActionLoading(true)
-    try {
-      const result = await walletApi.scanQrPayment(qrToken)
-      toast.success('Ödeme alındı!', {
-        description: `${result.amount.toLocaleString('tr-TR')}₺ bakiyenize eklendi.`,
-      })
-      setQrScanOpen(false)
-      setQrToken('')
-      await load()
-    } catch (e: any) {
-      toast.error('QR tarama hatası', { description: e.message })
-    } finally {
-      setActionLoading(false)
-    }
   }
 
   const typeLabels: Record<string, { label: string; icon: any; color: string }> = {
@@ -208,10 +157,10 @@ export default function WalletScreen() {
   }
 
   const statusInfo: Record<string, { label: string; color: string; icon: any }> = {
-    COMPLETED: { label: 'Tamamlandı', color: 'text-emerald-600 bg-emerald-50', icon: CheckCircle2 },
-    PENDING: { label: 'Beklemede', color: 'text-amber-600 bg-amber-50', icon: Clock },
-    FAILED: { label: 'Başarısız', color: 'text-red-600 bg-red-50', icon: XCircle },
-    CANCELLED: { label: 'İptal', color: 'text-gray-600 bg-gray-50', icon: AlertCircle },
+    COMPLETED: { label: 'Tamamlandı', color: 'text-emerald-600 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60', icon: CheckCircle2 },
+    PENDING: { label: 'Beklemede', color: 'text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60', icon: Clock },
+    FAILED: { label: 'Başarısız', color: 'text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800/60', icon: XCircle },
+    CANCELLED: { label: 'İptal', color: 'text-gray-600 dark:text-slate-300 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700', icon: AlertCircle },
   }
 
   if (loading) {
@@ -229,120 +178,108 @@ export default function WalletScreen() {
     <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-4xl">
       {/* Başlık */}
       <div className="mb-5 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <WalletIcon className="w-6 h-6 text-emerald-600" />
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
+          <WalletIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
           Cüzdanım
         </h1>
-        <p className="text-sm text-gray-500 mt-1">Bakiye, işlem geçmişi ve ödemeler</p>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Bakiye, işlem geçmişi ve ödemeler</p>
       </div>
 
-      {/* Bakiye Kartı */}
-      <Card className="mb-4 sm:mb-6 bg-gradient-to-br from-emerald-600 to-teal-700 text-white border-0 overflow-hidden relative">
-        <div className="absolute -top-10 -right-10 w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-white/10 blur-2xl" />
-        <CardContent className="p-4 sm:p-6 relative">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <p className="text-emerald-100 text-xs sm:text-sm">Mevcut Bakiye</p>
-              <p className="text-2xl sm:text-4xl font-bold mt-1">{balance.toLocaleString('tr-TR')}₺</p>
+      {/* Bakiye Kartı - 3D Financial Vault Card */}
+      <div className="mb-6 card-3d-dark rounded-3xl p-6 sm:p-8 relative overflow-hidden text-white border border-emerald-500/30 shadow-[0_20px_50px_-15px_rgba(5,150,105,0.4)] preserve-3d">
+        <div className="absolute inset-0 bg-spatial-grid opacity-25 pointer-events-none" />
+        <div className="absolute -top-16 -right-16 w-52 h-52 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none" />
+        
+        <div className="relative z-10 flex items-start justify-between mb-4 preserve-3d">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full badge-3d-dark text-[11px] font-bold text-emerald-300 mb-2 translate-z-2">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>GÜVENLİ CÜZDAN & HAVUZ BAKİYESİ</span>
             </div>
-            <WalletIcon className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-200" />
+            <p className="text-emerald-100 text-xs sm:text-sm font-semibold tracking-wide">Kullanılabilir Bakiye</p>
+            <p className="text-3xl sm:text-5xl font-black tracking-tight mt-1 text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] translate-z-4">
+              {balance.toLocaleString('tr-TR')}₺
+            </p>
           </div>
-          {/* Butonlar — mobilde 2x2 grid, desktop'ta tek satır */}
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mt-3">
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-white/20 hover:bg-white/30 text-white border-0 text-xs sm:text-sm"
+          <div className="w-14 h-14 rounded-2xl bg-emerald-500/30 border border-emerald-400/50 flex items-center justify-center text-emerald-300 shadow-[0_4px_16px_rgba(16,185,129,0.3)] translate-z-4">
+            <WalletIcon className="w-7 h-7" />
+          </div>
+        </div>
+
+        {/* Butonlar — 3D Tactile Push Buttons */}
+        <div className="relative z-10 flex flex-wrap gap-3 mt-4 pt-2 border-t border-white/20 preserve-3d">
+          {(user?.role === 'EMPLOYER' || user?.role === 'ADMIN') && (
+            <button
+              type="button"
+              className="btn-3d-emerald btn-3d-pill px-5 py-2.5 text-xs sm:text-sm font-black flex items-center gap-2 translate-z-4"
               onClick={() => setDepositOpen(true)}
             >
-              <ArrowDownCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
-              Para Yatır
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-white/20 hover:bg-white/30 text-white border-0 text-xs sm:text-sm"
+              <ArrowDownCircle className="w-4 h-4 text-emerald-100" />
+              <span>Para Yatır (Havuz Bakiye)</span>
+            </button>
+          )}
+          {(user?.role === 'WORKER' || user?.role === 'ADMIN') && (
+            <button
+              type="button"
+              className="btn-3d-white btn-3d-pill px-5 py-2.5 text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2 translate-z-4 shadow-md"
               onClick={() => setWithdrawOpen(true)}
             >
-              <ArrowUpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
-              Para Çek
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-white/20 hover:bg-white/30 text-white border-0 text-xs sm:text-sm"
-              onClick={() => setTransferOpen(true)}
-            >
-              <ArrowRightLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
-              Transfer
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-white/20 hover:bg-white/30 text-white border-0 text-xs sm:text-sm"
-              onClick={() => setQrGenerateOpen(true)}
-            >
-              <QrCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
-              QR Öde
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-white/20 hover:bg-white/30 text-white border-0 text-xs sm:text-sm col-span-2 sm:col-span-1"
-              onClick={() => setQrScanOpen(true)}
-            >
-              <ArrowDownCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
-              QR Tara
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <ArrowUpCircle className="w-4 h-4 text-emerald-700" />
+              <span>Bakiye Çek (IBAN)</span>
+            </button>
+          )}
+        </div>
+      </div>
 
-      {/* İşlem Geçmişi */}
-      <Card>
-        <CardHeader className="pb-3 p-3 sm:p-6">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <CardTitle className="text-sm sm:text-lg">İşlem Geçmişi</CardTitle>
-            <div className="flex gap-1 overflow-x-auto no-scrollbar -mx-1 px-1">
-              {['ALL', 'DEPOSIT', 'WITHDRAW', 'TRANSFER', 'QR_PAYMENT', 'JOB_PAYMENT'].map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setFilterType(t)}
-                  className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors ${
-                    filterType === t
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {t === 'ALL' ? 'Tümü' : typeLabels[t]?.label || t}
-                </button>
-              ))}
+      {/* İşlem Geçmişi - 3D Spatial */}
+      <div className="card-3d-spatial rounded-3xl border border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 shadow-sm overflow-hidden">
+        <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-white/10">
+          <div className="flex items-center justify-between flex-wrap gap-2.5">
+            <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100">İşlem Geçmişi</h2>
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1">
+              {['ALL', 'DEPOSIT', 'WITHDRAW', 'JOB_PAYMENT', 'REFUND'].map((t) => {
+                const isActive = filterType === t
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setFilterType(t)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                      isActive
+                        ? 'btn-3d-emerald btn-3d-pill'
+                        : 'btn-3d-white btn-3d-pill text-slate-700 dark:text-slate-200'
+                    }`}
+                  >
+                    {t === 'ALL' ? 'Tümü' : typeLabels[t]?.label || t}
+                  </button>
+                )
+              })}
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
+        </div>
+        <div className="p-0">
           {transactions.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-500 dark:text-slate-400">
               <WalletIcon className="w-12 h-12 mx-auto mb-2 opacity-30" />
               <p className="font-medium">Henüz işlem yok</p>
               <p className="text-xs mt-1">İşlemleriniz burada görünecek</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-white/10">
               {transactions.map((tx) => {
-                const typeInfo = typeLabels[tx.type] || { label: tx.type, icon: WalletIcon, color: 'text-gray-600' }
+                const typeInfo = typeLabels[tx.type] || { label: tx.type, icon: WalletIcon, color: 'text-gray-600 dark:text-slate-400' }
                 const statusInfo2 = statusInfo[tx.status] || statusInfo.COMPLETED
                 const Icon = typeInfo.icon
                 const isPositive = tx.amount > 0
                 return (
-                  <div key={tx.id} className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 hover:bg-gray-50">
+                  <div key={tx.id} className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-slate-800/50">
                     <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 ${
-                      isPositive ? 'bg-emerald-50' : 'bg-red-50'
+                      isPositive ? 'bg-emerald-50 dark:bg-emerald-950/60' : 'bg-red-50 dark:bg-red-950/60'
                     }`}>
                       <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${typeInfo.color}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{tx.description}</p>
+                      <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-slate-100 truncate">{tx.description}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <Badge variant="outline" className={`text-[9px] sm:text-[10px] ${statusInfo2.color}`}>
                           {statusInfo2.label}
@@ -363,74 +300,98 @@ export default function WalletScreen() {
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Para Yatırma Dialog — Kart Animasyonlu */}
+      {/* Para Yatırma Dialog — Ultra Modern Kart & Banka Seçimli */}
       <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6 dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ArrowDownCircle className="w-5 h-5 text-emerald-600" />
+            <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-gray-900 dark:text-slate-100">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <ArrowDownCircle className="w-5 h-5" />
+              </div>
               Hesabına Para Yatır
             </DialogTitle>
-            <DialogDescription>
-              Kendi banka hesabınızdan EFT/Havale ile para yatırın. Aşağıdaki banka bilgilerinizi girin, ödemeyi yaptıktan sonra admin onayı ile bakiyenize yansıyacaktır.
+            <DialogDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
+              Kendi banka hesabınızdan EFT/Havale ile para yatırın. Bilgilerinizi girip transferi yaptıktan sonra bakiyeniz hesabınıza yansıtılacaktır.
             </DialogDescription>
           </DialogHeader>
 
-          {/* Kart Animasyonu */}
-          <div className="relative h-32 mb-4 perspective-1000">
-            <div
-              className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 p-4 text-white shadow-xl transition-transform"
-              style={{
-                transform: depositAmount ? 'rotateY(-5deg) rotateX(2deg)' : 'none',
-                transition: 'transform 0.3s ease',
-              }}
-            >
-              <div className="flex items-start justify-between h-full">
-                <div>
-                  <p className="text-emerald-100 text-[10px] uppercase tracking-wider">Bakiye Yükleme</p>
-                  <p className="text-2xl font-bold mt-1">
-                    {depositAmount ? `${parseFloat(depositAmount).toLocaleString('tr-TR')}₺` : '0₺'}
-                  </p>
-                  <p className="text-emerald-200 text-[10px] mt-2">{depositName || 'Ad Soyad'}</p>
-                </div>
-                <WalletIcon className="w-7 h-7 text-emerald-200" />
-              </div>
-              {/* Chip */}
-              <div className="absolute bottom-3 left-4 w-8 h-6 rounded bg-yellow-400/80" />
-              <p className="absolute bottom-3 right-4 text-[9px] text-emerald-200 font-mono">
-                {depositIban ? `****${depositIban.slice(-4)}` : '****'}
-              </p>
-            </div>
+          {/* Ultra Modern Kart Önizlemesi */}
+          <div className="py-1">
+            <ModernBankCard
+              cardType="DEPOSIT"
+              amount={depositAmount}
+              name={depositName}
+              ibanDigits={depositIbanDigits}
+              selectedBank={depositBank}
+              customBankName={depositCustomBank}
+            />
           </div>
 
-          <div className="space-y-3 py-1">
+          <div className="space-y-3.5 py-1">
             <div>
-              <Label>Tutar (₺) — Min 50₺</Label>
-              <Input type="number" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder="500" min="50" />
+              <Label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Tutar (₺) — Min 50₺ *</Label>
+              <Input
+                type="number"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+                placeholder="500"
+                min="50"
+                className="h-10 mt-1 text-sm font-semibold dark:bg-slate-800 dark:border-white/10 dark:text-white"
+              />
             </div>
+
             <div>
-              <Label>Ad Soyad (Gönderen)</Label>
-              <Input value={depositName} onChange={(e) => setDepositName(e.target.value)} placeholder="Ahmet Yılmaz" />
+              <Label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Ad Soyad (Gönderen) *</Label>
+              <Input
+                value={depositName}
+                onChange={(e) => setDepositName(e.target.value)}
+                placeholder="Ahmet Yılmaz"
+                className="h-10 mt-1 text-sm dark:bg-slate-800 dark:border-white/10 dark:text-white"
+              />
             </div>
-            <div>
-              <Label>IBAN (Gönderen)</Label>
-              <Input value={depositIban} onChange={(e) => setDepositIban(e.target.value.toUpperCase())} placeholder="TR99 0001 2345 6789 0123 4567 89" />
+
+            {/* Banka Seçici (Logolu ve Tikli) */}
+            <BankSelector
+              selectedBankId={depositBank?.id || ''}
+              onSelectBank={(b) => setDepositBank(b)}
+              customBankName={depositCustomBank}
+              onCustomBankNameChange={setDepositCustomBank}
+            />
+
+            {/* TR Sabit IBAN Girişi */}
+            <FixedTrIbanInput
+              digits={depositIbanDigits}
+              onChangeDigits={setDepositIbanDigits}
+              label="Gönderen IBAN (Kendi Banka Hesabınız)"
+            />
+
+            {/* Alıcı Şirket Hesap Bilgisi */}
+            <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200/80 dark:border-blue-800/50 rounded-xl text-xs text-blue-900 dark:text-blue-200 space-y-1.5 shadow-2xs">
+              <div className="font-semibold text-blue-950 dark:text-blue-300 flex items-center gap-1.5">
+                <span>📌</span>
+                <span>Havale Yapılacak Şirket Hesabı</span>
+              </div>
+              <div className="bg-white/80 dark:bg-slate-850/90 p-2.5 rounded-lg border border-blue-100 dark:border-white/10 font-mono text-xs space-y-1">
+                <div className="text-gray-600 dark:text-slate-400 text-[11px] font-sans">
+                  Alıcı Ünvanı: <strong className="text-gray-900 dark:text-slate-100 font-semibold">Günübirlik İş Bul A.Ş.</strong>
+                </div>
+                <div className="text-gray-600 dark:text-slate-400 text-[11px] font-sans">
+                  IBAN: <strong className="text-blue-900 dark:text-blue-400 font-bold select-all tracking-wider">TR99 0001 2345 6789 0123 4567 89</strong>
+                </div>
+                <div className="text-amber-800 dark:text-amber-400 text-[10px] font-sans">
+                  💡 Açıklama kısmına sistemde kayıtlı cep telefon numaranızı yazınız.
+                </div>
+              </div>
             </div>
-            <div>
-              <Label>Banka Adı (opsiyonel)</Label>
-              <Input value={depositBank} onChange={(e) => setDepositBank(e.target.value)} placeholder="İş Bankası" />
-            </div>
-            <div className="p-2.5 bg-blue-50 rounded-lg text-[11px] text-blue-700">
-              📌 Aşağıdaki hesaba EFT/Havale yapın, ardından talebiniz admin tarafından onaylanacaktır:
-              <br />
-              <strong>Günübirlik İş Bul A.Ş.</strong><br />
-              <strong>TR99 0001 2345 6789 0123 4567 89</strong><br />
-              <span className="text-blue-500">Açıklamaya telefon numaranızı yazın</span>
-            </div>
-            <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={handleDeposit} disabled={actionLoading}>
+
+            <Button
+              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-sm transition"
+              onClick={handleDeposit}
+              disabled={actionLoading}
+            >
               {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ArrowDownCircle className="w-4 h-4 mr-2" />}
               Yatırma Talebi Oluştur
             </Button>
@@ -438,237 +399,90 @@ export default function WalletScreen() {
         </DialogContent>
       </Dialog>
 
-      {/* Para Çekme Dialog — IBAN'lı */}
+      {/* Para Çekme Dialog — Ultra Modern Kart & Banka Seçimli */}
       <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6 dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ArrowUpCircle className="w-5 h-5 text-red-600" />
-              Para Çek (IBAN'a)
+            <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-gray-900 dark:text-slate-100">
+              <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                <ArrowUpCircle className="w-5 h-5" />
+              </div>
+              Para Çek (IBAN&apos;a)
             </DialogTitle>
-            <DialogDescription>
-              Cüzdan bakiyenizi kendi banka hesabınıza çekin. Talebiniz alındıktan sonra 3-5 iş günü içinde işlenir.
-              <br />Mevcut bakiye: <strong>{balance.toLocaleString('tr-TR')}₺</strong>
+            <DialogDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
+              Cüzdan bakiyenizi kendi banka hesabınıza çekin. Talebiniz onaylandıktan sonra paranız hesabınıza aktarılır.
+              <br />Mevcut Bakiye: <strong className="text-emerald-700 dark:text-emerald-400 font-semibold">{balance.toLocaleString('tr-TR')}₺</strong>
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-1">
-            <div>
-              <Label>Tutar (₺) — Min 50₺</Label>
-              <Input type="number" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} placeholder="500" min="50" />
-            </div>
-            <div>
-              <Label>Ad Soyad (Alıcı)</Label>
-              <Input value={withdrawName} onChange={(e) => setWithdrawName(e.target.value)} placeholder="Ahmet Yılmaz" />
-            </div>
-            <div>
-              <Label>IBAN (Alıcı)</Label>
-              <Input value={withdrawIban} onChange={(e) => setWithdrawIban(e.target.value.toUpperCase())} placeholder="TR99 0001 2345 6789 0123 4567 89" />
-            </div>
-            <div>
-              <Label>Banka Adı (opsiyonel)</Label>
-              <Input value={withdrawBank} onChange={(e) => setWithdrawBank(e.target.value)} placeholder="İş Bankası" />
-            </div>
-            <div className="p-2.5 bg-amber-50 rounded-lg text-[11px] text-amber-700">
-              ⏳ Talebiniz alındıktan sonra <strong>3-5 iş günü</strong> içinde incelenir ve IBAN'a gönderilir. Onay süreci tamamlanana kadar tutar bakiyenizden düşülür.
-            </div>
-            <Button className="w-full bg-red-600 hover:bg-red-700" onClick={handleWithdraw} disabled={actionLoading}>
-              {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ArrowUpCircle className="w-4 h-4 mr-2" />}
-              Çekme Talebi Oluştur
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
-      {/* Transfer Dialog */}
-      <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Para Transferi</DialogTitle>
-            <DialogDescription>
-              Başka bir kullanıcıya para gönderin. Min 10₺.
-              Mevcut bakiye: {balance.toLocaleString('tr-TR')}₺
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
+          {/* Ultra Modern Kart Önizlemesi */}
+          <div className="py-1">
+            <ModernBankCard
+              cardType="WITHDRAW"
+              amount={withdrawAmount}
+              name={withdrawName}
+              ibanDigits={withdrawIbanDigits}
+              selectedBank={withdrawBank}
+              customBankName={withdrawCustomBank}
+            />
+          </div>
+
+          <div className="space-y-3.5 py-1">
             <div>
-              <Label>Alıcı Kullanıcı ID</Label>
-              <Input
-                value={transferRecipient}
-                onChange={(e) => setTransferRecipient(e.target.value)}
-                placeholder="cmu..."
-              />
-            </div>
-            <div>
-              <Label>Tutar (₺)</Label>
+              <Label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Tutar (₺) — Min 50₺ *</Label>
               <Input
                 type="number"
-                value={transferAmount}
-                onChange={(e) => setTransferAmount(e.target.value)}
-                placeholder="100"
-                min="10"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                placeholder="500"
+                min="50"
+                max={balance}
+                className="h-10 mt-1 text-sm font-semibold dark:bg-slate-800 dark:border-white/10 dark:text-white"
               />
-            </div>
-            <div>
-              <Label>Açıklama (opsiyonel)</Label>
-              <Input
-                value={transferDesc}
-                onChange={(e) => setTransferDesc(e.target.value)}
-                placeholder="İş ücreti ödemesi"
-              />
-            </div>
-            <Button
-              className="w-full"
-              onClick={handleTransfer}
-              disabled={actionLoading}
-            >
-              {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ArrowRightLeft className="w-4 h-4 mr-2" />}
-              Transfer Yap
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* QR Generate Dialog */}
-      <Dialog open={qrGenerateOpen} onOpenChange={(v) => { setQrGenerateOpen(v); if (!v) setGeneratedQr(null) }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>QR ile Öde</DialogTitle>
-            <DialogDescription>
-              Ödeme QR kodu üretin. Karşı taraf taradığında tutar otomatik transfer olur.
-              Mevcut bakiye: {balance.toLocaleString('tr-TR')}₺
-            </DialogDescription>
-          </DialogHeader>
-          {generatedQr ? (
-            <div className="text-center py-4">
-              <img
-                src={generatedQr.qrImageDataUrl}
-                alt="Ödeme QR"
-                className="w-64 h-64 mx-auto rounded-xl border-2 border-emerald-200"
-              />
-              <div className="mt-4 space-y-1">
-                <p className="text-2xl font-bold text-emerald-600">
-                  {generatedQr.amount.toLocaleString('tr-TR')}₺
-                </p>
-                <p className="text-sm text-gray-600">{generatedQr.description}</p>
-                <p className="text-xs text-amber-600 mt-2">
-                  ⏰ Geçerlilik: {new Date(generatedQr.expiresAt).toLocaleTimeString('tr-TR')}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => setGeneratedQr(null)}
-              >
-                Yeni QR Üret
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4 py-2">
-              <div>
-                <Label>Tutar (₺)</Label>
-                <Input
-                  type="number"
-                  value={qrAmount}
-                  onChange={(e) => setQrAmount(e.target.value)}
-                  placeholder="250"
-                  min="1"
-                />
-              </div>
-              <div>
-                <Label>Açıklama</Label>
-                <Input
-                  value={qrDesc}
-                  onChange={(e) => setQrDesc(e.target.value)}
-                  placeholder="İnşaat işçisi ücreti"
-                />
-              </div>
-              <Button
-                className="w-full"
-                onClick={handleQrGenerate}
-                disabled={actionLoading}
-              >
-                {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <QrCode className="w-4 h-4 mr-2" />}
-                QR Kod Üret
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* QR Camera Scanner (cüzdan ödeme al) */}
-      {qrScanOpen && walletQrCameraMode && (
-        <QrScannerCamera
-          onScan={async (token) => {
-            setQrToken(token)
-            setActionLoading(true)
-            try {
-              const result = await walletApi.scanQrPayment(token)
-              toast.success('Ödeme alındı!', {
-                description: `${result.amount.toLocaleString('tr-TR')}₺ bakiyenize eklendi.`,
-              })
-              setQrScanOpen(false)
-              setWalletQrCameraMode(false)
-              setQrToken('')
-              await load()
-            } catch (e: any) {
-              toast.error('QR tarama hatası', { description: e.message })
-              setQrScanOpen(false)
-              setWalletQrCameraMode(false)
-            } finally {
-              setActionLoading(false)
-            }
-          }}
-          onClose={() => { setQrScanOpen(false); setWalletQrCameraMode(false) }}
-          loading={actionLoading}
-          title="QR Tara — Ödeme Al"
-          description="İşverenin QR kodunu kamera ile tarayın"
-          onSwitchManual={() => { setWalletQrCameraMode(false) }}
-        />
-      )}
-
-      {/* QR Scan Dialog (manuel) */}
-      <Dialog open={qrScanOpen && !walletQrCameraMode} onOpenChange={(v) => { if (!v) setQrScanOpen(false) }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>QR Tara — Ödeme Al</DialogTitle>
-            <DialogDescription>
-              İşverenin QR kodunu kamera ile tarayın veya manuel token girin.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {/* Kamera butonu */}
-            <Button
-              className="w-full bg-indigo-600 hover:bg-indigo-700"
-              onClick={() => setWalletQrCameraMode(true)}
-            >
-              <QrCode className="w-4 h-4 mr-2" />
-              📷 Kamera ile Tara
-            </Button>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-white px-3 text-gray-500">veya manuel girin</span>
-              </div>
             </div>
 
             <div>
-              <Label>QR Token</Label>
+              <Label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Ad Soyad (Alıcı) *</Label>
               <Input
-                value={qrToken}
-                onChange={(e) => setQrToken(e.target.value)}
-                placeholder="a1b2c3d4..."
+                value={withdrawName}
+                onChange={(e) => setWithdrawName(e.target.value)}
+                placeholder="Ahmet Yılmaz"
+                className="h-10 mt-1 text-sm dark:bg-slate-800 dark:border-white/10 dark:text-white"
               />
             </div>
+
+            {/* Banka Seçici (Logolu ve Tikli) */}
+            <BankSelector
+              selectedBankId={withdrawBank?.id || ''}
+              onSelectBank={(b) => setWithdrawBank(b)}
+              customBankName={withdrawCustomBank}
+              onCustomBankNameChange={setWithdrawCustomBank}
+            />
+
+            {/* TR Sabit IBAN Girişi */}
+            <FixedTrIbanInput
+              digits={withdrawIbanDigits}
+              onChangeDigits={setWithdrawIbanDigits}
+              label="Alıcı IBAN (Paranın Yatacağı Hesap)"
+            />
+
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/50 rounded-xl text-xs text-amber-800 dark:text-amber-200 space-y-1 shadow-2xs">
+              <div className="font-semibold text-amber-950 dark:text-amber-300 flex items-center gap-1">
+                <span>⏳</span>
+                <span>İşlem Süreci</span>
+              </div>
+              <p className="text-[11px] text-amber-900 dark:text-amber-200 leading-relaxed">
+                Talebiniz alındıktan sonra <strong>3-5 iş günü</strong> içinde incelenir ve IBAN hesabınıza gönderilir. Onay süreci tamamlanana kadar çekilen tutar bakiyenizden düşülür.
+              </p>
+            </div>
+
             <Button
-              className="w-full"
-              onClick={handleQrScan}
+              className="w-full h-11 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl shadow-sm transition"
+              onClick={handleWithdraw}
               disabled={actionLoading}
             >
-              {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ArrowDownCircle className="w-4 h-4 mr-2" />}
-              Ödemeyi Al
+              {actionLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ArrowUpCircle className="w-4 h-4 mr-2" />}
+              Çekme Talebi Oluştur
             </Button>
           </div>
         </DialogContent>

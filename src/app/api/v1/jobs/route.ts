@@ -5,13 +5,22 @@ import { withErrorHandler, getNumberParam, getQueryParam } from '@/server/lib/ro
 
 // GET /api/v1/jobs - Tüm iş ilanlarını listele (konum bazlı arama)
 export const GET = withErrorHandler(async (req: NextRequest) => {
+  let employerId = getQueryParam(req, 'employerId')
+  const mine = getQueryParam(req, 'mine')
+  if (mine === 'true' || mine === '1') {
+    const { user } = await requireAuth(req)
+    if (user) {
+      employerId = user.userId
+    }
+  }
+
   const query = {
     page: getNumberParam(req, 'page', 1),
     pageSize: getNumberParam(req, 'pageSize', 10),
     category: getQueryParam(req, 'category'),
     city: getQueryParam(req, 'city'),
     district: getQueryParam(req, 'district'),
-    status: getQueryParam(req, 'status', 'OPEN'),
+    status: getQueryParam(req, 'status', (mine === 'true' || mine === '1' || employerId) ? undefined : 'OPEN'),
     search: getQueryParam(req, 'search'),
     lat: getNumberParam(req, 'lat'),
     lng: getNumberParam(req, 'lng'),
@@ -20,7 +29,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     maxWage: getNumberParam(req, 'maxWage'),
     workDateFrom: getQueryParam(req, 'workDateFrom'),
     workDateTo: getQueryParam(req, 'workDateTo'),
-    employerId: getQueryParam(req, 'employerId'),
+    employerId,
     sortBy: getQueryParam(req, 'sortBy', 'NEWEST') as any,
   }
   const result = await jobsService.list(query)

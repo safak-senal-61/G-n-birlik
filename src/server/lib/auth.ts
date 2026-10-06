@@ -175,7 +175,8 @@ export function validateEmail(email: string): boolean {
 }
 
 export function validatePhone(phone: string): boolean {
-  return /^(\+90|0)?5\d{9}$/.test(phone.replace(/\s/g, ''))
+  const cleaned = phone.replace(/[\s\-\(\)]/g, '')
+  return /^\+[1-9]\d{7,14}$/.test(cleaned) || /^(\+90|0)?5\d{9}$/.test(cleaned)
 }
 
 export function safeJsonParse<T>(value: string | null, fallback: T): T {
@@ -251,16 +252,24 @@ export async function createNotification(params: {
     userId: params.userId,
     title: params.title,
     message: params.body,
+    type: params.type,
     data: { ...params.data, notificationId: notification.id, type: params.type },
+  }).catch(() => {})
+
+  // 4. OneSignal e-posta bildirimi gönder (kritik işlem bildirimleri)
+  sendOneSignalEmailSafe({
+    userId: params.userId,
+    title: params.title,
+    body: params.body,
+    type: params.type,
+    data: params.data,
   }).catch(() => {})
 
   return notification
 }
 
 /**
- * WebSocket server'a internal HTTP POST yapar.
- * WS server online kullanıcıya notification:new event'ini emit eder.
- * Offline kullanıcı için sessizce atlar (DB'ye zaten kaydedildi).
+ * Supabase Realtime ile kullanıcıya anlık bildirim ilet
  */
 async function sendWebSocketNotification(params: {
   userId: string
@@ -270,39 +279,16 @@ async function sendWebSocketNotification(params: {
   data?: any
 }) {
   try {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 3000) // 3 sn timeout
-
-    const res = await fetch(`${WS_INTERNAL_URL}/internal/notify`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Internal-Key': INTERNAL_API_KEY,
-      },
-      body: JSON.stringify({
-        userId: params.userId,
-        type: params.type,
-        title: params.title,
-        body: params.body,
-        data: params.data || {},
-      }),
-      signal: controller.signal,
+    const { broadcastToUser } = await import('@/server/lib/realtime')
+    await broadcastToUser(params.userId, 'notification:new', {
+      userId: params.userId,
+      type: params.type,
+      title: params.title,
+      body: params.body,
+      data: params.data || {},
     })
-
-    clearTimeout(timeout)
-
-    if (res.ok) {
-      const result = await res.json()
-      if (result.online && result.delivered > 0) {
-        console.log(`[WS] Bildirim anlık iletildi → ${params.userId} (${result.delivered} socket)`)
-      }
-      // Online değilse sessiz — DB'ye zaten kaydedildi, kullanıcı giriş yapınca görecek
-    }
   } catch (e: any) {
-    // WS server kapalı olabilir — kritik değil, DB'ye kaydedildi zaten
-    if (e?.name !== 'AbortError' && e?.code !== 'ECONNREFUSED') {
-      console.error('[WS] Internal notify hatası:', e?.message || e)
-    }
+    console.warn('[Supabase Realtime] Bildirim iletme hatası:', e?.message || e)
   }
 }
 
@@ -423,81 +409,186 @@ async function sendOneSignalPushSafe(params: {
   userId: string
   title: string
   message: string
+  type?: string
   data?: any
 }) {
-  const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY
-  const ONESIGNAL_APP_ID = '6bddc78e-79e7-4701-9e46-6fca772e402a'
+  const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || ''
+  const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || ''
 
   if (!ONESIGNAL_REST_API_KEY) {
-    // API key yoksa push gönderme, sadece DB'ye kaydet
     return
   }
 
+  const authHeader = (ONESIGNAL_REST_API_KEY.startsWith('os_v2_') ? 'Key ' : 'Bearer ') + ONESIGNAL_REST_API_KEY
+
   try {
-    // Önce external_id (modern yöntem) ile dene
-    // Mobil cihazlar OneSignal.login(userId) çağırdığında external_id set olur
+    let webPath = '/'
+    if (params.data?.jobId) webPath = `/jobs/${params.data.jobId}`
+    else if (params.data?.applicationId) webPath = `/applications`
+    else if (params.data?.conversationId) webPath = `/messages`
+    else if (params.data?.type === 'WALLET_DEPOSIT' || params.type === 'WALLET_DEPOSIT') webPath = `/wallet`
+
+    // Önce external_id (modern OneSignal SDK v5 login) ile dene
     const res = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ONESIGNAL_REST_API_KEY}`,
+        'Authorization': authHeader,
       },
       body: JSON.stringify({
         app_id: ONESIGNAL_APP_ID,
-        // Modern yöntem: external_id alias (OneSignal.login(userId) ile set edilir)
         include_aliases: [{ external_id: params.userId }],
         target_channel: 'push',
         headings: { en: params.title, tr: params.title },
         contents: { en: params.message, tr: params.message },
         data: params.data || {},
-        // Web için tıklanınca açılacak URL
-        web_url: '/',
-        // Mobil için deep link — uygulama otomatik açılır
-        // URL scheme: gunubirlik://  (app.config.js'de tanımlanacak)
-        // Türüne göre doğru ekrana yönlendir
-        app_url: buildDeepLink(params.data, params.type),
+        web_url: webPath,
+        app_url: buildDeepLink(params.data, params.type || 'notifications'),
       }),
     })
 
     const result = await res.json() as any
 
-    // Eğer external_id ile başarılı olduysa (recipients > 0)
     if (result.id && result.recipients > 0) {
       console.log(`[OneSignal] Push gönderildi (external_id): ${result.id} → ${params.userId} (${result.recipients} cihaz)`)
       return
     }
 
-    // external_id ile başarısız — tag yöntemini dene (eski yöntem)
-    // Web SDK tag ekliyor, mobil de ekleyebilir
-    if (!result.id || result.recipients === 0) {
-      const res2 = await fetch('https://onesignal.com/api/v1/notifications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${ONESIGNAL_REST_API_KEY}`,
-        },
-        body: JSON.stringify({
-          app_id: ONESIGNAL_APP_ID,
-          filters: [
-            { field: 'tag', key: 'user_id', relation: '=', value: params.userId },
-          ],
-          headings: { en: params.title, tr: params.title },
-          contents: { en: params.message, tr: params.message },
-          url: '/',
-          data: params.data || {},
-          web_push_routing: 'web',
-        }),
-      })
+    // external_id ile alıcı bulunamadıysa tag filtresi ile dene (Web SDK / tag kayıtları)
+    const res2 = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
+      },
+      body: JSON.stringify({
+        app_id: ONESIGNAL_APP_ID,
+        filters: [
+          { field: 'tag', key: 'user_id', relation: '=', value: params.userId },
+        ],
+        headings: { en: params.title, tr: params.title },
+        contents: { en: params.message, tr: params.message },
+        url: webPath,
+        data: params.data || {},
+      }),
+    })
 
-      const result2 = await res2.json() as any
-      if (result2.id && result2.recipients > 0) {
-        console.log(`[OneSignal] Push gönderildi (tag): ${result2.id} → ${params.userId} (${result2.recipients} cihaz)`)
-        return
-      }
-      // Her iki yöntem de başarısız — kullanıcı henüz hiçbir cihazdan OneSignal'a kaydolmamış
-      console.warn(`[OneSignal] Push alıcı yok → user ${params.userId} (henüz OneSignal'a kayıtlı cihaz yok)`)
+    const result2 = await res2.json() as any
+    if (result2.id && result2.recipients > 0) {
+      console.log(`[OneSignal] Push gönderildi (tag): ${result2.id} → ${params.userId} (${result2.recipients} cihaz)`)
+      return
     }
   } catch (e) {
     console.error('[OneSignal] Push hatası:', e)
+  }
+}
+
+/**
+ * OneSignal Email gönder (server-side)
+ * Kullanıcının e-postası varsa ve bildirim türü önemliyse e-posta gönderir
+ */
+const EMAIL_NOTIFY_TYPES = new Set([
+  'JOB_APPLIED',
+  'APPLICATION_ACCEPTED',
+  'APPLICATION_REJECTED',
+  'APPLICATION_WITHDRAWN',
+  'WORK_STARTED',
+  'WORK_COMPLETED',
+  'JOB_CANCELLED',
+  'PAYMENT_PENDING',
+  'PAYMENT_APPROVED',
+  'PAYMENT_REJECTED',
+  'PAYMENT_DISPUTE_RESOLVED',
+  'WALLET_DEPOSIT',
+  'DEPOSIT_REQUEST',
+  'DEPOSIT_REJECTED',
+  'WITHDRAWAL_REQUEST',
+  'WALLET_WITHDRAW_COMPLETED',
+  'WALLET_WITHDRAW_REJECTED',
+  'WALLET_TRANSFER_RECEIVED',
+  'VERIFICATION_APPROVED',
+  'VERIFICATION_REJECTED',
+  'ACCOUNT_WARNING',
+  'ACCOUNT_SUSPENDED',
+  'ACCOUNT_REACTIVATED',
+  'JOB_APPROVED',
+  'JOB_REJECTED',
+  'ESCROW_DISPUTED'
+])
+
+async function sendOneSignalEmailSafe(params: {
+  userId: string
+  title: string
+  body: string
+  type: string
+  data?: any
+}) {
+  const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || ''
+  const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || ''
+
+  if (!ONESIGNAL_REST_API_KEY) return
+  if (!EMAIL_NOTIFY_TYPES.has(params.type)) return
+
+  try {
+    const { db } = await import('@/lib/db')
+    const user = await db.user.findUnique({
+      where: { id: params.userId },
+      select: { email: true, fullName: true },
+    })
+
+    if (!user || !user.email) return
+
+    const authHeader = (ONESIGNAL_REST_API_KEY.startsWith('os_v2_') ? 'Key ' : 'Bearer ') + ONESIGNAL_REST_API_KEY
+
+    const emailHtml = `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 540px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 28px 24px; text-align: center;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.5px;">Günübirlik İş Bul</h1>
+          <p style="color: rgba(255,255,255,0.85); margin: 6px 0 0; font-size: 13px;">Hızlı ve Güvenilir Günlük İş Platformu</p>
+        </div>
+        <div style="padding: 28px 24px;">
+          <h2 style="color: #111827; font-size: 18px; margin: 0 0 14px; font-weight: 600;">${params.title}</h2>
+          <p style="color: #4b5563; font-size: 15px; line-height: 1.6; margin: 0 0 20px;">
+            Merhaba ${user.fullName || 'Değerli Kullanıcımız'},<br/><br/>
+            ${params.body}
+          </p>
+          <div style="margin: 28px 0; text-align: center;">
+            <a href="https://gunubirlik.space-z.ai" style="display: inline-block; background: #10b981; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 10px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 6px rgba(16,185,129,0.3);">
+              Uygulamada Görüntüle
+            </a>
+          </div>
+          <div style="border-top: 1px solid #f3f4f6; padding-top: 18px; font-size: 12px; color: #9ca3af; text-align: center; line-height: 1.5;">
+            Bu e-posta Günübirlik hesabınızdaki önemli bir işlem veya bildirim sebebiyle gönderilmiştir.<br/>
+            © ${new Date().getFullYear()} Günübirlik İş Bul. Tüm hakları saklıdır.
+          </div>
+        </div>
+      </div>
+    `
+
+    const res = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
+      },
+      body: JSON.stringify({
+        app_id: ONESIGNAL_APP_ID,
+        include_email_tokens: [user.email],
+        email_subject: params.title,
+        email_body: emailHtml,
+        email_from_name: 'Günübirlik İş Bul',
+        email_from_address: 'noreply@gunubirlik.com',
+        email_reply_to_address: 'destek@gunubirlik.com',
+      }),
+    })
+
+    const result = await res.json() as any
+    if (result.id) {
+      console.log(`[OneSignal] Email gönderildi: ${result.id} → ${user.email} (${params.type})`)
+    } else {
+      console.warn(`[OneSignal] Email gönderilemedi:`, result)
+    }
+  } catch (e) {
+    console.error('[OneSignal] Email gönderme hatası:', e)
   }
 }

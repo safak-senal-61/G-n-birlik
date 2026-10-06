@@ -17,6 +17,7 @@ import {
   Briefcase,
   CreditCard,
   BadgeCheck,
+  ArrowDownCircle,
 } from 'lucide-react'
 
 export default function AdminDashboard() {
@@ -95,8 +96,8 @@ export default function AdminDashboard() {
         />
       </div>
 
-      {/* Yönetim aksiyon kartları (iş onayı, ödeme, doğrulama) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Yönetim aksiyon kartları (iş onayı, bakiye yükleme, iş ödemesi, doğrulama) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <ActionCard
           title="İlan Onayı Bekleyen"
           value={stats.jobs?.pendingApproval || 0}
@@ -107,12 +108,21 @@ export default function AdminDashboard() {
           alert={(stats.jobs?.pendingApproval || 0) > 0}
         />
         <ActionCard
-          title="Ödeme Onayı Bekleyen"
-          value={stats.payments?.pending || 0}
-          subtext={`${(stats.payments?.pendingTotalAmount || 0).toLocaleString('tr-TR')}₺ toplam · ${stats.payments?.disputed || 0} itiraz`}
-          icon={CreditCard}
+          title="Bakiye Yükleme Talebi"
+          value={stats.payments?.pendingDeposits || 0}
+          subtext={`${(stats.payments?.pendingDepositsTotalAmount || 0).toLocaleString('tr-TR')}₺ EFT/Havale onayı`}
+          icon={ArrowDownCircle}
           gradient="from-emerald-500 to-teal-500"
-          href="/admin/payments"
+          href="/admin/payments?tab=deposits"
+          alert={(stats.payments?.pendingDeposits || 0) > 0}
+        />
+        <ActionCard
+          title="İş Ödemesi Bekleyen"
+          value={stats.payments?.pending || 0}
+          subtext={`${(stats.payments?.pendingTotalAmount || 0).toLocaleString('tr-TR')}₺ · ${stats.payments?.disputed || 0} itiraz`}
+          icon={CreditCard}
+          gradient="from-indigo-500 to-purple-500"
+          href="/admin/payments?tab=payments"
           alert={(stats.payments?.pending || 0) > 0}
         />
         <ActionCard

@@ -42,7 +42,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   }
 
   // Kullanıcıyı bul
-  let user = null
+  let user: any = null
   if (type !== 'EMAIL_ACTIVATION') {
     user = await db.user.findUnique({ where: { email: email.toLowerCase() } })
     if (!user) {

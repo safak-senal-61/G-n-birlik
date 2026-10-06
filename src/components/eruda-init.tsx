@@ -13,6 +13,12 @@ export default function ErudaInit() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
+    // Sadece development modunda VEYA URL'de ?debug=true / ?eruda=true varsa yükle
+    // Production'da yüklenmez, Lighthouse skorunu ve main-thread'i korur
+    const isDev = process.env.NODE_ENV === 'development'
+    const isDebug = window.location.search.includes('debug=true') || window.location.search.includes('eruda=true')
+    if (!isDev && !isDebug) return
+
     // Eruda zaten yüklü mü kontrol
     if ((window as any).__erudaInitialized) return
     ;(window as any).__erudaInitialized = true

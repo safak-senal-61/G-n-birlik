@@ -17,7 +17,7 @@ import { ApiError } from './auth.service'
 
 const OTP_EXPIRY_MINUTES = 10
 const MAX_ATTEMPTS = 5
-const ONESIGNAL_APP_ID = '6bddc78e-79e7-4701-9e46-6fca772e402a'
+const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || '6bddc78e-79e7-4701-9e46-6fca772e402a'
 
 const OTP_TEMPLATES: Record<string, { subject: string; title: string; body: (code: string, name?: string) => string }> = {
   EMAIL_ACTIVATION: {
@@ -240,7 +240,7 @@ class EmailOtpService {
   }): Promise<boolean> {
     // Runtime'da env vars oku (production build'de modül seviyesinde çalışmıyor)
     const RESEND_API_KEY = process.env.RESEND_API_KEY
-    const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY
+    const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || ''
 
     console.log('[EmailOTP] sendEmail başlatıldı ->', params.to)
     console.log('[EmailOTP] RESEND_API_KEY:', RESEND_API_KEY ? 'var' : 'yok')
@@ -270,11 +270,12 @@ class EmailOtpService {
     // 2. OneSignal Email ile dene
     if (ONESIGNAL_REST_API_KEY) {
       try {
+        const authHeader = (ONESIGNAL_REST_API_KEY.startsWith('os_v2_') ? 'Key ' : 'Bearer ') + ONESIGNAL_REST_API_KEY
         const res = await fetch('https://onesignal.com/api/v1/notifications', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${ONESIGNAL_REST_API_KEY}`,
+            'Authorization': authHeader,
           },
           body: JSON.stringify({
             app_id: ONESIGNAL_APP_ID,

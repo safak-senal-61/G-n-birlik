@@ -1,22 +1,15 @@
 /**
- * E-posta Servisi - Resend kullanarak gerçek e-posta gönderimi
+ * E-posta Servisi - Resend & OneSignal Email kullanarak gerçek e-posta gönderimi
  *
- * RESEND_API_KEY yoksa: şifre sıfırlama kodunu kullanıcıya göstermek yerine
- * sunucu log'larına yazar (geliştirme) ve kullanıcıya normal akışı döner.
- * Production'da RESEND_API_KEY ile gerçek e-posta gönderir.
- *
- * Resend kurulumu: https://resend.com
- * 1. Ücretsiz hesap aç (100 e-posta/ay ücretsiz)
- * 2. API Keys → Create API Key
- * 3. .env dosyasına RESEND_API_KEY=re_xxx ekle
- * 4. Domain doğrula (veya onboarding@resend.dev kullan test için)
+ * 1. Resend (RESEND_API_KEY varsa)
+ * 2. OneSignal Email (ONESIGNAL_REST_API_KEY ile)
+ * 3. Dev modu fallback (kodu log'a yazar)
  */
 import { Resend } from 'resend'
 import { ApiError } from '@/server/services/auth.service'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null
-const DEV_MODE = process.env.EMAIL_DEV_MODE === 'true' || !RESEND_API_KEY
 const FROM_EMAIL = process.env.EMAIL_FROM || 'Günübirlik İş Bul <onboarding@resend.dev>'
 
 export interface EmailParams {
@@ -34,44 +27,73 @@ export interface EmailResult {
 export class EmailService {
   /**
    * E-posta gönder
-   * Dev modunda (RESEND_API_KEY yok): konsola yazdırır, preview döndürmez
-   * Production'da: gerçek e-posta gönderir
-   *
-   * Not: Şifre sıfırlama/e-posta doğrulama kodları için preview ARTIK
-   * kullanıcıya gösterilmiyor. Sadece sunucu log'larında kalıyor.
+   * 1. Resend API
+   * 2. OneSignal Email API
+   * 3. Dev modu console fallback
    */
   async send(params: EmailParams): Promise<{ preview: string; sent: boolean }> {
-    console.log(`📧 [EMAIL] ${DEV_MODE ? 'DEV MODE' : 'PRODUCTION'} → ${params.to}`)
+    console.log(`📧 [EMAIL] Gönderim başlatıldı → ${params.to}`)
     console.log(`   Subject: ${params.subject}`)
 
-    if (DEV_MODE) {
-      // E-posta gönderilemiyor - kodu log'a yaz ama preview'a koyma
-      console.log(`   ⚠️  RESEND_API_KEY yok - e-posta gönderilemedi (dev modu)`)
-      console.log(`   📝 İçerik önizleme: ${(params.text || params.html.substring(0, 200))}`)
-      // Frontend preview'a kodu koymuyoruz - boş string dönüyoruz
-      return { preview: '', sent: false }
-    }
+    // 1. Resend ile dene (varsa)
+    if (resend) {
+      try {
+        const { data, error } = await resend.emails.send({
+          from: FROM_EMAIL,
+          to: params.to,
+          subject: params.subject,
+          html: params.html,
+          text: params.text,
+        })
 
-    try {
-      const { data, error } = await resend!.emails.send({
-        from: FROM_EMAIL,
-        to: params.to,
-        subject: params.subject,
-        html: params.html,
-        text: params.text,
-      })
-
-      if (error) {
-        console.error('❌ [EMAIL] Gönderim hatası:', error)
-        throw new ApiError(`E-posta gönderilemedi: ${error.message}`, 500)
+        if (!error && data?.id) {
+          console.log(`✅ [EMAIL] Resend ile gönderildi! ID: ${data?.id}`)
+          return { preview: '', sent: true }
+        }
+        console.warn('⚠️ [EMAIL] Resend hatası:', error)
+      } catch (err: any) {
+        console.warn('⚠️ [EMAIL] Resend exception:', err.message)
       }
-
-      console.log(`✅ [EMAIL] Gönderildi! ID: ${data?.id}`)
-      return { preview: '', sent: true }
-    } catch (err: any) {
-      console.error('❌ [EMAIL] Hata:', err.message)
-      throw new ApiError(`E-posta gönderilemedi: ${err.message}`, 500)
     }
+
+    const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY || ''
+    const ONESIGNAL_APP_ID = process.env.ONESIGNAL_APP_ID || process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID || ''
+
+    if (ONESIGNAL_REST_API_KEY) {
+      try {
+        const authHeader = (ONESIGNAL_REST_API_KEY.startsWith('os_v2_') ? 'Key ' : 'Bearer ') + ONESIGNAL_REST_API_KEY
+        const res = await fetch('https://onesignal.com/api/v1/notifications', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader,
+          },
+          body: JSON.stringify({
+            app_id: ONESIGNAL_APP_ID,
+            include_email_tokens: [params.to],
+            email_subject: params.subject,
+            email_body: params.html,
+            email_from_name: 'Günübirlik İş Bul',
+            email_from_address: 'noreply@gunubirlik.com',
+            email_reply_to_address: 'destek@gunubirlik.com',
+          }),
+        })
+
+        const result = await res.json() as any
+        if (result.id) {
+          console.log(`✅ [EMAIL] OneSignal Email ile gönderildi! ID: ${result.id} → ${params.to}`)
+          return { preview: '', sent: true }
+        }
+        console.warn('⚠️ [EMAIL] OneSignal Email hatası:', result.errors || result)
+      } catch (err: any) {
+        console.warn('⚠️ [EMAIL] OneSignal Email exception:', err.message)
+      }
+    }
+
+    // 3. Dev modu fallback
+    console.log(`   ⚠️  E-posta gönderilemedi (dev modu fallback)`)
+    console.log(`   📝 İçerik önizleme: ${(params.text || params.html.substring(0, 200))}`)
+    return { preview: '', sent: false }
   }
 
   // ====================================================================

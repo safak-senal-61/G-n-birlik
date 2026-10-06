@@ -12,6 +12,7 @@ import { db } from '@/lib/db'
 import { createNotification } from '@/server/lib/auth'
 import { ApiError } from './auth.service'
 import { applicationsService } from './applications.service'
+import { walletService } from './wallet.service'
 import QRCode from 'qrcode'
 import crypto from 'crypto'
 
@@ -250,7 +251,7 @@ export class QrCheckinService {
       }),
     ])
 
-    // CHECK_OUT ise ödeme talebi oluştur (applicationsService ile aynı mantık)
+    // CHECK_OUT ise ödeme talebi oluştur ve emanetten işçiye aktar
     if (newStatus === 'COMPLETED') {
       const existingPayment = await db.payment.findFirst({
         where: { applicationId: app.id },
@@ -264,9 +265,25 @@ export class QrCheckinService {
             employerId: qr.employerId,
             amount: app.job.wageAmount,
             wageType: app.job.wageType,
-            status: 'PENDING',
+            status: 'COMPLETED',
           },
         })
+      }
+
+      // Emanette para varsa işçinin cüzdanına otomatik serbest bırak
+      const currentJob = await db.job.findUnique({ where: { id: app.jobId } })
+      if (currentJob && currentJob.escrowStatus === 'HELD' && currentJob.escrowAmount > 0) {
+        try {
+          const payoutAmount = Math.min(app.job.wageAmount, currentJob.escrowAmount)
+          await walletService.releaseEscrow({
+            jobId: app.jobId,
+            workerId: app.workerId,
+            employerId: qr.employerId,
+            amount: payoutAmount,
+          })
+        } catch (e) {
+          console.error('Check-out emanet aktarım hatası:', e)
+        }
       }
     }
 

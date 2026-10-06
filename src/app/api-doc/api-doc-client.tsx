@@ -42,6 +42,7 @@ import {
   BadgeCheck,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ThemeToggle } from '@/components/shared/theme-toggle'
 
 interface Endpoint {
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
@@ -148,10 +149,44 @@ const API_GROUPS: { title: string; icon: any; color: string; endpoints: Endpoint
       },
       {
         method: 'POST',
-        path: '/api/v1/auth/avatar',
-        desc: 'Avatar yükle (base64). Cloudinary veya local storage.',
+        path: '/api/v1/auth/change-password',
+        desc: 'Mevcut şifreyi doğrulayarak yeni şifre belirler (en az 6 karakter). Şifre hashlenerek kaydedilir.',
         auth: true,
-        body: `{ "base64": "data:image/png;base64,...", "mimeType": "image/png" }`,
+        body: `{
+  "currentPassword": "eskiSifre123",
+  "newPassword": "yeniGucluSifre456"
+}`,
+        response: `{
+  "success": true,
+  "message": "Şifreniz güncellendi."
+}`,
+      },
+      {
+        method: 'GET',
+        path: '/api/v1/auth/security-info',
+        desc: 'Kullanıcının iki faktörlü doğrulama (2FA), son şifre değişikliği tarihi, aktif oturum sayısı ve e-posta doğrulama durumunu getirir. Güvenlik sekmesi açıldığında çağrılır.',
+        auth: true,
+        response: `{
+  "success": true,
+  "data": {
+    "twoFactorEnabled": false,
+    "lastPasswordChange": "2026-09-20T10:00:00.000Z",
+    "activeSessions": 1,
+    "emailVerified": true
+  }
+}`,
+      },
+      {
+        method: 'POST',
+        path: '/api/v1/auth/avatar',
+        desc: 'Avatar yükle (base64 PNG/JPEG/WEBP). Cloudinary veya yerel depolama kullanılır.',
+        auth: true,
+        body: `{ "base64": "data:image/png;base64,iVBORw0KGgo...", "mimeType": "image/png" }`,
+        response: `{
+  "success": true,
+  "data": { "avatarUrl": "/uploads/avatars/user_123.png" },
+  "message": "Profil fotoğrafınız güncellendi."
+}`,
       },
       {
         method: 'POST',
@@ -201,22 +236,40 @@ const API_GROUPS: { title: string; icon: any; color: string; endpoints: Endpoint
       {
         method: 'POST',
         path: '/api/v1/auth/2fa/setup',
-        desc: '2FA için TOTP secret üret ve QR kod döndür.',
+        desc: '2FA için TOTP secret üretir ve Google Authenticator / Authy ile uyumlu QR kod URL\'i döndürür.',
         auth: true,
+        response: `{
+  "success": true,
+  "data": {
+    "secret": "JBSWY3DPEHPK3PXP",
+    "qrCodeUrl": "otpauth://totp/Gunubirlik:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Gunubirlik"
+  },
+  "message": "QR kodu authenticator uygulamanızla tarayın."
+}`,
       },
       {
         method: 'POST',
         path: '/api/v1/auth/2fa/verify',
-        desc: '2FA kurulumunu doğrula ve aktif et.',
+        desc: 'Authenticator uygulamasındaki 6 haneli zaman bazlı kodu doğrulayarak 2FA korumasını aktif eder.',
         auth: true,
         body: `{ "code": "123456" }`,
+        response: `{
+  "success": true,
+  "data": { "twoFactorEnabled": true },
+  "message": "İki faktörlü doğrulama aktif edildi! 🎉"
+}`,
       },
       {
         method: 'POST',
         path: '/api/v1/auth/2fa/disable',
-        desc: '2FAyı devre dışı bırak.',
+        desc: 'Authenticator uygulamasındaki 6 haneli güncel kod ile 2FA korumasını devre dışı bırakır.',
         auth: true,
         body: `{ "code": "123456" }`,
+        response: `{
+  "success": true,
+  "data": { "twoFactorEnabled": false },
+  "message": "İki faktörlü doğrulama devre dışı bırakıldı."
+}`,
       },
       {
         method: 'POST',
@@ -295,33 +348,68 @@ sortBy=NEWEST|OLDEST|WAGE_HIGH|WAGE_LOW|NEAREST|URGENT`,
       {
         method: 'PUT',
         path: '/api/v1/jobs/{id}',
-        desc: 'İlan güncelle. Sadece ilanı veren işveren.',
+        desc: 'İlan bilgilerini günceller (başlık, açıklama, ücret, saatler, konum vb.). Sadece ilanı oluşturan işveren güncelleyebilir.',
         auth: true,
         role: 'EMPLOYER',
+        body: `{
+  "title": "İnşaat Ustası ve Kalıpçı Aranıyor",
+  "description": "Detaylı açıklama (en az 20 karakter)...",
+  "wageAmount": 2800,
+  "wageType": "DAILY",
+  "openingsTotal": 2
+}`,
+        response: `{
+  "success": true,
+  "data": { "id": "cmj...", "title": "İnşaat Ustası..." },
+  "message": "İş ilanı güncellendi."
+}`,
+      },
+      {
+        method: 'PATCH',
+        path: '/api/v1/jobs/{id}',
+        desc: 'İlan durumunu günceller (OPEN, FILLED, CLOSED, CANCELLED). İptal ve Emanet Koruma Kuralları: (1) İşe başlama saatine 2 saatten az kala işveren ilanı CANCELLED yaparsa %30 cayma tazminatı kesilerek onaylı işçinin cüzdan bakiyesine tazminat olarak aktarılır. (2) İşçi check-in yapmışsa (IN_PROGRESS) veya iş tamamlanmışsa (COMPLETED) ilan kesinlikle iptal edilemez. (3) Kalan emanet tutarı işverene anında iade edilir ve bekleyen başvurular bilgilendirilir.',
+        auth: true,
+        role: 'EMPLOYER',
+        body: `{ "status": "CANCELLED" }`,
+        response: `{
+  "success": true,
+  "data": { "id": "cmj...", "status": "CANCELLED" },
+  "message": "İlan durumu güncellendi."
+}`,
       },
       {
         method: 'DELETE',
         path: '/api/v1/jobs/{id}',
-        desc: 'İlanı sil.',
+        desc: 'İlanı kalıcı olarak siler. Güvenlik Kilidi: Onaylanmış (ACCEPTED), devam eden (IN_PROGRESS) veya tamamlanmış (COMPLETED) işçisi/başvurusu bulunan ilanlar sistem bütünlüğü gereği SİLİNEMEZ! İptal işlemi için PATCH status=CANCELLED kullanılmalıdır.',
         auth: true,
         role: 'EMPLOYER',
+        response: `{
+  "success": true,
+  "data": { "id": "cmj..." },
+  "message": "İş ilanı silindi."
+}`,
       },
       {
         method: 'POST',
         path: '/api/v1/jobs/{id}/save',
-        desc: 'İlanı kaydet / kayıttan çıkar (toggle).',
+        desc: 'İlanı kaydet / kayıttan çıkar (toggle). İşçiler beğendikleri ilanları favorilerine ekleyebilir.',
         auth: true,
+        response: `{
+  "success": true,
+  "data": { "removed": false },
+  "message": "İlan kaydedildi."
+}`,
       },
       {
         method: 'GET',
         path: '/api/v1/jobs/saved',
-        desc: 'Kullanıcının kaydettiği ilanları listeler.',
+        desc: 'Kullanıcının kaydettiği (favorilediği) ilanları listeler.',
         auth: true,
       },
       {
         method: 'GET',
         path: '/api/v1/jobs/categories',
-        desc: 'İş kategorilerini listeler.',
+        desc: 'İş kategorilerini (INSAAT, RESTAURANT, TEMIZLIK, NAKLIYE, TARIM, TEKNIK, SAGLIK, DIGER) etiket ve ikonlarıyla listeler.',
         auth: false,
       },
     ],
@@ -334,28 +422,50 @@ sortBy=NEWEST|OLDEST|WAGE_HIGH|WAGE_LOW|NEAREST|URGENT`,
       {
         method: 'POST',
         path: '/api/v1/applications',
-        desc: 'Bir ilana başvuru yap. İşçi rolü gerekli.',
+        desc: 'Bir ilana başvuru yap. İşçi rolü gerekli. İlana göre önceden başvuru yapılmışsa engellenir.',
         auth: true,
         role: 'WORKER',
         body: `{
-  "jobId": "ck...",
-  "message": "8 yıllık deneyimliyim...",
+  "jobId": "cmj...",
+  "message": "8 yıllık deneyimliyim, kendi ekipmanım var.",
   "proposedWage": 2800
+}`,
+        response: `{
+  "success": true,
+  "data": { "id": "cma...", "status": "PENDING" },
+  "message": "Başvurunuz işverene iletildi."
 }`,
       },
       {
         method: 'GET',
         path: '/api/v1/applications',
-        desc: 'İşçi: kendi başvuruları. İşveren: ilanlarına yapılan başvurular.',
+        desc: 'İşçi: kendi yaptığı başvurular. İşveren: kendi ilanlarına gelen başvurular.',
         auth: true,
-        query: `status=PENDING|ACCEPTED|REJECTED|WITHDRAWN|COMPLETED|NO_SHOW`,
+        query: `status=PENDING|ACCEPTED|REJECTED|IN_PROGRESS|COMPLETED|NO_SHOW`,
+      },
+      {
+        method: 'GET',
+        path: '/api/v1/applications/by-employer',
+        desc: 'İşveren: Kendi verdiği tüm ilanlara gelen tüm başvuruları tek listede getirir.',
+        auth: true,
+        role: 'EMPLOYER',
+        query: `status=PENDING|ACCEPTED|REJECTED|IN_PROGRESS|COMPLETED`,
+      },
+      {
+        method: 'GET',
+        path: '/api/v1/applications/by-job',
+        desc: 'İşveren: Belirli bir ilana yapılan başvuruları detaylı olarak listeler.',
+        auth: true,
+        role: 'EMPLOYER',
+        query: `jobId=cmj...&status=PENDING|ACCEPTED|REJECTED`,
       },
       {
         method: 'PUT',
         path: '/api/v1/applications/{id}',
-        desc: 'Başvuru durumunu güncelle. COMPLETED yapıldığında otomatik ödeme kaydı oluşturulur ve admin onayı bekler.',
+        desc: 'Başvuru durumunu güncelle (ACCEPTED veya REJECTED). Onaylandığında işçiye bildirim gider, iş kontenjanı takip edilir.',
         auth: true,
-        body: `{ "status": "ACCEPTED", "employerNote": "Yarın 08:00te gelin" }`,
+        role: 'EMPLOYER',
+        body: `{ "status": "ACCEPTED", "employerNote": "Yarın 08:00'de iş yerinde olun lütfen." }`,
       },
       {
         method: 'POST',
@@ -563,14 +673,14 @@ sortBy=NEWEST|OLDEST|WAGE_HIGH|WAGE_LOW|NEAREST|URGENT`,
     ],
   },
   {
-    title: 'QR ile İşe Başlama',
+    title: 'QR ile İşe Başlama, Bitirme & Emanet Ödeme',
     icon: QrCode,
     color: 'bg-cyan-100 text-cyan-700',
     endpoints: [
       {
         method: 'POST',
         path: '/api/v1/applications/{id}/qr-code',
-        desc: 'İşveren, kabul ettiği işçi için check-in veya check-out QR kodu üretir. Sadece işin sahibi işveren üretebilir. QR 5 dakika geçerli, tek kullanımlık. Base64 PNG görsel döner (frontend direkt <img src=...> ile gösterir).',
+        desc: 'İşveren, kabul ettiği işçi için check-in (işe başlama) veya check-out (işi tamamlama ve emanet ödemesini serbest bırakma) QR kodu üretir. Sadece işin sahibi işveren üretebilir. QR 5 dakika geçerli, tek kullanımlıktır. Base64 PNG görsel döner (frontend direkt <img src=...> ile gösterir).',
         auth: true,
         role: 'EMPLOYER',
         body: `{ "type": "CHECK_IN" }  // veya "CHECK_OUT"`,
@@ -600,7 +710,7 @@ sortBy=NEWEST|OLDEST|WAGE_HIGH|WAGE_LOW|NEAREST|URGENT`,
       {
         method: 'POST',
         path: '/api/v1/qr/scan',
-        desc: 'İşçi (veya işveren) QR kodunu tarar. Token doğrulanır, application durumu güncellenir. CHECK_IN → IN_PROGRESS, CHECK_OUT → COMPLETED + otomatik ödeme talebi oluşturulur. Her iki tarafa da bildirim gönderilir.',
+        desc: 'İşçi (veya işveren) QR kodunu kamerasıyla tarar. Token doğrulanır, application durumu güncellenir: CHECK_IN ile durum IN_PROGRESS (iş başladı) olur; CHECK_OUT ile durum COMPLETED olur ve işverenin emanetteki ödemesi otomatik olarak işçinin cüzdan bakiyesine aktarılır. Her iki tarafa da anlık bildirim gider.',
         auth: true,
         body: `{ "token": "a1b2c3d4e5f6... (QR içindeki token)" }`,
         response: `{
@@ -678,6 +788,17 @@ sortBy=NEWEST|OLDEST|WAGE_HIGH|WAGE_LOW|NEAREST|URGENT`,
         desc: 'Bir konuşmadaki mesajları sayfalanmış olarak listeler.',
         auth: true,
         query: `page=1&pageSize=50`,
+      },
+      {
+        method: 'POST',
+        path: '/api/v1/conversations/read',
+        desc: 'Konuşmadaki tüm mesajları okundu olarak işaretler ve okunmamış mesaj sayacını sıfırlar.',
+        auth: true,
+        body: `{ "conversationId": "cmc..." }`,
+        response: `{
+  "success": true,
+  "data": { "markedRead": 3 }
+}`,
       },
     ],
   },
@@ -793,7 +914,7 @@ sortBy=NEWEST|OLDEST|WAGE_HIGH|WAGE_LOW|NEAREST|URGENT`,
       {
         method: 'GET',
         path: '/api/v1/wallet/balance',
-        desc: 'Kullanıcının cüzdan bakiyesini getirir.',
+        desc: 'Kullanıcının cüzdan bakiyesini getirir. İşverenin emanete yatırdığı bakiye ve işçinin kazandığı hak edişler burada tutulur.',
         auth: true,
         response: `{
   "success": true,
@@ -807,98 +928,17 @@ sortBy=NEWEST|OLDEST|WAGE_HIGH|WAGE_LOW|NEAREST|URGENT`,
       {
         method: 'GET',
         path: '/api/v1/wallet/transactions',
-        desc: 'Cüzdan işlem geçmişini listeler. Filtreleme desteklenir.',
+        desc: 'Cüzdan işlem geçmişini listeler. Filtreleme seçenekleri: Tümü (ALL), Para Yatırma (DEPOSIT), Para Çekme (WITHDRAW), İş Ödemesi (JOB_PAYMENT), İade (REFUND).',
         auth: true,
-        query: `type=ALL|DEPOSIT|WITHDRAW|TRANSFER|QR_PAYMENT|JOB_PAYMENT|REFUND|FEE|BONUS
+        query: `type=ALL|DEPOSIT|WITHDRAW|JOB_PAYMENT|REFUND
 page=1&pageSize=20`,
       },
       {
         method: 'POST',
-        path: '/api/v1/wallet/withdraw',
-        desc: 'Para çekme talebi oluşturur. Min 50₺. Talep PENDING olarak kaydedilir, admin onayı bekler (1-3 iş günü).',
-        auth: true,
-        body: `{
-  "amount": 500,
-  "bankInfo": "Ahmet Yılmaz - TR99 0001 2345 6789",
-  "note": "Acil ihtiyaç"
-}`,
-      },
-      {
-        method: 'POST',
-        path: '/api/v1/wallet/transfer',
-        desc: 'Başka bir kullanıcıya para transferi. Min 10₺. Anında gerçekleşir, her iki tarafa işlem kaydı ve bildirim gönderilir.',
-        auth: true,
-        body: `{
-  "recipientId": "cmu...",
-  "amount": 250,
-  "description": "İnşaat işçisi ücreti",
-  "note": "Bugünkü iş için"
-}`,
-      },
-      {
-        method: 'POST',
-        path: '/api/v1/wallet/qr-pay/generate',
-        desc: 'QR ile ödeme kodu üretir. İşveren işçiye ödemek için kullanır. 5 dakika geçerli, tek kullanımlık. Base64 PNG görsel döner. Gönderenin bakiyesi kontrol edilir.',
-        auth: true,
-        body: `{
-  "amount": 2500,
-  "description": "İnşaat işçisi günlük ücret"
-}`,
-        response: `{
-  "success": true,
-  "data": {
-    "qrId": "cmu...",
-    "token": "a1b2c3d4e5f6...",
-    "qrImageDataUrl": "data:image/png;base64,iVBORw0KGgo...",
-    "expiresAt": "2026-09-26T12:35:00.000Z",
-    "amount": 2500,
-    "description": "İnşaat işçisi günlük ücret",
-    "generator": { "id": "...", "fullName": "Ahmet" }
-  }
-}`,
-      },
-      {
-        method: 'POST',
-        path: '/api/v1/wallet/qr-pay/scan',
-        desc: 'QR ödeme kodunu tarar. Token doğrulanır, gönderenin bakiyesinden düşülüp alıcının bakiyesine eklenir. Her iki tarafa WalletTransaction kaydı ve bildirim gönderilir.',
-        auth: true,
-        body: `{ "token": "a1b2c3d4e5f6..." }`,
-        response: `{
-  "success": true,
-  "data": {
-    "transactionId": "cmu...",
-    "balanceAfter": 2750,
-    "amount": 2500,
-    "type": "QR_PAYMENT",
-    "status": "COMPLETED",
-    "qrPayment": {
-      "id": "cmu...",
-      "amount": 2500,
-      "description": "İnşaat işçisi günlük ücret",
-      "generator": { "id": "...", "fullName": "Ahmet" }
-    }
-  }
-}`,
-      },
-      {
-        method: 'POST',
-        path: '/api/v1/admin/wallet/deposit',
-        desc: 'Admin: Kullanıcıya bakiye yükler. DEPOSIT işlemi oluşturur, anında bakiyeye yansır. Kullanıcıya bildirim gönderilir.',
-        auth: true,
-        role: 'ADMIN',
-        body: `{
-  "userId": "cmu...",
-  "amount": 1000,
-  "description": "Manuel bakiye yükleme",
-  "reference": "MANUAL_001",
-  "note": "Telefon ile ödeme"
-}`,
-      },
-      {
-        method: 'POST',
         path: '/api/v1/wallet/deposit-request',
-        desc: 'Para yatırma talebi oluşturur. Kullanıcı kendi banka hesabından EFT/Havale ile para yatıracak. IBAN, Ad Soyad ve banka adı girer. Talep PENDING olarak kaydedilir, admin EFT geldiğini onaylayınca bakiyeye yansır. Min 50₺.',
+        desc: 'İşveren / Admin: Cüzdana para yatırma talebi oluşturur (İşveren cüzdanında "Para Yatır" butonu). İşveren iş ilanları için gereken emanet bütçesini EFT/Havale ile banka hesabımıza gönderir. Dekont bilgisi ve IBAN girilir. Talep PENDING olarak kaydedilir, admin onaylayınca bakiyeye yansır. Min 50₺.',
         auth: true,
+        role: 'EMPLOYER',
         body: `{
   "amount": 1000,
   "senderName": "Ahmet Yılmaz",
@@ -917,27 +957,29 @@ page=1&pageSize=20`,
     "status": "PENDING",
     "createdAt": "2026-09-26T..."
   },
-  "message": "Para yatırma talebiniz alındı..."
+  "message": "Para yatırma talebiniz alındı. Admin onayından sonra bakiyenize yansıyacaktır."
 }`,
       },
       {
         method: 'GET',
         path: '/api/v1/wallet/deposit-requests',
-        desc: 'Kullanıcının para yatırma taleplerini listeler (geçmiş + durum).',
+        desc: 'İşveren: Geçmiş para yatırma taleplerini ve onay durumlarını listeler.',
         auth: true,
+        role: 'EMPLOYER',
         query: `page=1`,
       },
       {
         method: 'POST',
         path: '/api/v1/wallet/withdraw-request',
-        desc: 'Para çekme talebi oluşturur. Cüzdan bakiyesini IBAN\'a çekmek için. Bakiyeden hemen düşülür (emanete alınır), admin onayı sonrası IBAN\'a gönderilir. Reddedilirse para iade edilir. Min 50₺. 3-5 iş günü.',
+        desc: 'İşçi / Admin: Cüzdandan para çekme talebi oluşturur (İşçi cüzdanında "Para Çek" butonu). Tamamlanan işlerden kazanılan bakiye işçinin IBAN hesabına aktarılmak üzere talep edilir. Tutar bakiyeden derhal bloke edilir, admin banka transferini onayladıktan sonra çekim tamamlanır. Reddedilirse iade edilir. Min 50₺.',
         auth: true,
+        role: 'WORKER',
         body: `{
   "amount": 500,
   "recipientName": "Ahmet Yılmaz",
   "recipientIban": "TR99 0001 2345 6789 0123 4567 89",
   "recipientBank": "İş Bankası",
-  "recipientNote": "Acil ihtiyaç"
+  "recipientNote": "Haftalık kazanç çekimi"
 }`,
         response: `{
   "success": true,
@@ -946,15 +988,30 @@ page=1&pageSize=20`,
     "transaction": { "id": "cmu...", "type": "WITHDRAW", "amount": -500 },
     "balanceAfter": 16500
   },
-  "message": "Para çekme talebiniz alındı. 3-5 iş günü..."
+  "message": "Para çekme talebiniz alındı. 1-3 iş günü içinde IBAN hesabınıza yatırılacaktır."
 }`,
       },
       {
         method: 'GET',
         path: '/api/v1/wallet/withdraw-requests',
-        desc: 'Kullanıcının para çekme taleplerini listeler (geçmiş + durum).',
+        desc: 'İşçi: Geçmiş para çekme taleplerini ve durumlarını listeler.',
         auth: true,
+        role: 'WORKER',
         query: `page=1`,
+      },
+      {
+        method: 'POST',
+        path: '/api/v1/admin/wallet/deposit',
+        desc: 'Admin: Kullanıcıya bakiye yükler. DEPOSIT işlemi oluşturur, anında bakiyeye yansır. Kullanıcıya bildirim gönderilir.',
+        auth: true,
+        role: 'ADMIN',
+        body: `{
+  "userId": "cmu...",
+  "amount": 1000,
+  "description": "Manuel bakiye yükleme",
+  "reference": "MANUAL_001",
+  "note": "Telefon ile ödeme"
+}`,
       },
       {
         method: 'GET',
@@ -1125,6 +1182,135 @@ page=1&pageSize=20`,
         body: `{
   "resolution": "APPROVED",
   "note": "İşçi haklı, ödeme yapılsın"
+}`,
+      },
+      {
+        method: 'GET',
+        path: '/api/v1/admin/deposit-requests',
+        desc: 'Admin: Banka havalesi ile bakiye yükleme taleplerini listeler. Dekont veya referans koduyla eşleştirme için kullanılır.',
+        auth: true,
+        role: 'ADMIN',
+        query: `status=PENDING|APPROVED|REJECTED|ALL
+search=Ahmet
+page=1&pageSize=20`,
+        response: `{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "dep_123",
+        "userId": "usr_456",
+        "user": { "fullName": "Mehmet Demir", "phone": "+905321112233" },
+        "amount": 2500,
+        "bankName": "Ziraat Bankası",
+        "transferReference": "REF-789012",
+        "receiptUrl": "/uploads/receipts/rec_01.jpg",
+        "status": "PENDING",
+        "createdAt": "2026-10-02T14:30:00.000Z"
+      }
+    ],
+    "pagination": { "page": 1, "pageSize": 20, "total": 1, "totalPages": 1 }
+  }
+}`,
+      },
+      {
+        method: 'POST',
+        path: '/api/v1/admin/deposit-requests/{id}/approve',
+        desc: 'Admin: Para yatırma talebini onaylar. Tutar kullanıcının cüzdan bakiyesine aktarılır, transaction COMPLETED işaretlenir ve kullanıcıya anlık bildirim iletilir.',
+        auth: true,
+        role: 'ADMIN',
+        body: `{ "adminNote": "Banka ekstresinde havale teyit edildi, bakiye yüklendi." }`,
+        response: `{
+  "success": true,
+  "data": { "id": "dep_123", "status": "APPROVED", "newBalance": 2500 },
+  "message": "Para yatırma talebi onaylandı ve bakiye yüklendi."
+}`,
+      },
+      {
+        method: 'POST',
+        path: '/api/v1/admin/deposit-requests/{id}/reject',
+        desc: 'Admin: Para yatırma talebini gerekçe belirterek reddeder. Kullanıcıya ret bildirimi iletilir.',
+        auth: true,
+        role: 'ADMIN',
+        body: `{ "rejectionReason": "Referans koduna ait havale banka hesabımıza ulaşmadı." }`,
+        response: `{
+  "success": true,
+  "message": "Para yatırma talebi reddedildi."
+}`,
+      },
+      {
+        method: 'GET',
+        path: '/api/v1/admin/withdrawal-requests',
+        desc: 'Admin: Banka hesabına para çekme taleplerini listeler.',
+        auth: true,
+        role: 'ADMIN',
+        query: `status=PENDING|APPROVED|REJECTED|ALL
+page=1&pageSize=20`,
+        response: `{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "with_456",
+        "userId": "usr_789",
+        "amount": 1500,
+        "iban": "TR330006100511123456789012",
+        "accountHolder": "Ali Yılmaz",
+        "status": "PENDING",
+        "createdAt": "2026-10-02T16:00:00.000Z"
+      }
+    ],
+    "pagination": { "page": 1, "pageSize": 20, "total": 1, "totalPages": 1 }
+  }
+}`,
+      },
+      {
+        method: 'POST',
+        path: '/api/v1/admin/withdrawal-requests/{id}/approve',
+        desc: 'Admin: Para çekme talebini onaylar (Havale/EFT yapıldıktan sonra). Kilitli bakiye sistemden düşürülür.',
+        auth: true,
+        role: 'ADMIN',
+        body: `{ "notes": "EFT dekont numarası: EFT-994821" }`,
+        response: `{
+  "success": true,
+  "message": "Para çekme talebi onaylandı."
+}`,
+      },
+      {
+        method: 'POST',
+        path: '/api/v1/admin/withdrawal-requests/{id}/reject',
+        desc: 'Admin: Para çekme talebini reddeder ve kilitli tutarı kullanıcının cüzdanına iade eder.',
+        auth: true,
+        role: 'ADMIN',
+        body: `{ "rejectionReason": "Belirtilen IBAN numarası hesap sahibi ismiyle uyuşmuyor." }`,
+        response: `{
+  "success": true,
+  "message": "Para çekme talebi reddedildi ve bakiye iade edildi."
+}`,
+      },
+      {
+        method: 'GET',
+        path: '/api/v1/admin/conversations/{id}/messages',
+        desc: 'Admin Moderasyon: Şikayet veya ihlal şüphesi olan bir konuşmanın mesajlarını inceler. Hem filtrelenmiş hem de sansürsüz orijinal içerikleri ve ihlal tespitlerini döner.',
+        auth: true,
+        role: 'ADMIN',
+        query: `page=1&pageSize=50`,
+        response: `{
+  "success": true,
+  "data": {
+    "messages": [
+      {
+        "id": "msg_001",
+        "senderId": "usr_1",
+        "content": "05321234567 numaram",
+        "filteredContent": "[İletişim Bilgisi Gizlendi] numaram",
+        "flagged": true,
+        "flaggedReason": "PHONE",
+        "createdAt": "2026-10-02T12:00:00.000Z"
+      }
+    ],
+    "conversation": { "id": "conv_99", "participants": ["usr_1", "usr_2"] }
+  }
 }`,
       },
       {
@@ -1511,9 +1697,26 @@ limit=5  (opsiyonel, max 10)`,
       {
         method: 'GET',
         path: '/api/v1/health',
-        desc: 'Sistem sağlık kontrolü.',
+        desc: 'Sistem sağlık kontrolü. API durumu, servis adı, versiyon, timestamp ve kayıtlı çekirdek modül endpointlerinin durumunu döner.',
         auth: false,
-        response: `{ "success": true, "data": { "status": "ok", "timestamp": "..." } }`,
+        response: `{
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "service": "Günübirlik İş Bulma Platformu API",
+    "version": "1.0.0",
+    "timestamp": "2026-10-03T01:50:00.000Z",
+    "endpoints": {
+      "auth": ["/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/logout", "/api/v1/auth/me"],
+      "jobs": ["/api/v1/jobs", "/api/v1/jobs/[id]", "/api/v1/jobs/saved", "/api/v1/jobs/categories"],
+      "applications": ["/api/v1/applications", "/api/v1/applications/[id]", "/api/v1/applications/by-job", "/api/v1/applications/by-employer"],
+      "conversations": ["/api/v1/conversations", "/api/v1/conversations/[id]/messages"],
+      "notifications": ["/api/v1/notifications", "/api/v1/notifications/read-all"],
+      "users": ["/api/v1/users/[id]"],
+      "websocket": "Supabase Realtime WebSocket (wss://dyiqfounesugdljzzebh.supabase.co/realtime/v1/websocket)"
+    }
+  }
+}`,
       },
     ],
   },
@@ -1558,7 +1761,7 @@ function CodeBlock({ code }: { code: string }) {
 
 export default function ApiDocsClient() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-300">
       {/* Hero */}
       <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
         <div className="container mx-auto px-4 py-12 max-w-6xl">
@@ -1593,21 +1796,24 @@ export default function ApiDocsClient() {
             </div>
           </div>
 
-          <div className="mt-6 flex items-center gap-3 text-sm">
-            <a
-              href="/"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-lg transition-colors"
-            >
-              <Globe className="w-4 h-4" />
-              Ana Sayfaya Dön
-            </a>
-            <a
-              href="/admin"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-lg transition-colors"
-            >
-              <Shield className="w-4 h-4" />
-              Yönetim Paneli
-            </a>
+          <div className="mt-6 flex items-center justify-between gap-3 text-sm flex-wrap">
+            <div className="flex items-center gap-3">
+              <a
+                href="/"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-lg transition-colors"
+              >
+                <Globe className="w-4 h-4" />
+                Ana Sayfaya Dön
+              </a>
+              <a
+                href="/admin"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-lg transition-colors"
+              >
+                <Shield className="w-4 h-4" />
+                Yönetim Paneli
+              </a>
+            </div>
+            <ThemeToggle variant="dropdown" />
           </div>
         </div>
       </div>
@@ -1809,25 +2015,24 @@ export function useCurrentLocation() {
               </CardContent>
             </Card>
 
-            {/* QR ile işe başlama */}
+            {/* QR ile işe başlama ve emanet ödeme */}
             <Card className="border-cyan-200 bg-cyan-50">
               <CardContent className="p-4">
                 <h3 className="font-semibold text-cyan-900 mb-2 flex items-center gap-2">
                   <QrCode className="w-4 h-4" />
-                  QR ile İşe Başlama (Check-in / Check-out)
+                  QR ile İşe Başlama, Bitirme & Emanet Ödeme (Check-in / Check-out)
                 </h3>
                 <p className="text-sm text-cyan-800 mb-2">
-                  İşveren işçiyi kabul ettikten sonra, iş günü geldiğinde QR ile işe başlatır ve bitirir.
-                  Bu sistem sahtekarlığı önler — sadece fiziksel olarak iş yerinde olan kişi QR'ı tarayabilir.
+                  Platformumuzda sahtekarlığı ve anlaşmazlıkları önlemek için tüm iş başlangıç ve hak ediş ödemeleri
+                  <strong> İş QR Yaşam Döngüsü</strong> ile güvence altına alınmıştır. Cüzdan ekranında gereksiz serbest transfer ve harici QR ödeme butonları kaldırılmış;
+                  tüm hak ediş süreci gerçek iş doğrulamasına bağlanmıştır.
                 </p>
-                <ol className="text-sm text-cyan-800 space-y-1 ml-4 list-decimal mb-3">
-                  <li>İşveren applicationı <code className="bg-white px-1 rounded">ACCEPTED</code> yapar (zaten var)</li>
-                  <li>İş günü geldiğinde işveren <code className="bg-white px-1 rounded">POST /api/v1/applications/{`{id}`}/qr-code</code> ile <code className="bg-white px-1 rounded">CHECK_IN</code> QR üretir</li>
-                  <li>İşçi kendi telefonunda QR tarayıcı ile QR'ı tarar (veya işveren işçinin ekranında QR gösterir)</li>
-                  <li>İşçi <code className="bg-white px-1 rounded">POST /api/v1/qr/scan</code> çağırır → application <code className="bg-white px-1 rounded">IN_PROGRESS</code> olur</li>
-                  <li>İş bitiminde işveren <code className="bg-white px-1 rounded">CHECK_OUT</code> QR üretir, işçi tarar</li>
-                  <li>application <code className="bg-white px-1 rounded">COMPLETED</code> olur + otomatik <code className="bg-white px-1 rounded">PENDING</code> ödeme talebi oluşur</li>
-                  <li>Admin ödeme talebini onaylar → işveren öder → işçi alır</li>
+                <ol className="text-sm text-cyan-800 space-y-1.5 ml-4 list-decimal mb-3">
+                  <li><strong>İşveren Bakiye Yükler:</strong> İşveren ilan açabilmek ve işçi kabul edebilmek için cüzdanındaki <Badge variant="outline" className="bg-emerald-100 text-emerald-800 text-[10px]">Para Yatır</Badge> butonuyla EFT/Havale talebi oluşturur.</li>
+                  <li><strong>Başvuru Kabulü & Emanet (Escrow):</strong> İşveren başvuran işçiyi kabul ettiğinde (<code className="bg-white px-1 rounded">ACCEPTED</code>), iş yevmiyesi güvence için sistemde emanete ayrılır.</li>
+                  <li><strong>İşe Başlama QR (Check-in):</strong> İş günü işveren <code className="bg-white px-1 rounded">CHECK_IN</code> QR&apos;ı üretir. İşçi telefon kamerasıyla tarar (<code className="bg-white px-1 rounded">POST /api/v1/qr/scan</code>) → Başvuru <code className="bg-white px-1 rounded">IN_PROGRESS</code> olur ve mesai başlar.</li>
+                  <li><strong>İş Bitiş & Otomatik Ödeme QR (Check-out):</strong> Mesai bittiğinde işveren <code className="bg-white px-1 rounded">CHECK_OUT</code> QR&apos;ı üretir. İşçi taradığında başvuru <code className="bg-white px-1 rounded">COMPLETED</code> olur ve emanetteki yevmiye otomatik olarak işçinin cüzdan bakiyesine aktarılır.</li>
+                  <li><strong>İşçi Para Çeker:</strong> İşçi cüzdanında toplanan kazancını <Badge variant="outline" className="bg-blue-100 text-blue-800 text-[10px]">Para Çek</Badge> butonuyla dilediği zaman banka IBAN hesabına aktarır.</li>
                 </ol>
                 <p className="text-xs text-cyan-700 mb-2">
                   <strong>Web örneği (İşveren QR üretir ve gösterir):</strong>
@@ -1960,6 +2165,53 @@ function QrScanner() {
                 <p className="text-xs text-cyan-700 mt-3">
                   <strong>QR güvenlik notları:</strong> Her QR 5 dakika geçerli, tek kullanımlık. Token <code className="bg-white px-1 rounded">crypto.randomBytes(32)</code> ile üretilir. Aynı application için yeni QR üretildiğinde eskiler otomatik expire olur. Sadece ilgili işçi veya işveren tarayabilir.
                 </p>
+              </CardContent>
+            </Card>
+
+            {/* Cüzdan & Rol Ayrımı */}
+            <Card className="border-emerald-200 bg-emerald-50">
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-emerald-900 mb-2 flex items-center gap-2">
+                  <Wallet className="w-4 h-4" />
+                  Cüzdan Mimarisi ve Rol Ayrımı (İşveren vs İşçi)
+                </h3>
+                <p className="text-sm text-emerald-800 mb-3">
+                  Günübirlik platformunda güvenlik ve netlik esastır. İşe başlarken ve biterken QR okutulduğu için bağımsız serbest transfer ve harici QR ödeme butonları cüzdandan kaldırılmış; arayüz rollere göre optimize edilmiştir:
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                  <div className="bg-white rounded-lg p-3 border border-emerald-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-lg">🏢</span>
+                      <strong className="text-emerald-900 text-sm">İşveren (EMPLOYER)</strong>
+                      <Badge className="bg-emerald-600 text-white text-[10px] ml-auto">Para Yatır</Badge>
+                    </div>
+                    <p className="text-xs text-emerald-800 font-medium mb-1">
+                      Yalnızca <strong>&quot;Para Yatır&quot;</strong> butonunu görür.
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      İşveren, ilan yayınlayıp işçi kabul edebilmek için platform hesaplarına EFT/Havale ile bakiye yükler. İşe kabul edilen işçinin yevmiyesi sistem tarafından otomatik emanete alınır. İş bitiminde check-out QR tarandığında işçiye ödeme otomatik yapılır.
+                    </p>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-3 border border-blue-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-lg">👷</span>
+                      <strong className="text-blue-900 text-sm">İşçi (WORKER)</strong>
+                      <Badge className="bg-blue-600 text-white text-[10px] ml-auto">Para Çek</Badge>
+                    </div>
+                    <p className="text-xs text-blue-800 font-medium mb-1">
+                      Yalnızca <strong>&quot;Para Çek&quot;</strong> butonunu görür.
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      İşçi, çalıştığı günlerin sonunda Check-out QR taramasıyla otomatik kazandığı ve cüzdan bakiyesine yansıyan ücretini kendi banka IBAN hesabına çekmek için talep oluşturur. İşçiye para yatırma zorunluluğu yoktur.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-xs text-emerald-900 bg-emerald-100/70 p-2.5 rounded border border-emerald-300">
+                  <strong>Admin (ADMIN)</strong>: Hem &quot;Para Yatır&quot; hem de &quot;Para Çek&quot; butonlarını görür, gelen EFT bildirimlerini onaylar ve işçilerin banka çekim taleplerini yönetir.
+                </div>
               </CardContent>
             </Card>
 
@@ -2214,33 +2466,28 @@ async function checkVerificationStatus() {
                 </div>
 
                 <p className="text-xs text-orange-700 mb-2">
-                  <strong>Mimari:</strong> Next.js API (port 3000) ↔ Internal HTTP (port 3005) ↔ WebSocket Server (port 3004)
+                  <strong>Mimari:</strong> Next.js API ↔ Supabase Realtime WebSocket + OneSignal Push/Email
                 </p>
                 <CodeBlock code={`┌─────────────────────┐
 │  Next.js API (3000) │  createNotification() çağrılır
 └──────────┬──────────┘
            │
-           ├──→ 1. DB'ye kaydet (Prisma)
+           ├──→ 1. DB'ye kaydet (Prisma - kalıcı geçmiş)
            │
-           ├──→ 2. POST http://localhost:3005/internal/notify
+           ├──→ 2. Supabase Realtime WebSocket (wss://dyiqfounesugdljzzebh.supabase.co)
+           │       broadcastToUser(userId, 'notification:new', payload)
            │       │
            │       ▼
-           │    ┌─────────────────────┐
-           │    │  Internal HTTP (3005)│  WS server'a ilet
-           │    └──────────┬──────────┘
-           │                │
-           │                ▼
-           │    ┌─────────────────────┐
-           │    │  Socket.io (3004)    │  onlineUsers.get(userId)
-           │    │  → emit              │  → socket.emit('notification:new')
-           │    └─────────────────────┘
+           │    ┌───────────────────────────────────┐
+           │    │  Supabase Realtime Cloud (WS)     │  Kullanıcı kanalı: user:{userId}
+           │    │  → anlık ses, rozet, toast       │  Tüm bağlı client'lara 0-latency iletir
+           │    └───────────────────────────────────┘
            │
-           ├──→ 3. OneSignal REST API
+           ├──→ 3. OneSignal REST API (Native Cihaz Push)
            │       POST https://onesignal.com/api/v1/notifications
-           │       filters: [{ tag: 'user_id', relation: '=', value: userId }]  (push)
-           │       include_email_tokens: ['user1@email.com', ...]              (email)
+           │       include_aliases: { external_id: userId }  (mobil + web push)
            │
-           └──→ 4. OneSignal Email API (broadcast ve önemli olaylar)
+           └──→ 4. OneSignal Email API (işlem ve duyuru mailleri)
                    POST https://onesignal.com/api/v1/notifications
                    app_id + include_email_tokens + email_subject + email_body`} />
 
@@ -2273,7 +2520,7 @@ useEffect(() => {
 // {
 //   id: 'notif_...',
 //   userId: 'cmu...',
-//   type: 'APPLICATION_ACCEPTED' | 'NEW_MESSAGE' | 'SYSTEM_UPDATE' | ...,
+//   type: 'APPLICATION_ACCEPTED' | 'JOB_CANCELLED' | 'NEW_MESSAGE' | 'PAYMENT_APPROVED' | ...,
 //   title: 'Başvurunuz Onaylandı!',
 //   body: 'İnşaat İşçisi ilanına başvurunuz onaylandı.',
 //   data: { applicationId, jobId, ... },
@@ -2294,8 +2541,8 @@ const broadcast = await fetch('/api/v1/admin/broadcast', {
     htmlContent: '<h2>Yeni Özellik!</h2><p>QR ile işe başlama...</p>',
     type: 'SYSTEM_UPDATE',
     target: 'ALL',           // ALL | WORKERS | EMPLOYERS | SPECIFIC
-    sendPush: true,          // DB + WS + OneSignal Push
-    sendEmail: true,         // Resend ile email
+    sendPush: true,          // DB + Supabase Realtime + OneSignal Push
+    sendEmail: true,         // OneSignal Email ile e-posta
     // targetUserIds: ['id1', 'id2']  // target=SPECIFIC ise gerekli
   })
 })
@@ -2309,22 +2556,22 @@ const result = await fetch(\`/api/v1/admin/broadcast/\${broadcast.data.id}/send\
 // result.data.channels:
 // {
 //   db: 150,        // 150 kullanıcıya DB'ye kaydedildi
-//   ws: 23,         // 23 online kullanıcıya anlık toast
+//   ws: 23,         // 23 online kullanıcıya Supabase Realtime anlık toast
 //   push: 150,      // 150 kullanıcıya OneSignal push
 //   email: 145      // 145 e-posta (OneSignal Email ile, 5 kullanıcıda e-posta yok)
 // }`} />
 
-                <p className="text-xs text-orange-700 mt-3">
+                <div className="text-xs text-orange-700 mt-3">
                   <strong>Gerekli env var'lar:</strong>
                   <ul className="ml-4 mt-1 space-y-1 list-disc">
-                    <li><code className="bg-white px-1 rounded">ONESIGNAL_REST_API_KEY</code> — OneSignal push + email için (yoksa her ikisi de atlanır, sadece DB+WS)</li>
-                    <li><code className="bg-white px-1 rounded">ONESIGNAL_APP_ID</code> — OneSignal app ID (kodda hardcoded: <code className="bg-white px-1 rounded">6bddc78e-79e7-4701-9e46-6fca772e402a</code>)</li>
-                    <li><code className="bg-white px-1 rounded">INTERNAL_API_KEY</code> — Next.js ↔ WS server arası shared secret (default: <code className="bg-white px-1 rounded">gunubirlik_internal_2024</code>)</li>
-                    <li><code className="bg-white px-1 rounded">WS_INTERNAL_URL</code> — WS server internal HTTP URL (default: <code className="bg-white px-1 rounded">http://localhost:3005</code>)</li>
+                    <li><code className="bg-white px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code> — Supabase Realtime WebSocket URL (<code className="bg-white px-1 rounded">https://dyiqfounesugdljzzebh.supabase.co</code>)</li>
+                    <li><code className="bg-white px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> — Supabase Publishable / Anon Key</li>
+                    <li><code className="bg-white px-1 rounded">ONESIGNAL_APP_ID</code> — OneSignal App ID (<code className="bg-white px-1 rounded">6bddc78e-79e7-4701-9e46-6fca772e402a</code>)</li>
+                    <li><code className="bg-white px-1 rounded">ONESIGNAL_REST_API_KEY</code> — OneSignal REST API Key (Push ve Email gönderimi için)</li>
                   </ul>
-                </p>
+                </div>
                 <p className="text-xs text-orange-700 mt-3">
-                  <strong>WS Server başlatma:</strong> <code className="bg-white px-1 rounded">npx tsx mini-services/job-realtime/index.ts</code> — Socket.io (3004) + Internal HTTP (3005) aynı process'te çalışır.
+                  <strong>WebSocket Mimarisi:</strong> Sistemimiz 100% Supabase Realtime WebSocket altyapısı üzerinde çalışır. Harici yerel daemon ya da ayrı port (3004/3005) gerekmez; timeout sorunları engellenmiş ve yüksek erişilebilirlik sağlanmıştır.
                 </p>
 
                 <div className="mt-5 p-4 bg-white rounded-lg border border-purple-200">
@@ -2682,57 +2929,296 @@ OneSignal.Notifications.addEventListener('click', (event) => {
           </TabsContent>
 
           {/* WebSocket Tab */}
-          <TabsContent value="websocket" className="space-y-4">
-            <Card className="border-pink-200 bg-pink-50">
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-pink-900 mb-2 flex items-center gap-2">
-                  <Zap className="w-4 h-4" />
-                  WebSocket Bağlantısı
-                </h3>
-                <p className="text-sm text-pink-800 mb-3">
-                  Socket.io kullanır. Mesajlaşma, bildirimler, yazıyor göstergesi ve online durum için.
+          <TabsContent value="websocket" className="space-y-6">
+            <Card className="border-pink-200 bg-pink-50/70">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-pink-950 flex items-center gap-2 text-base">
+                    <Zap className="w-5 h-5 text-pink-600" />
+                    Supabase Realtime WebSocket Mimarisi
+                  </h3>
+                  <Badge className="bg-pink-600 text-white font-mono text-xs">v1.0.0 WS</Badge>
+                </div>
+                <p className="text-sm text-pink-900 leading-relaxed mb-4">
+                  Platformumuz, anlık bildirimler, canlı mesajlaşma, yazıyor göstergeleri ve sistem duyuruları için
+                  <strong> Supabase Realtime WebSocket</strong> protokolünü kullanır. Yerel sunucu portlarına veya daemon servislerine
+                  ihtiyaç duymadan doğrudan güvenli WebSocket bağlantısı (<code className="bg-white px-1.5 py-0.5 rounded text-pink-800 font-mono text-xs">wss://</code>) üzerinden
+                  çalışır. Timeout sorunları tamamen elimine edilmiş, arka planda otomatik yeniden bağlanma (reconnection) mekanizması entegre edilmiştir.
                 </p>
-                <CodeBlock code={`// Mobil (React Native / Flutter) veya Web
-const socket = io("https://your-domain.com/?XTransformPort=3004", {
-  transports: ["websocket"],
-  auth: { token: jwtToken }
-})
 
-socket.on("connect", () => console.log("Bağlandı"))
-socket.on("message:new", (msg) => {/* Yeni mesaj */})
-socket.on("notification:new", (n) => {/* Yeni bildirim */})`} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs mb-4">
+                  <div className="bg-white p-3 rounded-lg border border-pink-200 shadow-sm">
+                    <span className="font-semibold text-gray-800 block mb-1">WebSocket Sunucu Endpoint:</span>
+                    <code className="text-pink-700 font-mono break-all select-all">wss://dyiqfounesugdljzzebh.supabase.co/realtime/v1/websocket</code>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg border border-pink-200 shadow-sm">
+                    <span className="font-semibold text-gray-800 block mb-1">Public Anon API Key:</span>
+                    <code className="text-pink-700 font-mono break-all select-all">sb_publishable_irls6ujUsDGr3ImADjaKMA_pgxe-_hy</code>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-4 border border-pink-200 shadow-sm">
+                  <h4 className="font-semibold text-gray-900 text-xs uppercase tracking-wider mb-2">3 Temel Realtime Kanalı:</h4>
+                  <ul className="text-xs text-gray-700 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <span className="bg-pink-100 text-pink-800 px-1.5 py-0.5 rounded font-mono font-bold">user:{`{userId}`}</span>
+                      <span>Kullanıcıya özel kanal. Anlık bildirimler (<code className="font-mono">notification:new</code>), iş iptal/tazminat uyarıları (<code className="font-mono">job:cancelled</code>), cüzdan ve ödeme onayları burada dinlenir.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-mono font-bold">conversation:{`{conversationId}`}</span>
+                      <span>İki kullanıcı arasındaki sohbet kanalı. Anlık mesajlar (<code className="font-mono">message:new</code>), yazıyor göstergeleri (<code className="font-mono">typing:start/stop</code>) ve okundu bilgisi (<code className="font-mono">message:read</code>) akar.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-mono font-bold">gunubirlik:global</span>
+                      <span>Tüm kullanıcılara açık genel yayın kanalı. Yakındaki yeni iş ilanı alarmları (<code className="font-mono">job:new_nearby</code>) ve acil sistem duyuruları (<code className="font-mono">broadcast</code>).</span>
+                    </li>
+                  </ul>
+                </div>
               </CardContent>
             </Card>
 
+            {/* Event Listesi */}
             <Card>
               <CardHeader>
-                <CardTitle>Olaylar (Events)</CardTitle>
+                <CardTitle className="text-base flex items-center justify-between">
+                  <span>WebSocket Olayları (Events) &amp; Payload Şemaları</span>
+                  <Badge variant="outline" className="font-normal text-xs">10 Aktif Olay</Badge>
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {[
-                    { dir: 'client→server', event: 'conversation:join', data: '{ conversationId: "ck..." }', desc: 'Konuşma odasına katıl' },
-                    { dir: 'client→server', event: 'message:send', data: '{ conversationId, content, type, clientMessageId }', desc: 'Mesaj gönder' },
-                    { dir: 'client→server', event: 'typing:start', data: '{ conversationId }', desc: 'Yazıyor göstergesi başlat' },
-                    { dir: 'client→server', event: 'message:read', data: '{ conversationId, messageIds }', desc: 'Mesajları okundu işaretle' },
-                    { dir: 'server→client', event: 'message:new', data: '{ id, senderId, content, createdAt }', desc: 'Yeni mesaj alındı' },
-                    { dir: 'server→client', event: 'typing:start', data: '{ userId, conversationId }', desc: 'Karşı taraf yazıyor' },
-                    { dir: 'server→client', event: 'notification:new', data: '{ type, title, body }', desc: 'Anlık bildirim' },
-                    { dir: 'server→client', event: 'job:new_nearby', data: '{ jobId, title, latitude, longitude }', desc: 'Yakında yeni iş ilanı' },
-                    { dir: 'server→client', event: 'user:status', data: '{ userId, isOnline, lastActiveAt }', desc: 'Online durum değişti' },
-                    { dir: 'server→client', event: 'conversation:unread', data: '{ conversationId }', desc: 'Okunmamış mesaj var' },
+                    {
+                      channel: 'user:{userId}',
+                      dir: 'Server → Client',
+                      event: 'notification:new',
+                      desc: 'Kullanıcıya özel yeni anlık bildirim (başvuru kabulü, işe başlama QR onayı, para çekme/yatırma onayı, vb.).',
+                      data: `{
+  "id": "notif_cm123456789",
+  "userId": "usr_987654321",
+  "type": "APPLICATION_ACCEPTED", // veya JOB_CANCELLED, PAYMENT_APPROVED, QR_CHECKIN vb.
+  "title": "Başvurunuz Kabul Edildi! 🎉",
+  "body": "Kadıköy Restoran Servis Elemanı işine başvurunuz onaylandı.",
+  "data": { "jobId": "job_01", "applicationId": "app_01" },
+  "createdAt": "2026-10-02T18:45:00.000Z"
+}`,
+                    },
+                    {
+                      channel: 'user:{userId}',
+                      dir: 'Server → Client',
+                      event: 'job:cancelled',
+                      desc: 'İşveren iş başlangıcına 2 saatten az kala işi iptal ettiğinde işçiye iletilen özel tazminat ve iptal uyarısı (%30 tazminat işçi bakiyesine aktarılır).',
+                      data: `{
+  "jobId": "job_123",
+  "jobTitle": "Restoran Garsonluk",
+  "reason": "Mekan tadilata alındı",
+  "penaltyApplied": true,
+  "compensationAmount": 450, // TL cinsinden işçiye aktarılan tazminat
+  "cancelledAt": "2026-10-02T19:00:00.000Z"
+}`,
+                    },
+                    {
+                      channel: 'user:{userId}',
+                      dir: 'Server → Client',
+                      event: 'payment:update',
+                      desc: 'Banka havalesi ile bakiye yükleme (deposit) veya para çekme (withdrawal) talebinin admin tarafından onaylanması veya reddedilmesi.',
+                      data: `{
+  "transactionId": "tx_5544",
+  "type": "DEPOSIT", // veya WITHDRAWAL
+  "status": "APPROVED", // veya REJECTED
+  "amount": 1000,
+  "currentBalance": 3500,
+  "note": "Banka havalesi teyit edildi."
+}`,
+                    },
+                    {
+                      channel: 'conversation:{conversationId}',
+                      dir: 'Bidirectional (Client ↔ Server)',
+                      event: 'message:new',
+                      desc: 'Konuşma odasındaki tüm katılımcılara yeni sohbet mesajını iletir. Moderasyon filtrelemesi otomatik uygulanır.',
+                      data: `{
+  "id": "msg_8877",
+  "conversationId": "conv_9988",
+  "senderId": "usr_1122",
+  "content": "Merhaba, iş yerine ulaştım.",
+  "type": "TEXT", // veya IMAGE
+  "createdAt": "2026-10-02T19:05:00.000Z"
+}`,
+                    },
+                    {
+                      channel: 'conversation:{conversationId}',
+                      dir: 'Bidirectional (Client ↔ Server)',
+                      event: 'typing:start',
+                      desc: 'Kullanıcının klavyede yazmaya başladığını karşı tarafa bildirir.',
+                      data: `{
+  "conversationId": "conv_9988",
+  "userId": "usr_1122"
+}`,
+                    },
+                    {
+                      channel: 'conversation:{conversationId}',
+                      dir: 'Bidirectional (Client ↔ Server)',
+                      event: 'typing:stop',
+                      desc: 'Kullanıcının yazmayı bıraktığını karşı tarafa bildirir.',
+                      data: `{
+  "conversationId": "conv_9988",
+  "userId": "usr_1122"
+}`,
+                    },
+                    {
+                      channel: 'conversation:{conversationId}',
+                      dir: 'Bidirectional (Client ↔ Server)',
+                      event: 'message:read',
+                      desc: 'Alıcı mesajı okuduğunda mavi tik / görüldü durumunu günceller.',
+                      data: `{
+  "conversationId": "conv_9988",
+  "userId": "usr_3344",
+  "readAt": "2026-10-02T19:06:00.000Z"
+}`,
+                    },
+                    {
+                      channel: 'gunubirlik:global',
+                      dir: 'Server → Client',
+                      event: 'job:new_nearby',
+                      desc: 'Kullanıcının konumuna yakın yeni bir günübirlik iş ilanı yayınlandığında harita ve liste görünümünü anlık tetikler.',
+                      data: `{
+  "jobId": "job_5544",
+  "title": "Acil Depo Görevlisi",
+  "city": "İstanbul",
+  "district": "Kadıköy",
+  "latitude": 40.9904,
+  "longitude": 29.0291,
+  "dailyWage": 1600,
+  "urgent": true
+}`,
+                    },
+                    {
+                      channel: 'gunubirlik:global',
+                      dir: 'Server → Client',
+                      event: 'broadcast',
+                      desc: 'Tüm online kullanıcılara yönelik genel duyuru, kampanya veya bakım bildirimi.',
+                      data: `{
+  "id": "broad_001",
+  "title": "🎉 Bayram Kampanyası Başladı",
+  "message": "Tüm tamamlanan işlerde komisyon indirimi uygulandı!",
+  "type": "PROMOTION"
+}`,
+                    },
+                    {
+                      channel: 'user:{userId}',
+                      dir: 'Server → Client',
+                      event: 'conversation:unread',
+                      desc: 'Kullanıcının okunmamış mesaj sayacını (unread badge) güncellemesi için tetiklenir.',
+                      data: `{
+  "conversationId": "conv_9988",
+  "unreadCount": 3
+}`,
+                    },
                   ].map((e, i) => (
-                    <div key={i} className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <Badge variant={e.dir.startsWith('client') ? 'default' : 'secondary'} className="text-xs">
+                    <div key={i} className="border border-gray-200 rounded-lg p-3.5 hover:bg-gray-50/80 transition-colors">
+                      <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge className="bg-pink-600 text-white font-mono text-xs">
+                            {e.event}
+                          </Badge>
+                          <Badge variant="outline" className="font-mono text-xs bg-slate-50 text-slate-700">
+                            {e.channel}
+                          </Badge>
+                        </div>
+                        <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
                           {e.dir}
-                        </Badge>
-                        <code className="text-sm font-mono font-semibold text-pink-700">{e.event}</code>
+                        </span>
                       </div>
-                      <p className="text-xs text-gray-600 mb-1">{e.desc}</p>
-                      <code className="text-xs text-gray-500">{e.data}</code>
+                      <p className="text-xs text-gray-600 mb-2 leading-relaxed">{e.desc}</p>
+                      <CodeBlock code={e.data} />
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Entegrasyon Kod Örnekleri */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <span>📱 İstemci Entegrasyon Kodları (Client Implementations)</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-xs font-semibold text-gray-700 mb-1">1. Web / React / Next.js (TypeScript — @supabase/supabase-js):</p>
+                  <CodeBlock code={`import { createClient } from '@supabase/supabase-js'
+
+const SUPABASE_URL = 'https://dyiqfounesugdljzzebh.supabase.co'
+const SUPABASE_ANON_KEY = 'sb_publishable_irls6ujUsDGr3ImADjaKMA_pgxe-_hy'
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  realtime: { params: { eventsPerSecond: 20 } }
+})
+
+// Kullanıcı kanalına abone ol
+const userChannel = supabase.channel(\`user:\${userId}\`, {
+  config: { broadcast: { self: true } }
+})
+
+userChannel
+  .on('broadcast', { event: 'notification:new' }, ({ payload }) => {
+    console.log('Anlık bildirim:', payload.title, payload.body)
+  })
+  .on('broadcast', { event: 'job:cancelled' }, ({ payload }) => {
+    alert(\`İş iptal edildi: \${payload.reason}. Tazminat: \${payload.compensationAmount} TL\`)
+  })
+  .subscribe((status) => {
+    if (status === 'SUBSCRIBED') console.log('Kullanıcı kanalı aktif!')
+  })`} />
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-gray-700 mb-1">2. React Native / Expo Mobile Entegrasyonu:</p>
+                  <CodeBlock code={`// src/lib/realtime-mobile.ts
+import { createClient } from '@supabase/supabase-js'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+export const supabase = createClient(
+  'https://dyiqfounesugdljzzebh.supabase.co',
+  'sb_publishable_irls6ujUsDGr3ImADjaKMA_pgxe-_hy',
+  {
+    auth: {
+      storage: AsyncStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
+  }
+)
+
+export function subscribeToUserEvents(userId: string, onNotification: (notif: any) => void) {
+  const channel = supabase.channel(\`user:\${userId}\`)
+  channel.on('broadcast', { event: 'notification:new' }, ({ payload }) => {
+    onNotification(payload)
+  })
+  channel.subscribe()
+  return () => { supabase.removeChannel(channel) }
+}`} />
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-gray-700 mb-1">3. Flutter Entegrasyonu (supabase_flutter):</p>
+                  <CodeBlock code={`import 'package:supabase_flutter/supabase_flutter.dart';
+
+await Supabase.initialize(
+  url: 'https://dyiqfounesugdljzzebh.supabase.co',
+  anonKey: 'sb_publishable_irls6ujUsDGr3ImADjaKMA_pgxe-_hy',
+);
+
+final channel = Supabase.instance.client.channel('user:$userId');
+
+channel.onBroadcast(
+  event: 'notification:new',
+  callback: (payload) {
+    print('Yeni bildirim: \${payload['title']}');
+  },
+).subscribe();`} />
                 </div>
               </CardContent>
             </Card>
@@ -2741,16 +3227,16 @@ socket.on("notification:new", (n) => {/* Yeni bildirim */})`} />
 
         {/* Footer */}
         <div className="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
-          <p className="font-medium text-gray-700">Günübirlik İş Bul — API v1.0</p>
-          <p className="mt-1">
-            Next.js 16 + Prisma + JWT + Socket.io + Resend + Cloudinary
+          <p className="font-semibold text-gray-800">Günübirlik İş Bul — Resmi API Dokümantasyonu v1.0</p>
+          <p className="mt-1 text-xs text-gray-500">
+            Next.js 16 (App Router) · Prisma ORM · PostgreSQL · Supabase Realtime WebSocket · OneSignal Push &amp; Email · Cloudinary CDN
           </p>
           <div className="mt-4 flex items-center justify-center gap-3">
-            <a href="/" className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700">
+            <a href="/" className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium">
               <Globe className="w-3.5 h-3.5" /> Ana Sayfa
             </a>
             <span>·</span>
-            <a href="/admin" className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700">
+            <a href="/admin" className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium">
               <Shield className="w-3.5 h-3.5" /> Yönetim Paneli
             </a>
           </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAdminAuth, adminFetch } from '@/lib/admin-store'
+import Logo from '@/components/shared/logo'
 import {
   LayoutDashboard,
   Users,
@@ -86,12 +87,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         {/* Logo */}
         <div className="h-16 px-6 flex items-center justify-between border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <Shield className="w-5 h-5 text-white" strokeWidth={2.5} />
-            </div>
+            <Logo size="sm" variant="icon" showText={false} />
             <div>
-              <p className="font-bold text-sm leading-tight">Yönetim Paneli</p>
-              <p className="text-[10px] text-slate-500 leading-tight">Günübirlik İş Bul</p>
+              <p className="font-bold text-sm leading-tight text-white">Yönetim Paneli</p>
+              <p className="text-[10px] text-slate-400 leading-tight">Günübirlik İş Bul</p>
             </div>
           </div>
           <button
@@ -113,8 +112,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               badge = stats.moderation.pendingFlags
             } else if (item.badgeKey === 'pendingJobs' && stats?.jobs?.pendingApproval > 0) {
               badge = stats.jobs.pendingApproval
-            } else if (item.badgeKey === 'pendingPayments' && stats?.payments?.pending > 0) {
-              badge = stats.payments.pending
+            } else if (item.badgeKey === 'pendingPayments') {
+              const totalPending = (stats?.payments?.pending || 0) + (stats?.payments?.pendingDeposits || 0) + (stats?.payments?.pendingWithdrawals || 0)
+              if (totalPending > 0) badge = totalPending
             } else if (item.badgeKey === 'pendingVerifications' && stats?.verification?.pending > 0) {
               badge = stats.verification.pending
             }

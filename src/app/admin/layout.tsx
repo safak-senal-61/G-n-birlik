@@ -6,13 +6,27 @@ import AdminLogin from '@/components/admin/admin-login'
 import AdminShell from '@/components/admin/admin-shell'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, initialize } = useAdminAuth()
+  const { isAuthenticated } = useAdminAuth()
   const [checked, setChecked] = useState(false)
 
   useEffect(() => {
-    initialize()
-    setChecked(true)
-  }, [initialize])
+    let mounted = true
+    const init = async () => {
+      try {
+        await useAdminAuth.getState().initialize()
+      } catch (err) {
+        console.error('Admin auth init error:', err)
+      } finally {
+        if (mounted) {
+          setChecked(true)
+        }
+      }
+    }
+    init()
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   if (!checked) {
     return (

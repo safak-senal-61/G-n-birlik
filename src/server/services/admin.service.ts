@@ -49,6 +49,9 @@ export async function getDashboardStats() {
     completedPaymentsToday,
     pendingVerifications,
     verifiedEmployers,
+    pendingDepositRequests,
+    pendingDepositRequestsTotalAmount,
+    pendingWithdrawalRequests,
   ] = await Promise.all([
     db.user.count(),
     db.user.count({ where: { createdAt: { gte: todayStart } } }),
@@ -82,6 +85,13 @@ export async function getDashboardStats() {
     // Yeni: işveren doğrulama
     db.verificationRequest.count({ where: { status: 'PENDING' } }),
     db.user.count({ where: { role: 'EMPLOYER', isVerified: true } }),
+    // Yeni: para yatırma ve çekme talepleri
+    db.depositRequest.count({ where: { status: 'PENDING' } }),
+    db.depositRequest.aggregate({
+      where: { status: 'PENDING' },
+      _sum: { amount: true },
+    }),
+    db.withdrawalRequest.count({ where: { status: 'PENDING' } }),
   ])
 
   // Son 7 gün için trend verisi
@@ -137,6 +147,10 @@ export async function getDashboardStats() {
       pendingTotalAmount: pendingPaymentsTotalAmount._sum.amount || 0,
       disputed: disputedPayments,
       completedToday: completedPaymentsToday,
+      pendingDeposits: pendingDepositRequests,
+      pendingDepositsTotalAmount: pendingDepositRequestsTotalAmount._sum.amount || 0,
+      pendingWithdrawals: pendingWithdrawalRequests,
+      totalPendingFinancialActions: pendingPayments + pendingDepositRequests + pendingWithdrawalRequests,
     },
     verification: {
       pending: pendingVerifications,
@@ -1216,6 +1230,185 @@ export async function resolveDispute(params: {
   })
 
   return { payment: { id: updated.id, status: updated.status }, auditLogId: auditLog.id }
+}
+
+// ====================================================================
+// PARA YATIRMA VE ÇEKME TALEPLERİ (Cüzdan Finans Moderasyonu)
+// ====================================================================
+
+export interface DepositRequestListFilters {
+  status?: string // 'PENDING' | 'APPROVED' | 'REJECTED' | 'ALL'
+  search?: string
+  page?: number
+  pageSize?: number
+}
+
+export async function listDepositRequests(filters: DepositRequestListFilters = {}) {
+  const { status = 'PENDING', search, page = 1, pageSize = 20 } = filters
+
+  const where: any = {}
+  if (status && status !== 'ALL') {
+    where.status = status
+  }
+
+  if (search && search.trim()) {
+    const s = search.trim()
+    where.OR = [
+      { senderName: { contains: s } },
+      { senderIban: { contains: s } },
+      { senderBank: { contains: s } },
+      { user: { fullName: { contains: s } } },
+      { user: { email: { contains: s } } },
+    ]
+  }
+
+  const skip = (page - 1) * pageSize
+  const [items, total] = await Promise.all([
+    db.depositRequest.findMany({
+      where,
+      skip,
+      take: pageSize,
+      orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+            avatarUrl: true,
+            role: true,
+            walletBalance: true,
+            isVerified: true,
+            companyName: true,
+          },
+        },
+      },
+    }),
+    db.depositRequest.count({ where }),
+  ])
+
+  // Toplam tutar (mevcut filtreye göre)
+  const amountAgg = await db.depositRequest.aggregate({
+    where,
+    _sum: { amount: true },
+    _count: true,
+  })
+
+  // İnceleyen admin bilgilerini de çek
+  const reviewerIds = Array.from(new Set(items.map((i) => i.reviewedById).filter(Boolean))) as string[]
+  let reviewersMap: Record<string, { id: string; fullName: string; email: string }> = {}
+  if (reviewerIds.length > 0) {
+    const reviewers = await db.user.findMany({
+      where: { id: { in: reviewerIds } },
+      select: { id: true, fullName: true, email: true },
+    })
+    reviewersMap = Object.fromEntries(reviewers.map((r) => [r.id, r]))
+  }
+
+  const mapped = items.map((i) => ({
+    ...i,
+    reviewedBy: i.reviewedById ? reviewersMap[i.reviewedById] || null : null,
+  }))
+
+  return {
+    items: mapped,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+    summary: {
+      totalAmount: amountAgg._sum.amount || 0,
+      count: amountAgg._count,
+    },
+  }
+}
+
+export async function listWithdrawalRequests(filters: {
+  status?: string
+  search?: string
+  page?: number
+  pageSize?: number
+} = {}) {
+  const { status = 'PENDING', search, page = 1, pageSize = 20 } = filters
+
+  const where: any = {}
+  if (status && status !== 'ALL') {
+    where.status = status
+  }
+
+  if (search && search.trim()) {
+    const s = search.trim()
+    where.OR = [
+      { recipientName: { contains: s } },
+      { recipientIban: { contains: s } },
+      { recipientBank: { contains: s } },
+      { user: { fullName: { contains: s } } },
+      { user: { email: { contains: s } } },
+    ]
+  }
+
+  const skip = (page - 1) * pageSize
+  const [items, total] = await Promise.all([
+    db.withdrawalRequest.findMany({
+      where,
+      skip,
+      take: pageSize,
+      orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+            avatarUrl: true,
+            role: true,
+            walletBalance: true,
+            companyName: true,
+          },
+        },
+      },
+    }),
+    db.withdrawalRequest.count({ where }),
+  ])
+
+  const amountAgg = await db.withdrawalRequest.aggregate({
+    where,
+    _sum: { amount: true },
+    _count: true,
+  })
+
+  const reviewerIds = Array.from(new Set(items.map((i) => i.reviewedById).filter(Boolean))) as string[]
+  let reviewersMap: Record<string, { id: string; fullName: string; email: string }> = {}
+  if (reviewerIds.length > 0) {
+    const reviewers = await db.user.findMany({
+      where: { id: { in: reviewerIds } },
+      select: { id: true, fullName: true, email: true },
+    })
+    reviewersMap = Object.fromEntries(reviewers.map((r) => [r.id, r]))
+  }
+
+  const mapped = items.map((i) => ({
+    ...i,
+    reviewedBy: i.reviewedById ? reviewersMap[i.reviewedById] || null : null,
+  }))
+
+  return {
+    items: mapped,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    },
+    summary: {
+      totalAmount: amountAgg._sum.amount || 0,
+      count: amountAgg._count,
+    },
+  }
 }
 
 // ====================================================================

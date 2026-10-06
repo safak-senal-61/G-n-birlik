@@ -28,17 +28,16 @@ export default function MessagesScreen() {
   const [isTyping, setIsTyping] = useState(false)
   const [connected, setConnected] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const typingTimeoutRef = useRef<any>()
+  const typingTimeoutRef = useRef<any>(null)
 
-  // WebSocket bağla
+  // Supabase Realtime bağla
   useEffect(() => {
     if (!user) return
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
-    if (token) {
-      const socket = connectSocket(token)
-      socket.on('connect', () => setConnected(true))
-      socket.on('disconnect', () => setConnected(false))
-    }
+    const socket = connectSocket(token || user.id)
+    socket.on('connect', () => setConnected(true))
+    socket.on('disconnect', () => setConnected(false))
+    if (socket.connected) setConnected(true)
 
     const unsubNewMsg = on('message:new', (msg: any) => {
       if (msg.conversationId === selectedId) {
@@ -192,7 +191,7 @@ export default function MessagesScreen() {
   return (
     <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
       <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Mesajlar</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">Mesajlar</h1>
         <Badge variant={connected ? 'default' : 'secondary'} className={connected ? 'bg-green-500' : 'text-xs flex-shrink-0'}>
           <Circle className={`w-2 h-2 mr-1 ${connected ? 'fill-white' : 'fill-gray-400'}`} />
           <span className="hidden sm:inline">{connected ? 'Bağlı' : 'Bağlanıyor...'}</span>
@@ -202,15 +201,15 @@ export default function MessagesScreen() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 h-[calc(100dvh-180px)] sm:h-[600px]">
         {/* Konuşma listesi */}
-        <div className={`border rounded-lg overflow-hidden ${selectedId ? 'hidden md:block' : ''}`}>
+        <div className={`border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden bg-white dark:bg-slate-900/90 ${selectedId ? 'hidden md:block' : ''}`}>
           <ScrollArea className="h-full custom-scrollbar">
             {loading ? (
               <div className="p-3 space-y-2">
                 {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-16" />)}
               </div>
             ) : conversations.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
-                <MessageSquare className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+              <div className="p-6 text-center text-gray-500 dark:text-slate-400">
+                <MessageSquare className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-slate-600" />
                 <p className="text-sm">Henüz mesajlaşma yok</p>
               </div>
             ) : (
@@ -218,32 +217,32 @@ export default function MessagesScreen() {
                 <button
                   key={conv.id}
                   onClick={() => selectConversation(conv.id)}
-                  className={`w-full text-left p-3 border-b hover:bg-gray-50 transition flex items-start gap-3 ${
-                    selectedId === conv.id ? 'bg-emerald-50' : ''
+                  className={`w-full text-left p-3 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-slate-800/80 transition flex items-start gap-3 ${
+                    selectedId === conv.id ? 'bg-emerald-50 dark:bg-emerald-950/40' : ''
                   }`}
                 >
                   <Avatar className="w-10 h-10 flex-shrink-0">
-                    <AvatarFallback className="bg-emerald-100 text-emerald-700 text-xs">
+                    <AvatarFallback className="bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 text-xs">
                       {initials(conv.participant?.fullName || conv.participant?.companyName)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <h4 className="font-medium text-gray-900 text-sm truncate">
+                      <h4 className="font-medium text-gray-900 dark:text-white text-sm truncate">
                         {conv.participant?.companyName || conv.participant?.fullName}
                       </h4>
                       {conv.lastMessage && (
-                        <span className="text-[10px] text-gray-400 flex-shrink-0">
+                        <span className="text-[10px] text-gray-400 dark:text-slate-500 flex-shrink-0">
                           {formatRelative(conv.lastMessage.createdAt)}
                         </span>
                       )}
                     </div>
                     {conv.job && (
-                      <p className="text-[11px] text-emerald-600 truncate">
+                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400 truncate">
                         💼 {conv.job.title}
                       </p>
                     )}
-                    <p className="text-xs text-gray-500 truncate mt-0.5">
+                    <p className="text-xs text-gray-500 dark:text-slate-400 truncate mt-0.5">
                       {conv.lastMessage?.content || 'Yeni konuşma'}
                     </p>
                   </div>
@@ -259,33 +258,33 @@ export default function MessagesScreen() {
         </div>
 
         {/* Mesaj içeriği */}
-        <div className={`md:col-span-2 border rounded-lg flex flex-col overflow-hidden ${!selectedId ? 'hidden md:flex' : ''}`}>
+        <div className={`md:col-span-2 border border-gray-200 dark:border-white/10 rounded-lg flex flex-col overflow-hidden bg-white dark:bg-slate-900/90 ${!selectedId ? 'hidden md:flex' : ''}`}>
           {!selected ? (
-            <div className="flex-1 flex items-center justify-center text-gray-500 p-4">
+            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-slate-400 p-4">
               <div className="text-center">
-                <MessageSquare className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                <MessageSquare className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-slate-600" />
                 <p className="text-sm">Bir konuşma seçin</p>
               </div>
             </div>
           ) : (
             <>
               {/* Header */}
-              <div className="p-2 sm:p-3 border-b flex items-center gap-2 sm:gap-3 bg-white">
+              <div className="p-2 sm:p-3 border-b border-gray-200 dark:border-white/10 flex items-center gap-2 sm:gap-3 bg-white dark:bg-slate-900">
                 <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 flex-shrink-0" onClick={() => setSelectedId(null)}>
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
                 <Avatar className="w-9 h-9 flex-shrink-0">
-                  <AvatarFallback className="bg-emerald-100 text-emerald-700 text-xs">
+                  <AvatarFallback className="bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 text-xs">
                     {initials(selected.participant?.fullName || selected.participant?.companyName)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">
+                  <div className="font-medium text-sm truncate text-gray-900 dark:text-white">
                     {selected.participant?.companyName || selected.participant?.fullName}
                   </div>
                   {selected.job && (
                     <button
-                      className="text-xs text-emerald-600 hover:underline truncate block max-w-full"
+                      className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline truncate block max-w-full"
                       onClick={() => go('job-detail', { jobId: selected.job.id })}
                     >
                       💼 <span className="truncate">{selected.job.title}</span>
@@ -293,7 +292,7 @@ export default function MessagesScreen() {
                   )}
                 </div>
                 {selected.participant?.isVerified && (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300 text-[10px] flex-shrink-0">
+                  <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700/60 text-[10px] flex-shrink-0">
                     <span className="hidden sm:inline">Doğrulanmış</span>
                     <span className="sm:hidden">✓</span>
                   </Badge>
@@ -301,7 +300,7 @@ export default function MessagesScreen() {
               </div>
 
               {/* Mesajlar */}
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-gray-50 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-gray-50 dark:bg-slate-950/70 custom-scrollbar">
                 {loadingMessages ? (
                   <div className="space-y-2">
                     {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}
@@ -319,11 +318,11 @@ export default function MessagesScreen() {
                             className={`max-w-[80%] sm:max-w-[75%] rounded-2xl px-3 py-2 ${
                               isMe
                                 ? 'bg-emerald-600 text-white rounded-br-sm'
-                                : 'bg-white text-gray-900 border border-gray-200 rounded-bl-sm'
+                                : 'bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 border border-gray-200 dark:border-white/10 rounded-bl-sm shadow-xs'
                             } ${msg.pending ? 'opacity-60' : ''}`}
                           >
                             <p className="text-sm break-words">{msg.content}</p>
-                            <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${isMe ? 'text-emerald-100' : 'text-gray-400'}`}>
+                            <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${isMe ? 'text-emerald-100' : 'text-gray-400 dark:text-slate-400'}`}>
                               {msg.pending && <Circle className="w-2 h-2 fill-current" />}
                               {formatTime(msg.createdAt)}
                             </div>
@@ -333,7 +332,7 @@ export default function MessagesScreen() {
                     })}
                     {isTyping && (
                       <div className="flex justify-start">
-                        <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-3 py-2">
+                        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-2xl rounded-bl-sm px-3 py-2">
                           <div className="flex gap-1">
                             <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                             <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -348,7 +347,7 @@ export default function MessagesScreen() {
               </div>
 
               {/* Mesaj input - Mobil klavye için sticky */}
-              <div className="p-2 sm:p-3 border-t bg-white flex gap-2">
+              <div className="p-2 sm:p-3 border-t border-gray-200 dark:border-white/10 bg-white dark:bg-slate-900 flex gap-2">
                 <Input
                   placeholder="Mesajınızı yazın..."
                   value={newMessage}
@@ -359,7 +358,7 @@ export default function MessagesScreen() {
                       handleSend()
                     }
                   }}
-                  className="flex-1 h-11"
+                  className="flex-1 h-11 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
                 />
                 <Button onClick={handleSend} disabled={!newMessage.trim()} className="bg-emerald-600 hover:bg-emerald-700 h-11 w-11 p-0 flex-shrink-0">
                   <Send className="w-4 h-4" />

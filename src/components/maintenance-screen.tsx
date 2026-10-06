@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Logo from '@/components/shared/logo'
+import { WhatsAppIcon } from '@/components/shared/social-icons'
 import {
   Wrench,
   Clock,
@@ -117,13 +119,16 @@ export default function MaintenanceScreen() {
         <div className="w-full max-w-2xl">
           {/* Logo & Başlık */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl shadow-indigo-500/30 mb-6 animate-pulse">
-              <Wrench className="w-12 h-12 text-white" strokeWidth={2} />
+            <div className="relative inline-flex items-center justify-center mb-4">
+              <Logo size="xl" variant="icon" showText={false} />
+              <span className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-amber-500/90 text-amber-950 flex items-center justify-center border-2 border-slate-950 shadow-lg">
+                <Wrench className="w-4 h-4" />
+              </span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-black text-white mb-2 tracking-tight">
               {siteName}
             </h1>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-medium">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
               Bakım Modu Aktif
             </div>
@@ -206,7 +211,7 @@ export default function MaintenanceScreen() {
                   {data?.contactWhatsapp && (
                     <ContactLink
                       href={data.contactWhatsapp}
-                      icon={MessageCircle}
+                      icon={WhatsAppIcon}
                       label="WhatsApp"
                       value="Mesaj Gönder"
                       external
