@@ -424,46 +424,91 @@ export class SecurityService {
   // GOOGLE OAUTH
   // ====================================================================
 
-  // Google OAuth2 client (lazy init, sadece GOOGLE_CLIENT_ID varsa)
   private googleClient: OAuth2Client | null = null
+
+  private getGoogleClientId(): string {
+    return process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
+  }
 
   private getGoogleClient(): OAuth2Client {
     if (!this.googleClient) {
-      const clientId = process.env.GOOGLE_CLIENT_ID
-      if (!clientId) {
-        throw new ApiError('Google OAuth yapılandırılmamış. GOOGLE_CLIENT_ID eksik.', 500)
-      }
-      this.googleClient = new OAuth2Client(clientId)
+      const clientId = this.getGoogleClientId()
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET || undefined
+      this.googleClient = new OAuth2Client(clientId, clientSecret)
     }
     return this.googleClient
   }
 
   /**
    * Google OAuth ile giriş/kayıt
-   * Frontend Google Sign-In'den aldığı ID token'ı gönderir
-   * Backend token'ı doğrular ve kullanıcıyı oluşturur/bağlar
+   * Hem Google ID Token (JWT) hem de OAuth2 Access Token destekler.
+   * Yeni kullanıcı ise (DB'de kayıtlı değilse) önce rol (WORKER/EMPLOYER), profil bilgileri
+   * ve sözleşme onayı zorunlu tutulur; bunlar tamamlanmadan kayıt oluşturulmaz.
    */
-  async googleAuth(idToken: string): Promise<{ user: any; token: string; isNewUser: boolean }> {
-    // 1. Google ID token'ı doğrula
-    let ticket
-    try {
-      ticket = await this.getGoogleClient().verifyIdToken({
-        idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      })
-    } catch (err: any) {
-      throw new ApiError('Geçersiz Google token: ' + err.message, 401)
+  async googleAuth(
+    tokenInput: string,
+    registrationData?: {
+      completeRegistration?: boolean
+      role?: string
+      fullName?: string
+      phone?: string
+      city?: string
+      district?: string
+      companyName?: string
+      acceptedContracts?: boolean
     }
+  ): Promise<{
+    requiresRegistration?: boolean
+    googleProfile?: { email: string; fullName: string; avatarUrl?: string }
+    user: any
+    token: string
+    isNewUser: boolean
+  }> {
+    let googleId = ''
+    let email = ''
+    let fullName = ''
+    let avatarUrl: string | undefined = undefined
 
-    const payload = ticket.getPayload()
-    if (!payload) {
-      throw new ApiError('Google token payload alınamadı.', 401)
+    const isJwtIdToken = tokenInput.split('.').length === 3
+
+    if (isJwtIdToken) {
+      try {
+        const ticket = await this.getGoogleClient().verifyIdToken({
+          idToken: tokenInput,
+          audience: this.getGoogleClientId(),
+        })
+        const payload = ticket.getPayload()
+        if (!payload || !payload.email) {
+          throw new Error('Google ID token payload eksik.')
+        }
+        googleId = payload.sub
+        email = payload.email
+        fullName = payload.name || email.split('@')[0]
+        avatarUrl = payload.picture
+      } catch (err: any) {
+        throw new ApiError('Geçersiz Google ID token: ' + err.message, 401)
+      }
+    } else {
+      // OAuth2 Access Token ile Google UserInfo API'den kullanıcı bilgilerini doğrula
+      try {
+        const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenInput}` },
+        })
+        if (!userInfoRes.ok) {
+          throw new Error('Google kullanıcı bilgileri doğrulanamadı.')
+        }
+        const profile = await userInfoRes.json()
+        if (!profile.sub || !profile.email) {
+          throw new Error('Google hesabı e-posta bilgisi içermiyor.')
+        }
+        googleId = profile.sub
+        email = profile.email
+        fullName = profile.name || email.split('@')[0]
+        avatarUrl = profile.picture
+      } catch (err: any) {
+        throw new ApiError('Google OAuth doğrulama hatası: ' + err.message, 401)
+      }
     }
-
-    const googleId = payload.sub
-    const email = payload.email!
-    const fullName = payload.name || email.split('@')[0]
-    const avatarUrl = payload.picture
 
     // 2. Google ID ile kullanıcı ara
     let user = await db.user.findUnique({
@@ -489,18 +534,78 @@ export class SecurityService {
           },
         })
       } else {
-        // 4. Yeni kullanıcı oluştur
+        // 4. Kullanıcı veritabanında hiç yok -> Zorunlu Kayıt Tamamlama kontrolü!
+        if (!registrationData?.completeRegistration) {
+          return {
+            requiresRegistration: true,
+            googleProfile: {
+              email: email.toLowerCase(),
+              fullName,
+              avatarUrl,
+            },
+            user: null,
+            token: '',
+            isNewUser: true,
+          }
+        }
+
+        // Zorunlu alanları doğrula
+        const assignedRole = registrationData.role
+        if (assignedRole !== 'WORKER' && assignedRole !== 'EMPLOYER') {
+          throw new ApiError(
+            'Kayıt olmak için Çalışan (İşçi) veya İşveren (İşletme) rolünü seçmelisiniz.',
+            400
+          )
+        }
+
+        const finalFullName = (registrationData.fullName || fullName || '').trim()
+        if (!finalFullName || finalFullName.length < 2) {
+          throw new ApiError('Lütfen adınızı ve soyadınızı eksiksiz girin.', 400)
+        }
+
+        const finalPhone = (registrationData.phone || '').trim()
+        if (!finalPhone || finalPhone.replace(/\D/g, '').length < 10) {
+          throw new ApiError('Kayıt tamamlamak için geçerli bir telefon numarası zorunludur.', 400)
+        }
+
+        const existingPhone = await db.user.findUnique({ where: { phone: finalPhone } })
+        if (existingPhone) {
+          throw new ApiError('Bu telefon numarası başka bir hesapta kayıtlı.', 409)
+        }
+
+        const finalCity = (registrationData.city || '').trim()
+        if (!finalCity) {
+          throw new ApiError('Lütfen bulunduğunuz şehri seçin.', 400)
+        }
+
+        const finalDistrict = (registrationData.district || '').trim() || undefined
+        const finalCompany = (registrationData.companyName || '').trim()
+
+        if (assignedRole === 'EMPLOYER' && !finalCompany) {
+          throw new ApiError('İşveren kaydı için işletme veya firma adı zorunludur.', 400)
+        }
+
+        if (!registrationData.acceptedContracts) {
+          throw new ApiError(
+            'Kayıt olabilmek için Mesafeli Satış, Kullanıcı Sözleşmesi, Gizlilik ve KVKK metinlerini onaylamalısınız.',
+            400
+          )
+        }
+
         isNewUser = true
         user = await db.user.create({
           data: {
             email: email.toLowerCase(),
-            fullName,
+            fullName: finalFullName,
+            phone: finalPhone,
+            city: finalCity,
+            district: finalDistrict,
+            companyName: assignedRole === 'EMPLOYER' ? finalCompany : null,
             googleId,
             provider: 'GOOGLE',
             emailVerified: true,
             avatarUrl,
-            role: 'WORKER',
-            // Şifre yok - sadece Google ile giriş
+            role: assignedRole,
           },
         })
 
@@ -523,7 +628,7 @@ export class SecurityService {
 
     // Hassas alanları temizle
     const { password, twoFactorSecret, twoFactorBackupCodes, ...safeUser } = user as any
-    return { user: safeUser, token, isNewUser }
+    return { requiresRegistration: false, user: safeUser, token, isNewUser }
   }
 
   // ====================================================================

@@ -4,25 +4,47 @@ import { ok, fail } from '@/server/lib/auth'
 import { withErrorHandler } from '@/server/lib/route'
 
 // POST /api/v1/auth/google
-// Body: { idToken } - Google Sign-In'den alınan ID token
+// Body: { idToken, completeRegistration?, role?, fullName?, phone?, city?, district?, companyName?, acceptedContracts? }
 export const POST = withErrorHandler(async (req: NextRequest) => {
-  const { idToken } = await req.json()
+  const body = await req.json()
+  const token = body.idToken || body.accessToken
 
-  if (!idToken) {
-    return fail('Google ID token gerekli.', 400)
+  if (!token) {
+    return fail('Google kimlik doğrulama bilgisi (token) gerekli.', 400)
   }
 
-  // GOOGLE_CLIENT_ID yoksa hata döndür (kurulum yapılmamış)
-  if (!process.env.GOOGLE_CLIENT_ID) {
-    return fail(
-      'Google OAuth henüz yapılandırılmamış. .env dosyasına GOOGLE_CLIENT_ID ekleyin.',
-      500
+  const result = await securityService.googleAuth(token, {
+    completeRegistration: Boolean(body.completeRegistration),
+    role: body.role,
+    fullName: body.fullName,
+    phone: body.phone,
+    city: body.city,
+    district: body.district,
+    companyName: body.companyName,
+    acceptedContracts: Boolean(body.acceptedContracts),
+  })
+
+  // Yeni kullanıcı ise ve henüz rol/bilgi seçimi yapmadıysa kaydı oluşturmadan onboarding iste
+  if (result.requiresRegistration) {
+    return ok(
+      {
+        requiresRegistration: true,
+        googleProfile: result.googleProfile,
+        user: null,
+        token: '',
+        isNewUser: true,
+      },
+      'Google hesabınız doğrulandı. Kaydınızı tamamlamak için hesap türünüzü ve bilgilerinizi girin.'
     )
   }
 
-  const result = await securityService.googleAuth(idToken)
   const response = ok(
-    { user: result.user, token: result.token, isNewUser: result.isNewUser },
+    {
+      requiresRegistration: false,
+      user: result.user,
+      token: result.token,
+      isNewUser: result.isNewUser,
+    },
     result.isNewUser ? 'Google ile kayıt başarılı! Hoş geldiniz.' : 'Google ile giriş yapıldı.'
   )
   // Token'ı cookie'ye de yaz (web için)

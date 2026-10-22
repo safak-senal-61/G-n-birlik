@@ -34,7 +34,22 @@ interface AuthState {
   initialize: () => Promise<void>
   login: (email: string, password: string, twoFactorCode?: string) => Promise<void>
   register: (data: any) => Promise<void>
-  loginWithGoogle: (idToken: string) => Promise<void>
+  loginWithGoogle: (
+    idToken: string,
+    registrationData?: {
+      completeRegistration?: boolean
+      role?: 'WORKER' | 'EMPLOYER'
+      fullName?: string
+      phone?: string
+      city?: string
+      district?: string
+      companyName?: string
+      acceptedContracts?: boolean
+    }
+  ) => Promise<{
+    requiresRegistration?: boolean
+    googleProfile?: { email: string; fullName: string; avatarUrl?: string }
+  }>
   logout: () => Promise<void>
   refresh: () => Promise<void>
   updateUser: (data: Partial<AuthUser>) => void
@@ -94,10 +109,17 @@ export const useAuth = create<AuthState>((set, get) => ({
     }
   },
 
-  loginWithGoogle: async (idToken) => {
+  loginWithGoogle: async (idToken, registrationData) => {
     set({ isLoading: true })
     try {
-      const result = await authApi.googleAuth(idToken)
+      const result = await authApi.googleAuth(idToken, registrationData)
+      if (result.requiresRegistration) {
+        set({ isLoading: false })
+        return {
+          requiresRegistration: true,
+          googleProfile: result.googleProfile,
+        }
+      }
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth_token', result.token)
       }
@@ -109,6 +131,7 @@ export const useAuth = create<AuthState>((set, get) => ({
         })
       }
       set({ user: result.user, token: result.token, isAuthenticated: true, isLoading: false })
+      return { requiresRegistration: false }
     } catch (e) {
       set({ isLoading: false })
       throw e

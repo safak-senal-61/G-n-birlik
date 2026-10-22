@@ -8,6 +8,7 @@ import Header from '@/components/shared/header'
 import AuthScreen from '@/components/screens/auth-screen'
 import AuthModal from '@/components/shared/auth-modal'
 import AuthGateCard from '@/components/shared/auth-gate-card'
+import { openCookiePreferencesModal } from '@/components/shared/cookie-consent-banner'
 import dynamic from 'next/dynamic'
 
 const JobsListScreen = dynamic(() => import('@/components/screens/jobs-list-screen'))
@@ -213,6 +214,17 @@ export default function Home() {
               <a href="/is-arayanlar" className="hover:text-[#141615] dark:hover:text-white">Çalışanlar</a>
               <a href="/isverenler" className="hover:text-[#141615] dark:hover:text-white">İşverenler</a>
               <a href="/blog" className="hover:text-[#141615] dark:hover:text-white">Yevmiye Rehberi</a>
+              <a href="/gizlilik-politikasi" className="hover:text-[#141615] dark:hover:text-white">Gizlilik Politikası</a>
+              <a href="/kullanim-kosullari" className="hover:text-[#141615] dark:hover:text-white">Kullanım Koşulları</a>
+              <a href="/mesafeli-satis-sozlesmesi" className="hover:text-[#141615] dark:hover:text-white">Mesafeli Satış Sözleşmesi</a>
+              <a href="/kvkk-aydinlatma-metni" className="hover:text-[#141615] dark:hover:text-white">KVKK Aydınlatma Metni</a>
+              <button
+                type="button"
+                onClick={openCookiePreferencesModal}
+                className="hover:text-[#141615] dark:hover:text-white cursor-pointer"
+              >
+                Çerez Tercihleri
+              </button>
             </div>
             <span className="font-mono text-[11px] text-[#8A8F8C]">© 2026 Günübirlik</span>
           </div>

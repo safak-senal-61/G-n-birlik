@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import ErudaInit from "@/components/eruda-init";
 import OneSignalInit from "@/components/onesignal-init";
+import CookieConsentBanner from "@/components/shared/cookie-consent-banner";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Plus_Jakarta_Sans({
@@ -136,6 +137,7 @@ export default function RootLayout({
           {children}
           <ScrollMotoClient />
           <SonnerToaster />
+          <CookieConsentBanner />
           <ErudaInit />
           <OneSignalInit />
         </ThemeProvider>

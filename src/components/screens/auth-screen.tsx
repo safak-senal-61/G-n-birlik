@@ -26,9 +26,14 @@ import {
   Smartphone,
   ChevronLeft,
   ChevronRight,
+  FileText,
+  Scale,
+  Check,
+  ExternalLink,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Logo from '@/components/shared/logo'
+import { LEGAL_CONTRACTS, LegalContractId } from '@/lib/legal-contracts'
 
 type Tab = 'login' | 'register'
 
@@ -58,7 +63,10 @@ export const COUNTRY_OPTIONS: CountryOption[] = [
   { code: '+41', name: 'İsviçre', flag: 'CH', minDigits: 9, maxDigits: 9, placeholder: '78 123 45 67' },
 ]
 
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || ''
+const GOOGLE_CLIENT_ID =
+  process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+  process.env.GOOGLE_CLIENT_ID ||
+  '411578437442-gs1rck2124rgr516fe9dn9tuu15ge9ig.apps.googleusercontent.com'
 
 export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
   const { login, register, loginWithGoogle } = useAuth()
@@ -97,6 +105,20 @@ export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
   const [regCompanyName, setRegCompanyName] = useState('')
   const [adminSecret, setAdminSecret] = useState('')
   const [logoClickCount, setLogoClickCount] = useState(0)
+
+  // Sözleşme onay kutuları ve sözleşme okuma modalı
+  const [acceptedContracts, setAcceptedContracts] = useState(false)
+  const [acceptedKvkk, setAcceptedKvkk] = useState(false)
+  const [activeContractModal, setActiveContractModal] = useState<LegalContractId | null>(null)
+
+  // Google ile yeni kayıt olan kullanıcı için zorunlu Rol Seçimi ve Bilgi Tamamlama (Onboarding)
+  const [googlePendingToken, setGooglePendingToken] = useState<string | null>(null)
+  const [googleProfile, setGoogleProfile] = useState<{
+    email: string
+    fullName: string
+    avatarUrl?: string
+  } | null>(null)
+  const [googleRole, setGoogleRole] = useState<'WORKER' | 'EMPLOYER' | null>(null)
 
   // Modal açıldığında sekme ve rol bilgisini senkronize et
   useEffect(() => {
@@ -177,8 +199,21 @@ export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
   const [forgotEmail, setForgotEmail] = useState('')
   const [forgotCode, setForgotCode] = useState('')
   const [forgotNewPassword, setForgotNewPassword] = useState('')
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [forgotStep, setForgotStep] = useState<'email' | 'reset' | 'done'>('email')
   const [forgotLoading, setForgotLoading] = useState(false)
+
+  // Google GSI script'ini önceden yükle (tıklama anında popup engelleyiciye takılmaması için)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if ((window as any).google?.accounts) return
+    if (document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) return
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    document.head.appendChild(script)
+  }, [])
 
   // 2FA login state
   const [showTwoFactor, setShowTwoFactor] = useState(false)
@@ -302,6 +337,19 @@ export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     if (registerInProgress) return
+
+    if (!regPhone.trim()) {
+      toast.error('Lütfen geçerli bir telefon numarası girin.')
+      return
+    }
+
+    if (!acceptedContracts || !acceptedKvkk) {
+      toast.error(
+        'Kayıt olabilmek için Mesafeli Satış Sözleşmesi, Kullanıcı Sözleşmesi, Gizlilik ve KVKK metinlerini onaylamalısınız.'
+      )
+      return
+    }
+
     setRegisterInProgress(true)
     setLoading(true)
     setError('')
@@ -370,6 +418,123 @@ export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
     }
   }
 
+  const processGoogleToken = async (tokenValue: string) => {
+    try {
+      setLoading(true)
+      const res = await loginWithGoogle(tokenValue)
+      if (res?.requiresRegistration) {
+        // Yeni Google kullanıcısı: henüz veritabanına kaydedilmedi!
+        // Zorunlu İşçi/İşveren seçimi, bilgi doldurma ve sözleşme onayı ekranını aç.
+        setGooglePendingToken(tokenValue)
+        setGoogleProfile(
+          res.googleProfile || {
+            email: '',
+            fullName: '',
+          }
+        )
+        if (res.googleProfile?.fullName) {
+          setRegFullName(res.googleProfile.fullName)
+        }
+        setGoogleRole(null)
+        setAcceptedContracts(false)
+        setAcceptedKvkk(false)
+        toast.info('Kaydınızı tamamlamak için İşçi veya İşveren seçimi yapıp bilgilerinizi doldurun.')
+        return
+      }
+      useApp.getState().closeAuthModal()
+      toast.success('Google ile giriş yapıldı')
+    } catch (err: any) {
+      setError(err.message || 'Google ile giriş yapılamadı.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCompleteGoogleRegistration = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!googlePendingToken) return
+    setError('')
+
+    if (!googleRole) {
+      toast.error('Lütfen Çalışan (İşçi) mi yoksa İşveren (İşletme) mi olduğunuzu seçin.')
+      setError('Kayıt olabilmek için İşçi veya İşveren rolünü seçmeniz zorunludur.')
+      return
+    }
+
+    if (!regFullName.trim() || regFullName.trim().length < 2) {
+      toast.error('Lütfen adınızı ve soyadınızı eksiksiz girin.')
+      return
+    }
+
+    if (googleRole === 'EMPLOYER' && !regCompanyName.trim()) {
+      toast.error('İşveren kaydı için işletme veya firma adınızı girmeniz zorunludur.')
+      return
+    }
+
+    if (!regPhone.trim()) {
+      toast.error('Lütfen telefon numaranızı girin.')
+      return
+    }
+
+    let formattedPhone = ''
+    let rawDigits = regPhone.replace(/\D/g, '')
+    if (selectedCountryCode === '+90') {
+      if (rawDigits.startsWith('0')) rawDigits = rawDigits.substring(1)
+      if (rawDigits.length !== 10) {
+        toast.error('Lütfen 10 veya 11 haneli geçerli bir telefon numarası girin.')
+        return
+      }
+      formattedPhone = `+90${rawDigits}`
+    } else {
+      if (rawDigits.length < activeCountry.minDigits) {
+        toast.error(`${activeCountry.name} için numara en az ${activeCountry.minDigits} hane olmalıdır.`)
+        return
+      }
+      formattedPhone = `${selectedCountryCode}${rawDigits}`
+    }
+
+    if (!regCity.trim()) {
+      toast.error('Lütfen bulunduğunuz şehri seçin.')
+      return
+    }
+
+    if (!regDistrict.trim()) {
+      toast.error('Lütfen bulunduğunuz ilçeyi girin.')
+      return
+    }
+
+    if (!acceptedContracts || !acceptedKvkk) {
+      toast.error(
+        'Kayıt olabilmek için Mesafeli Satış, Üyelik, Gizlilik ve KVKK sözleşmelerini kabul etmeniz zorunludur.'
+      )
+      return
+    }
+
+    try {
+      setLoading(true)
+      await loginWithGoogle(googlePendingToken, {
+        completeRegistration: true,
+        role: googleRole,
+        fullName: regFullName.trim(),
+        phone: formattedPhone,
+        city: regCity,
+        district: regDistrict.trim(),
+        companyName: googleRole === 'EMPLOYER' ? regCompanyName.trim() : undefined,
+        acceptedContracts: true,
+      })
+      setGooglePendingToken(null)
+      setGoogleProfile(null)
+      useApp.getState().closeAuthModal()
+      toast.success('Google hesabınızla kaydınız tamamlandı! Hoş geldiniz.')
+    } catch (err: any) {
+      const msg = err.message || 'Google kaydı tamamlanamadı.'
+      setError(msg)
+      toast.error('Kayıt Tamamlanamadı', { description: msg })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleGoogleLogin = async () => {
     setError('')
     try {
@@ -381,78 +546,71 @@ export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
         return
       }
 
-      await new Promise((resolve, reject) => {
-        if ((window as any).google?.accounts?.id) return resolve(null)
-        const script = document.createElement('script')
-        script.src = 'https://accounts.google.com/gsi/client'
-        script.async = true
-        script.defer = true
-        script.onload = () => resolve(null)
-        script.onerror = () => reject(new Error('Google bağlantısı kurulamadı'))
-        document.head.appendChild(script)
-      })
+      if (!(window as any).google?.accounts) {
+        await new Promise((resolve, reject) => {
+          if ((window as any).google?.accounts) return resolve(null)
+          const existing = document.querySelector(
+            'script[src="https://accounts.google.com/gsi/client"]'
+          ) as HTMLScriptElement | null
+          if (existing) {
+            existing.addEventListener('load', () => resolve(null))
+            existing.addEventListener('error', () =>
+              reject(new Error('Google bağlantısı kurulamadı'))
+            )
+            return
+          }
+          const script = document.createElement('script')
+          script.src = 'https://accounts.google.com/gsi/client'
+          script.async = true
+          script.defer = true
+          script.onload = () => resolve(null)
+          script.onerror = () => reject(new Error('Google bağlantısı kurulamadı'))
+          document.head.appendChild(script)
+        })
+      }
+
+      const googleOAuth2 = (window as any).google?.accounts?.oauth2
+      if (googleOAuth2?.initTokenClient) {
+        setLoading(true)
+        const tokenClient = googleOAuth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: 'openid email profile',
+          prompt: 'select_account',
+          error_callback: () => {
+            setLoading(false)
+          },
+          callback: async (tokenResponse: any) => {
+            if (tokenResponse?.error || !tokenResponse?.access_token) {
+              setLoading(false)
+              if (tokenResponse?.error && tokenResponse.error !== 'popup_closed_by_user') {
+                setError('Google ile giriş iptal edildi veya tamamlanamadı.')
+              }
+              return
+            }
+            await processGoogleToken(tokenResponse.access_token)
+          },
+        })
+        tokenClient.requestAccessToken({ prompt: 'select_account' })
+        return
+      }
 
       const googleAccts = (window as any).google.accounts.id
-
       googleAccts.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: async (response: any) => {
           setLoading(false)
-          if (response.error) {
-            setError('Google ile giriş yapılamadı.')
-            return
-          }
-          const idToken = response.credential
-          if (!idToken) {
+          if (response.error || !response.credential) {
             setError('Google doğrulama bilgisi alınamadı.')
             return
           }
-          try {
-            setLoading(true)
-            await loginWithGoogle(idToken)
-            useApp.getState().closeAuthModal()
-            toast.success('Google ile giriş yapıldı')
-          } catch (err: any) {
-            setError(err.message || 'Google ile giriş yapılamadı.')
-          } finally {
-            setLoading(false)
-          }
+          await processGoogleToken(response.credential)
         },
         auto_select: false,
         cancel_on_tap_outside: true,
       })
-
-      let container = document.getElementById('google-hidden-button')
-      if (!container) {
-        container = document.createElement('div')
-        container.id = 'google-hidden-button'
-        container.style.position = 'fixed'
-        container.style.top = '-9999px'
-        container.style.left = '-9999px'
-        container.style.opacity = '0'
-        document.body.appendChild(container)
-      }
-
-      container.innerHTML = ''
-      googleAccts.renderButton(container, {
-        theme: 'outline',
-        size: 'large',
-        width: 320,
-        text: 'continue_with',
-        shape: 'rectangular',
-      })
-
-      setLoading(true)
-      setTimeout(() => {
-        const googleBtn = container?.querySelector('div[role="button"]') as HTMLElement
-        if (googleBtn) {
-          googleBtn.click()
-        } else {
-          googleAccts.prompt()
-        }
-      }, 300)
+      googleAccts.prompt()
     } catch (err: any) {
-      setError(err.message)
+      setError(err.message || 'Google ile giriş başlatılamadı.')
       setLoading(false)
     }
   }
@@ -512,6 +670,111 @@ export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
     }
   }
 
+  const activeLegalContract =
+    LEGAL_CONTRACTS.find((c) => c.id === activeContractModal) || LEGAL_CONTRACTS[0]
+
+  const renderLegalConsentBlock = () => (
+    <div className="p-3 rounded-md bg-[#F6F5F2] dark:bg-[#181C1A] border border-[#D8D5CC] dark:border-[#2B322E] space-y-2.5">
+      <div className="flex items-center justify-between border-b border-[#E2E0D8] dark:border-[#252B28] pb-2">
+        <div className="flex items-center gap-1.5">
+          <Scale className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#5CD6A5]" />
+          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#141615] dark:text-[#F2F1ED]">
+            YASAL SÖZLEŞMELER VE GÜVENLİK ONAYI
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setActiveContractModal('mesafeli-satis')}
+          className="font-mono text-[10px] font-bold text-[#0D6847] dark:text-[#5CD6A5] hover:underline cursor-pointer"
+        >
+          Tümünü Oku
+        </button>
+      </div>
+
+      {/* Checkbox 1: Mesafeli Satış & Üyelik Sözleşmesi */}
+      <label className="flex items-start gap-2.5 cursor-pointer select-none">
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={acceptedContracts}
+          onClick={() => setAcceptedContracts(!acceptedContracts)}
+          className={`mt-0.5 w-4 h-4 rounded-xs border flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+            acceptedContracts
+              ? 'bg-[#0D6847] border-[#0D6847] text-white'
+              : 'bg-white dark:bg-[#141716] border-[#B8B4A9] dark:border-[#3A433E]'
+          }`}
+        >
+          {acceptedContracts && <Check className="w-3 h-3 stroke-[3]" />}
+        </button>
+        <span className="text-[11px] leading-relaxed text-[#424744] dark:text-[#B8BFBC]">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              setActiveContractModal('mesafeli-satis')
+            }}
+            className="font-bold text-[#0D6847] dark:text-[#5CD6A5] underline underline-offset-2 hover: opacity-90 cursor-pointer"
+          >
+            Mesafeli Hizmet Satış ve Emanet Ödeme Sözleşmesi
+          </button>{' '}
+          ile{' '}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              setActiveContractModal('kullanici')
+            }}
+            className="font-bold text-[#0D6847] dark:text-[#5CD6A5] underline underline-offset-2 hover:opacity-90 cursor-pointer"
+          >
+            Kullanıcı, İşçi ve İşveren Üyelik Sözleşmesi
+          </button>
+          &apos;ni okudum, anladım ve kabul ediyorum. *
+        </span>
+      </label>
+
+      {/* Checkbox 2: KVKK & Gizlilik Politikası */}
+      <label className="flex items-start gap-2.5 cursor-pointer select-none">
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={acceptedKvkk}
+          onClick={() => setAcceptedKvkk(!acceptedKvkk)}
+          className={`mt-0.5 w-4 h-4 rounded-xs border flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+            acceptedKvkk
+              ? 'bg-[#0D6847] border-[#0D6847] text-white'
+              : 'bg-white dark:bg-[#141716] border-[#B8B4A9] dark:border-[#3A433E]'
+          }`}
+        >
+          {acceptedKvkk && <Check className="w-3 h-3 stroke-[3]" />}
+        </button>
+        <span className="text-[11px] leading-relaxed text-[#424744] dark:text-[#B8BFBC]">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              setActiveContractModal('kvkk')
+            }}
+            className="font-bold text-[#0D6847] dark:text-[#5CD6A5] underline underline-offset-2 hover:opacity-90 cursor-pointer"
+          >
+            6698 Sayılı KVKK Aydınlatma Metni ve Açık Rıza Beyanı
+          </button>{' '}
+          ile{' '}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              setActiveContractModal('gizlilik')
+            }}
+            className="font-bold text-[#0D6847] dark:text-[#5CD6A5] underline underline-offset-2 hover:opacity-90 cursor-pointer"
+          >
+            Gizlilik ve Saha Güvenlik Politikası
+          </button>
+          &apos;nı okudum ve onaylıyorum. *
+        </span>
+      </label>
+    </div>
+  )
+
   const formContent = (
     <div className="w-full bg-white dark:bg-[#141716] text-[#141615] dark:text-[#F2F1ED]">
       {/* Üst Başlık & Logo */}
@@ -525,43 +788,49 @@ export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
           <Logo size="sm" variant="full" />
         </button>
         <span className="font-mono text-[10px] uppercase tracking-wider text-[#5C615E] dark:text-[#949B97] font-semibold pr-6">
-          {tab === 'login' ? 'OTURUM AÇ' : `KAYIT • ADIM ${regStep}/3`}
+          {googlePendingToken
+            ? 'GOOGLE KAYIT TAMAMLAMA'
+            : tab === 'login'
+              ? 'OTURUM AÇ'
+              : `KAYIT • ADIM ${regStep}/3`}
         </span>
       </div>
 
       <div className="p-5 sm:p-6 space-y-5">
-        {/* Sekme Seçici */}
-        <div className="grid grid-cols-2 gap-1 p-1 rounded-md bg-[#F0EFEA] dark:bg-[#1C211F] border border-[#D8D5CC] dark:border-[#2A302D]">
-          <button
-            type="button"
-            onClick={() => {
-              setTab('login')
-              setError('')
-            }}
-            className={`py-2 rounded text-xs font-semibold transition-colors cursor-pointer ${
-              tab === 'login'
-                ? 'bg-white dark:bg-[#141716] text-[#141615] dark:text-white shadow-2xs'
-                : 'text-[#5C615E] dark:text-[#949B97] hover:text-[#141615] dark:hover:text-white'
-            }`}
-          >
-            Giriş Yap
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setTab('register')
-              setRegStep(1)
-              setError('')
-            }}
-            className={`py-2 rounded text-xs font-semibold transition-colors cursor-pointer ${
-              tab === 'register'
-                ? 'bg-white dark:bg-[#141716] text-[#141615] dark:text-white shadow-2xs'
-                : 'text-[#5C615E] dark:text-[#949B97] hover:text-[#141615] dark:hover:text-white'
-            }`}
-          >
-            Yeni Hesap Aç
-          </button>
-        </div>
+        {/* Sekme Seçici (Google Onboarding aktif değilse göster) */}
+        {!googlePendingToken && (
+          <div className="grid grid-cols-2 gap-1 p-1 rounded-md bg-[#F0EFEA] dark:bg-[#1C211F] border border-[#D8D5CC] dark:border-[#2A302D]">
+            <button
+              type="button"
+              onClick={() => {
+                setTab('login')
+                setError('')
+              }}
+              className={`py-2 rounded text-xs font-semibold transition-colors cursor-pointer ${
+                tab === 'login'
+                  ? 'bg-white dark:bg-[#141716] text-[#141615] dark:text-white shadow-2xs'
+                  : 'text-[#5C615E] dark:text-[#949B97] hover:text-[#141615] dark:hover:text-white'
+              }`}
+            >
+              Giriş Yap
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTab('register')
+                setRegStep(1)
+                setError('')
+              }}
+              className={`py-2 rounded text-xs font-semibold transition-colors cursor-pointer ${
+                tab === 'register'
+                  ? 'bg-white dark:bg-[#141716] text-[#141615] dark:text-white shadow-2xs'
+                  : 'text-[#5C615E] dark:text-[#949B97] hover:text-[#141615] dark:hover:text-white'
+              }`}
+            >
+              Yeni Hesap Aç
+            </button>
+          </div>
+        )}
 
         {error && (
           <Alert variant="destructive" className="py-2.5 px-3 rounded-md border-[#EFC7BD] bg-[#FBEEE9] text-[#B43B21] dark:bg-[#2E1611] dark:border-[#5C281E] dark:text-[#F5937E]">
@@ -569,8 +838,253 @@ export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
           </Alert>
         )}
 
+        {/* ============= GOOGLE YENİ KULLANICI ZORUNLU KAYIT TAMAMLAMA FORMU ============= */}
+        {googlePendingToken && (
+          <form onSubmit={handleCompleteGoogleRegistration} className="space-y-4">
+            <div className="p-3.5 rounded-md bg-[#EAF3EE]/80 dark:bg-[#162921]/50 border border-[#0D6847]/30 space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#0D6847] dark:text-[#5CD6A5]">
+                  GOOGLE HESABI DOĞRULANDI • KAYIT TAMAMLAMA ZORUNLU
+                </span>
+                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white dark:bg-[#141716] text-[#141615] dark:text-[#F2F1ED] border border-[#D8D5CC] dark:border-[#2B322E]">
+                  {googleProfile?.email}
+                </span>
+              </div>
+              <p className="text-xs text-[#2B302E] dark:text-[#DCE0DD] leading-relaxed">
+                Kaydınızın geçerli sayılması için <strong>İşçi (Çalışan)</strong> mi yoksa{' '}
+                <strong>İşveren (İşletme)</strong> mi olduğunuzu seçmeniz, iletişim bilgilerinizi doldurmanız ve sözleşmeleri onaylamanız zorunludur.
+              </p>
+            </div>
+
+            {/* 1. ZORUNLU ROL SEÇİMİ */}
+            <div className="space-y-2">
+              <Label className="font-mono text-[10px] uppercase tracking-wider font-bold text-[#5C615E] dark:text-[#949B97]">
+                1. HESAP TÜRÜNÜZÜ SEÇİN (ZORUNLU) *
+              </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setGoogleRole('WORKER')}
+                  className={`p-3 rounded-md border text-left flex items-start justify-between gap-2 transition-colors cursor-pointer ${
+                    googleRole === 'WORKER'
+                      ? 'border-[#0D6847] bg-[#EAF3EE]/70 dark:bg-[#162921]/60 ring-1 ring-[#0D6847]'
+                      : 'border-[#D8D5CC] dark:border-[#2B322E] hover:bg-[#F6F5F2] dark:hover:bg-[#1C211F]'
+                  }`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-7 h-7 rounded bg-[#EAF3EE] dark:bg-[#162921] text-[#0D6847] dark:text-[#5CD6A5] flex items-center justify-center shrink-0 mt-0.5">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-extrabold text-[#141615] dark:text-white">
+                        Çalışan / İşçi
+                      </div>
+                      <div className="text-[11px] text-[#5C615E] dark:text-[#949B97] mt-0.5">
+                        Günlük işlere başvurup yevmiye kazanacağım.
+                      </div>
+                    </div>
+                  </div>
+                  {googleRole === 'WORKER' && (
+                    <CheckCircle2 className="w-4 h-4 text-[#0D6847] dark:text-[#5CD6A5] shrink-0" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setGoogleRole('EMPLOYER')}
+                  className={`p-3 rounded-md border text-left flex items-start justify-between gap-2 transition-colors cursor-pointer ${
+                    googleRole === 'EMPLOYER'
+                      ? 'border-[#0D6847] bg-[#EAF3EE]/70 dark:bg-[#162921]/60 ring-1 ring-[#0D6847]'
+                      : 'border-[#D8D5CC] dark:border-[#2B322E] hover:bg-[#F6F5F2] dark:hover:bg-[#1C211F]'
+                  }`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-7 h-7 rounded bg-[#F0EFEA] dark:bg-[#1E2421] text-[#141615] dark:text-[#F2F1ED] flex items-center justify-center shrink-0 mt-0.5">
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-extrabold text-[#141615] dark:text-white">
+                        İşveren / İşletme
+                      </div>
+                      <div className="text-[11px] text-[#5C615E] dark:text-[#949B97] mt-0.5">
+                        İlan açıp günlük personel çalıştıracağım.
+                      </div>
+                    </div>
+                  </div>
+                  {googleRole === 'EMPLOYER' && (
+                    <CheckCircle2 className="w-4 h-4 text-[#0D6847] dark:text-[#5CD6A5] shrink-0" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* 2. KİMLİK VE İŞLETME BİLGİLERİ */}
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-[#141615] dark:text-[#DCE0DD]">
+                  Ad Soyad *
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8F8C]" />
+                  <Input
+                    placeholder="Adınız ve Soyadınız"
+                    value={regFullName}
+                    onChange={(e) => setRegFullName(e.target.value)}
+                    className="pl-9 h-10 text-sm bg-white dark:bg-[#181C1A] border-[#D8D5CC] dark:border-[#2B322E] rounded-md"
+                    required
+                  />
+                </div>
+              </div>
+
+              {googleRole === 'EMPLOYER' && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-[#141615] dark:text-[#DCE0DD]">
+                    İşletme veya Firma Adı *
+                  </Label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8F8C]" />
+                    <Input
+                      placeholder="Örn: Kadıköy Lojistik / Merkez Kafe"
+                      value={regCompanyName}
+                      onChange={(e) => setRegCompanyName(e.target.value)}
+                      className="pl-9 h-10 text-sm bg-white dark:bg-[#181C1A] border-[#D8D5CC] dark:border-[#2B322E] rounded-md"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Telefon Numarası */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold text-[#141615] dark:text-[#DCE0DD]">
+                    Telefon Numarası *
+                  </Label>
+                  <span className="font-mono text-[10px] text-[#5C615E] dark:text-[#949B97]">
+                    {regPhone.replace(/\D/g, '').length}/{activeCountry.maxDigits} hane
+                  </span>
+                </div>
+                <div className="flex gap-1.5 items-center">
+                  <div className="w-[100px] shrink-0">
+                    <Select
+                      value={selectedCountryCode}
+                      onValueChange={(val) => {
+                        setSelectedCountryCode(val)
+                        setRegPhone('')
+                      }}
+                    >
+                      <SelectTrigger className="h-10 text-xs border-[#D8D5CC] dark:border-[#2B322E] px-2.5 bg-[#F6F5F2] dark:bg-[#181C1A]">
+                        <SelectValue>
+                          <span className="font-mono text-xs font-semibold">
+                            {activeCountry.flag} {activeCountry.code}
+                          </span>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60 bg-white dark:bg-[#141716] border-[#D8D5CC] dark:border-[#2B322E]">
+                        {COUNTRY_OPTIONS.map((c) => (
+                          <SelectItem key={c.code} value={c.code} className="text-xs">
+                            <span className="font-mono mr-1.5">{c.code}</span>
+                            <span>{c.name}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="relative flex-1">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8F8C]" />
+                    <Input
+                      type="tel"
+                      inputMode="numeric"
+                      placeholder={activeCountry.placeholder}
+                      value={regPhone}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      className="pl-9 h-10 text-sm font-mono bg-white dark:bg-[#181C1A] border-[#D8D5CC] dark:border-[#2B322E] rounded-md"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Şehir ve İlçe */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-[#141615] dark:text-[#DCE0DD]">
+                    Şehir *
+                  </Label>
+                  <Select value={regCity} onValueChange={setRegCity}>
+                    <SelectTrigger className="h-10 text-sm bg-white dark:bg-[#181C1A] border-[#D8D5CC] dark:border-[#2B322E]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-[#141716] border-[#D8D5CC] dark:border-[#2B322E]">
+                      {['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Adana', 'Konya', 'Trabzon', 'Kocaeli', 'Gaziantep'].map((c) => (
+                        <SelectItem key={c} value={c} className="text-xs">
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-[#141615] dark:text-[#DCE0DD]">
+                    İlçe *
+                  </Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8F8C]" />
+                    <Input
+                      placeholder="Örn: Kadıköy"
+                      value={regDistrict}
+                      onChange={(e) => setRegDistrict(e.target.value)}
+                      className="pl-9 h-10 text-sm bg-white dark:bg-[#181C1A] border-[#D8D5CC] dark:border-[#2B322E] rounded-md"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. ZORUNLU SÖZLEŞMELER VE KVKK CHECKBOX */}
+            {renderLegalConsentBlock()}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setGooglePendingToken(null)
+                  setGoogleProfile(null)
+                  setGoogleRole(null)
+                  setError('')
+                }}
+                className="h-10 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] text-xs font-semibold text-[#141615] dark:text-white flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Kaydı İptal Et</span>
+              </button>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="h-10 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Kaydediliyor...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Kaydı Tamamla ve Başla</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        )}
+
         {/* ============= GİRİŞ FORMU ============= */}
-        {tab === 'login' && (
+        {!googlePendingToken && tab === 'login' && (
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1">
               <h2 className="text-base font-bold text-[#141615] dark:text-white">
@@ -681,7 +1195,7 @@ export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
         )}
 
         {/* ============= KAYIT FORMU (3 ADIMLI) ============= */}
-        {tab === 'register' && (
+        {!googlePendingToken && tab === 'register' && (
           <form
             onSubmit={(e) => {
               e.preventDefault()
@@ -1056,6 +1570,9 @@ export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
                   </div>
                 </div>
 
+                {/* ZORUNLU SÖZLEŞMELER VE KVKK CHECKBOX */}
+                {renderLegalConsentBlock()}
+
                 <div className="grid grid-cols-2 gap-2 pt-2">
                   <button
                     type="button"
@@ -1088,166 +1605,503 @@ export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
             )}
           </form>
         )}
+
+        {/* Alt Yasal Sözleşme Kısayol Çubuğu */}
+        <div className="pt-3 border-t border-[#E2E0D8] dark:border-[#252B28] flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#5C615E] dark:text-[#949B97]">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <button
+              type="button"
+              onClick={() => setActiveContractModal('mesafeli-satis')}
+              className="hover:text-[#0D6847] dark:hover:text-[#5CD6A5] underline underline-offset-2 cursor-pointer"
+            >
+              Mesafeli Satış Sözleşmesi
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => setActiveContractModal('kullanici')}
+              className="hover:text-[#0D6847] dark:hover:text-[#5CD6A5] underline underline-offset-2 cursor-pointer"
+            >
+              Üyelik Sözleşmesi
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => setActiveContractModal('kvkk')}
+              className="hover:text-[#0D6847] dark:hover:text-[#5CD6A5] underline underline-offset-2 cursor-pointer"
+            >
+              KVKK &amp; Gizlilik
+            </button>
+          </div>
+          <a
+            href="/sozlesmeler"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold text-[#0D6847] dark:text-[#5CD6A5] hover:underline"
+          >
+            <span>Yasal Merkez</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
       </div>
 
-      {/* ============= HATA DIALOGU ============= */}
-      <Dialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ ...errorDialog, open })}>
-        <DialogContent className="w-[calc(100vw-24px)] max-w-sm rounded-lg bg-white dark:bg-[#141716] border border-[#D8D5CC] dark:border-[#252B28]">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold text-[#141615] dark:text-white">
-              {errorDialog.title}
-            </DialogTitle>
-            <DialogDescription className="text-xs text-[#5C615E] dark:text-[#949B97]">
-              {errorDialog.message}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end pt-2">
-            <Button
-              className="bg-[#0D6847] hover:bg-[#095237] h-9 px-4 text-xs text-white font-semibold"
-              onClick={() => setErrorDialog({ ...errorDialog, open: false })}
-            >
-              Anladım
-            </Button>
+      {/* ============= YASAL SÖZLEŞMELER VE KVKK OKUMA MODALI ============= */}
+      <Dialog
+        open={Boolean(activeContractModal)}
+        onOpenChange={(open) => {
+          if (!open) setActiveContractModal(null)
+        }}
+      >
+        <DialogContent className="w-[calc(100vw-20px)] max-w-2xl p-0 overflow-hidden rounded-md bg-white dark:bg-[#141716] border border-[#D8D5CC] dark:border-[#252B28] shadow-xl">
+          {/* Üst Kayıt Defteri Şeridi */}
+          <div className="px-5 py-3 bg-[#EFECE6] dark:bg-[#1A1E1C] border-b border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-between pr-10">
+            <div className="flex items-center gap-2">
+              <FileText className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#5CD6A5]" />
+              <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0D6847] dark:text-[#5CD6A5]">
+                {activeLegalContract.code} • HUKUKİ BELGE VE SÖZLEŞME METNİ
+              </span>
+            </div>
+            <span className="font-mono text-[10px] text-[#5C615E] dark:text-[#949B97]">
+              GÜNCEL: {activeLegalContract.updatedAt}
+            </span>
+          </div>
+
+          <div className="p-4 sm:p-5 space-y-4">
+            {/* Sözleşme Sekmeleri */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 rounded-md bg-[#F6F5F2] dark:bg-[#0C0E0D] border border-[#E2E0D8] dark:border-[#252B28]">
+              {LEGAL_CONTRACTS.map((c) => {
+                const isSelected = c.id === activeLegalContract.id
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setActiveContractModal(c.id)}
+                    className={`px-2 py-1.5 rounded text-[11px] font-semibold transition-colors text-center truncate cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#0D6847] text-white'
+                        : 'text-[#5C615E] dark:text-[#949B97] hover:text-[#141615] dark:hover:text-white'
+                    }`}
+                  >
+                    {c.shortTitle}
+                  </button>
+                )
+              })}
+            </div>
+
+            <DialogHeader className="space-y-1 text-left">
+              <DialogTitle className="text-sm sm:text-base font-extrabold text-[#141615] dark:text-white">
+                {activeLegalContract.title}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-[#5C615E] dark:text-[#949B97] leading-relaxed">
+                {activeLegalContract.summary}
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Maddeler (Kaydırılabilir Alan) */}
+            <div className="max-h-[48vh] overflow-y-auto pr-1 space-y-2.5">
+              {activeLegalContract.sections.map((sec, i) => (
+                <div
+                  key={i}
+                  className="p-3.5 rounded-md bg-[#F6F5F2] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] space-y-1.5"
+                >
+                  <div className="text-xs font-extrabold text-[#141615] dark:text-[#F2F1ED]">
+                    {sec.heading}
+                  </div>
+                  <p className="text-xs text-[#424744] dark:text-[#B8BFBC] leading-relaxed">
+                    {sec.body}
+                  </p>
+                  {sec.bullets && sec.bullets.length > 0 && (
+                    <ul className="space-y-1 pl-4 list-disc text-xs text-[#424744] dark:text-[#B8BFBC] leading-relaxed">
+                      {sec.bullets.map((b, bIdx) => (
+                        <li key={bIdx}>{b}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Alt Onay Butonları */}
+            <div className="pt-3 border-t border-[#E2E0D8] dark:border-[#252B28] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+              <a
+                href={activeLegalContract.path}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-[#5C615E] dark:text-[#949B97] hover:text-[#141615] dark:hover:text-white"
+              >
+                <span>Tam Sayfada Görüntüle ({activeLegalContract.path})</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveContractModal(null)}
+                  className="h-9 px-3.5 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] text-xs font-semibold text-[#141615] dark:text-[#F2F1ED] cursor-pointer"
+                >
+                  Kapat
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAcceptedContracts(true)
+                    setAcceptedKvkk(true)
+                    setActiveContractModal(null)
+                    toast.success('Sözleşmeler ve KVKK metinleri onaylandı.')
+                  }}
+                  className="h-9 px-4 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Okudum, Tümünü Kabul Ediyorum</span>
+                </button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ============= 2FA DIALOGU ============= */}
-      <Dialog open={showTwoFactor} onOpenChange={(open) => { if (!open) closeTwoFactor() }}>
-        <DialogContent className="w-[calc(100vw-24px)] max-w-sm rounded-lg bg-white dark:bg-[#141716] border border-[#D8D5CC] dark:border-[#252B28]">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold flex items-center gap-2 text-[#141615] dark:text-white">
-              <Smartphone className="w-4 h-4 text-[#0D6847]" />
-              İki Aşamalı Doğrulama
-            </DialogTitle>
-            <DialogDescription className="text-xs text-[#5C615E] dark:text-[#949B97]">
-              Doğrulama uygulamanızdaki 6 haneli güvenlik kodunu girin.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleTwoFactorLogin} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Doğrulama Kodu</Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                placeholder="000000"
-                value={twoFactorCode}
-                onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ''))}
-                className="h-12 text-center text-xl tracking-[0.4em] font-mono bg-[#F6F5F2] dark:bg-[#181C1A] border-[#D8D5CC] dark:border-[#2B322E]"
-                autoFocus
-                autoComplete="one-time-code"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button
+      {/* ============= HATA DIALOGU (MİMARİ KAYIT DEFTERİ) ============= */}
+      <Dialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ ...errorDialog, open })}>
+        <DialogContent className="w-[calc(100vw-24px)] max-w-md p-0 overflow-hidden rounded-md bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28]">
+          <div className="px-5 py-3 bg-[#EFECE6] dark:bg-[#1A1E1C] border-b border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-between pr-10">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#C84B31] dark:text-[#FF7A5C]">
+              00 / SİSTEM UYARISI
+            </span>
+            <span className="font-mono text-[10px] text-[#5C615E] dark:text-[#949B97]">AUTH-ERR</span>
+          </div>
+          <div className="p-5 space-y-4">
+            <DialogHeader className="space-y-1 text-left">
+              <DialogTitle className="text-base font-extrabold text-[#141615] dark:text-[#F2F1ED]">
+                {errorDialog.title}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-[#5C615E] dark:text-[#949B97] leading-relaxed">
+                {errorDialog.message}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end pt-2 border-t border-[#E2E0D8] dark:border-[#252B28]">
+              <button
                 type="button"
-                variant="outline"
-                className="flex-1 h-10 text-xs"
-                onClick={closeTwoFactor}
+                className="h-9 px-4 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold transition-colors cursor-pointer"
+                onClick={() => setErrorDialog({ ...errorDialog, open: false })}
               >
-                İptal
-              </Button>
-              <Button
-                type="submit"
-                className="flex-1 h-10 bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold"
-                disabled={twoFactorLoading || twoFactorCode.length !== 6}
-              >
-                {twoFactorLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Doğrula'}
-              </Button>
+                Anladım
+              </button>
             </div>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* ============= ŞİFRE SIFIRLAMA DIALOGU ============= */}
-      <Dialog open={forgotOpen} onOpenChange={(open) => { setForgotOpen(open); if (!open) resetForgotState() }}>
-        <DialogContent className="w-[calc(100vw-24px)] max-w-sm rounded-lg bg-white dark:bg-[#141716] border border-[#D8D5CC] dark:border-[#252B28]">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold text-[#141615] dark:text-white">
-              Şifre Sıfırlama
-            </DialogTitle>
-            <DialogDescription className="text-xs text-[#5C615E] dark:text-[#949B97]">
-              {forgotStep === 'email' && 'Kayıtlı e-posta adresinize 6 haneli doğrulama kodu göndereceğiz.'}
-              {forgotStep === 'reset' && 'E-postanıza gelen kodu ve yeni şifrenizi girin.'}
-              {forgotStep === 'done' && 'Şifreniz başarıyla güncellendi.'}
-            </DialogDescription>
-          </DialogHeader>
+      {/* ============= 2FA DIALOGU (MİMARİ KAYIT DEFTERİ) ============= */}
+      <Dialog open={showTwoFactor} onOpenChange={(open) => { if (!open) closeTwoFactor() }}>
+        <DialogContent className="w-[calc(100vw-24px)] max-w-md p-0 overflow-hidden rounded-md bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28]">
+          <div className="px-5 py-3 bg-[#EFECE6] dark:bg-[#1A1E1C] border-b border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-between pr-10">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0D6847] dark:text-[#5CD6A5]">
+              01 / İKİ AŞAMALI GÜVENLİK (2FA)
+            </span>
+            <span className="font-mono text-[10px] text-[#5C615E] dark:text-[#949B97]">TOTP-6</span>
+          </div>
 
-          {forgotStep === 'email' && (
-            <form onSubmit={handleForgotRequest} className="space-y-3.5">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">E-posta Adresi</Label>
-                <Input
-                  type="email"
-                  placeholder="ornek@eposta.com"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  className="h-10 text-sm"
-                  required
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full h-10 bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold"
-                disabled={forgotLoading}
-              >
-                {forgotLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Doğrulama Kodu Gönder'}
-              </Button>
-            </form>
-          )}
+          <div className="p-5 space-y-4">
+            <DialogHeader className="space-y-1 text-left">
+              <DialogTitle className="text-base font-extrabold flex items-center gap-2 text-[#141615] dark:text-white">
+                <Smartphone className="w-4 h-4 text-[#0D6847] dark:text-[#5CD6A5]" />
+                Doğrulama Kodu Girin
+              </DialogTitle>
+              <DialogDescription className="text-xs text-[#5C615E] dark:text-[#949B97]">
+                Authenticator uygulamanızda üretilen 6 haneli tek kullanımlık güvenlik kodunu girin.
+              </DialogDescription>
+            </DialogHeader>
 
-          {forgotStep === 'reset' && (
-            <form onSubmit={handleForgotReset} className="space-y-3.5">
+            <form onSubmit={handleTwoFactorLogin} className="space-y-4">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">6 Haneli Kod</Label>
+                <Label className="font-mono text-[10px] uppercase tracking-wider font-bold text-[#5C615E] dark:text-[#949B97]">
+                  6 HANELİ GÜVENLİK KODU
+                </Label>
                 <Input
-                  placeholder="000000"
-                  value={forgotCode}
-                  onChange={(e) => setForgotCode(e.target.value)}
-                  className="h-10 text-center font-mono tracking-widest"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   maxLength={6}
-                  required
+                  placeholder="000000"
+                  value={twoFactorCode}
+                  onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ''))}
+                  className="h-12 text-center text-xl tracking-[0.4em] font-mono bg-[#F6F5F2] dark:bg-[#0C0E0D] border-[#D8D5CC] dark:border-[#2B322E] rounded-md"
+                  autoFocus
+                  autoComplete="one-time-code"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Yeni Şifre</Label>
-                <Input
-                  type="password"
-                  placeholder="En az 6 karakter"
-                  value={forgotNewPassword}
-                  onChange={(e) => setForgotNewPassword(e.target.value)}
-                  className="h-10 text-sm"
-                  required
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full h-10 bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold"
-                disabled={forgotLoading}
-              >
-                {forgotLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Şifreyi Güncelle'}
-              </Button>
-            </form>
-          )}
 
-          {forgotStep === 'done' && (
-            <div className="text-center py-4 space-y-3">
-              <CheckCircle2 className="w-8 h-8 text-[#0D6847] mx-auto" />
-              <p className="text-xs text-[#5C615E] dark:text-[#949B97]">
-                Yeni şifrenizle hesabınıza giriş yapabilirsiniz.
-              </p>
-              <Button
-                className="w-full h-10 bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold"
-                onClick={resetForgotState}
-              >
-                Giriş Ekranına Dön
-              </Button>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  className="h-10 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-[#F6F5F2] dark:bg-[#181C1A] text-xs font-semibold text-[#141615] dark:text-[#F2F1ED] cursor-pointer"
+                  onClick={closeTwoFactor}
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="h-10 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold flex items-center justify-center gap-1.5 disabled:opacity-60 cursor-pointer"
+                  disabled={twoFactorLoading || twoFactorCode.length !== 6}
+                >
+                  {twoFactorLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Oturumu Doğrula'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============= ŞİFRE SIFIRLAMA DIALOGU (MİMARİ KAYIT DEFTERİ) ============= */}
+      <Dialog
+        open={forgotOpen}
+        onOpenChange={(open) => {
+          setForgotOpen(open)
+          if (!open) resetForgotState()
+        }}
+      >
+        <DialogContent className="w-[calc(100vw-24px)] max-w-md p-0 overflow-hidden rounded-md bg-white dark:bg-[#141716] border border-[#D8D5CC] dark:border-[#252B28] shadow-xl">
+          {/* Üst Kayıt Defteri Şeridi */}
+          <div className="px-5 py-3.5 bg-[#EFECE6] dark:bg-[#1A1E1C] border-b border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-between pr-10">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#0D6847] dark:bg-[#5CD6A5]" />
+              <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#0D6847] dark:text-[#5CD6A5]">
+                01 / GÜVENLİK & ŞİFRE KURTARMA
+              </span>
             </div>
-          )}
+            <span className="font-mono text-[10px] font-semibold text-[#5C615E] dark:text-[#949B97]">
+              {forgotStep === 'email' && 'ADIM 1/2'}
+              {forgotStep === 'reset' && 'ADIM 2/2'}
+              {forgotStep === 'done' && 'ONAYLANDI'}
+            </span>
+          </div>
+
+          <div className="p-5 sm:p-6 space-y-4">
+            {/* Başlık & Açıklama */}
+            <DialogHeader className="space-y-1 text-left">
+              <DialogTitle className="text-base sm:text-lg font-extrabold tracking-tight text-[#141615] dark:text-white">
+                {forgotStep === 'email' && 'Hesap Şifrenizi Sıfırlayın'}
+                {forgotStep === 'reset' && 'Güvenlik Kodu & Yeni Şifre'}
+                {forgotStep === 'done' && 'Şifreniz Başarıyla Yenilendi'}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-[#5C615E] dark:text-[#949B97] leading-relaxed">
+                {forgotStep === 'email' &&
+                  'Kayıtlı e-posta adresinizi girin; kimliğinizi doğrulamak için 6 haneli tek kullanımlık güvenlik kodu göndereceğiz.'}
+                {forgotStep === 'reset' &&
+                  'E-posta adresinize iletilen 6 haneli doğrulama kodunu ve yeni hesap şifrenizi tanımlayın.'}
+                {forgotStep === 'done' &&
+                  'Hesap güvenlik anahtarınız güncellendi. Yeni şifrenizle hemen oturum açabilirsiniz.'}
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Adım İlerleme Çubuğu */}
+            <div className="p-2.5 rounded-md bg-[#F6F5F2] dark:bg-[#0C0E0D] border border-[#E2E0D8] dark:border-[#252B28] space-y-2">
+              <div className="flex items-center justify-between font-mono text-[10px]">
+                <span className="font-semibold text-[#141615] dark:text-[#F2F1ED]">
+                  {forgotStep === 'email' && '01 • E-POSTA DOĞRULAMA'}
+                  {forgotStep === 'reset' && '02 • OTP KODU & YENİ ŞİFRE'}
+                  {forgotStep === 'done' && '03 • İŞLEM TAMAMLANDI'}
+                </span>
+                <span className="text-[#0D6847] dark:text-[#5CD6A5] font-bold">
+                  {forgotStep === 'email' ? '50%' : '100%'}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <div className="h-1 rounded-xs bg-[#0D6847] dark:bg-[#5CD6A5]" />
+                <div
+                  className={`h-1 rounded-xs transition-colors ${
+                    forgotStep === 'reset' || forgotStep === 'done'
+                      ? 'bg-[#0D6847] dark:bg-[#5CD6A5]'
+                      : 'bg-[#D8D5CC] dark:bg-[#2A302D]'
+                  }`}
+                />
+              </div>
+            </div>
+
+            {/* ADIM 1: E-POSTA GİRİŞİ */}
+            {forgotStep === 'email' && (
+              <form onSubmit={handleForgotRequest} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="font-mono text-[10px] uppercase tracking-wider font-bold text-[#5C615E] dark:text-[#949B97]">
+                    KAYITLI E-POSTA ADRESİNİZ
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8F8C]" />
+                    <Input
+                      type="email"
+                      placeholder="ornek@eposta.com"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      className="pl-9 h-10 text-sm bg-[#F6F5F2] dark:bg-[#0C0E0D] border-[#D8D5CC] dark:border-[#2B322E] rounded-md"
+                      required
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-md bg-[#F6F5F2] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] flex items-start gap-2.5">
+                  <Shield className="w-4 h-4 text-[#0D6847] dark:text-[#5CD6A5] shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-[#5C615E] dark:text-[#949B97] leading-relaxed">
+                    Doğrulama kodu gelen kutunuza 10–30 saniye içinde ulaşır. Göremezseniz Spam/Gereksiz klasörünü kontrol edin.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={resetForgotState}
+                    className="h-10 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] hover:bg-[#F6F5F2] dark:hover:bg-[#222825] text-xs font-semibold text-[#141615] dark:text-[#F2F1ED] cursor-pointer"
+                  >
+                    Vazgeç
+                  </button>
+                  <button
+                    type="submit"
+                    className="h-10 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
+                    disabled={forgotLoading}
+                  >
+                    {forgotLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Gönderiliyor...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Kod Gönder</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* ADIM 2: KOD & YENİ ŞİFRE */}
+            {forgotStep === 'reset' && (
+              <form onSubmit={handleForgotReset} className="space-y-4">
+                <div className="p-2.5 rounded-md bg-[#0D6847]/10 dark:bg-[#0D6847]/20 border border-[#0D6847]/30 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="block font-mono text-[9px] uppercase tracking-wider text-[#0D6847] dark:text-[#5CD6A5] font-bold">
+                      ALICI E-POSTA ADRESİ
+                    </span>
+                    <span className="block text-xs font-semibold text-[#141615] dark:text-white truncate">
+                      {forgotEmail}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setForgotStep('email')}
+                    className="px-2 py-1 rounded text-[10px] font-mono font-bold bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] text-[#141615] dark:text-[#F2F1ED] hover:border-[#0D6847] shrink-0 cursor-pointer"
+                  >
+                    Değiştir
+                  </button>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-mono text-[10px] uppercase tracking-wider font-bold text-[#5C615E] dark:text-[#949B97]">
+                      6 HANELİ DOĞRULAMA KODU
+                    </Label>
+                    <span className="font-mono text-[10px] text-[#0D6847] dark:text-[#5CD6A5]">
+                      {forgotCode.length}/6 Hane
+                    </span>
+                  </div>
+                  <Input
+                    inputMode="numeric"
+                    placeholder="000000"
+                    value={forgotCode}
+                    onChange={(e) => setForgotCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="h-11 text-center font-mono text-lg tracking-[0.4em] bg-[#F6F5F2] dark:bg-[#0C0E0D] border-[#D8D5CC] dark:border-[#2B322E] rounded-md"
+                    maxLength={6}
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="font-mono text-[10px] uppercase tracking-wider font-bold text-[#5C615E] dark:text-[#949B97]">
+                    YENİ HESAP ŞİFRESİ
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8A8F8C]" />
+                    <Input
+                      type={showForgotPassword ? 'text' : 'password'}
+                      placeholder="En az 6 karakter"
+                      value={forgotNewPassword}
+                      onChange={(e) => setForgotNewPassword(e.target.value)}
+                      className="pl-9 pr-9 h-10 text-sm bg-[#F6F5F2] dark:bg-[#0C0E0D] border-[#D8D5CC] dark:border-[#2B322E] rounded-md"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(!showForgotPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A8F8C] hover:text-[#141615] dark:hover:text-white"
+                    >
+                      {showForgotPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleForgotRequest}
+                    disabled={forgotLoading}
+                    className="h-10 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] hover:bg-[#F6F5F2] dark:hover:bg-[#222825] text-xs font-semibold text-[#141615] dark:text-[#F2F1ED] cursor-pointer"
+                  >
+                    Kodu Tekrar Gönder
+                  </button>
+                  <button
+                    type="submit"
+                    className="h-10 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60"
+                    disabled={forgotLoading}
+                  >
+                    {forgotLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Güncelleniyor...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Şifreyi Güncelle</span>
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* ADIM 3: TAMAMLANDI */}
+            {forgotStep === 'done' && (
+              <div className="space-y-4 pt-1">
+                <div className="p-4 rounded-md bg-[#0D6847]/10 dark:bg-[#0D6847]/20 border border-[#0D6847]/30 flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-md bg-[#0D6847] text-white flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#141615] dark:text-white">
+                      Şifre Güncelleme Kaydı Tamamlandı
+                    </div>
+                    <p className="text-[11px] text-[#5C615E] dark:text-[#949B97] mt-0.5 leading-relaxed">
+                      <strong>{forgotEmail}</strong> hesabınız için yeni şifreniz aktif edildi.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="w-full h-10 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+                  onClick={() => {
+                    if (forgotEmail) setLoginEmail(forgotEmail)
+                    resetForgotState()
+                  }}
+                >
+                  <span>Giriş Ekranına Dön</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

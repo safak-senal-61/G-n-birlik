@@ -303,8 +303,26 @@ export const authApi = {
   disable2FA: (code: string) => api.post<any>('/auth/2fa/disable', { code }),
 
   // Google OAuth
-  googleAuth: (idToken: string) =>
-    api.post<{ user: any; token: string; isNewUser: boolean }>('/auth/google', { idToken }),
+  googleAuth: (
+    idToken: string,
+    registrationData?: {
+      completeRegistration?: boolean
+      role?: 'WORKER' | 'EMPLOYER'
+      fullName?: string
+      phone?: string
+      city?: string
+      district?: string
+      companyName?: string
+      acceptedContracts?: boolean
+    }
+  ) =>
+    api.post<{
+      requiresRegistration?: boolean
+      googleProfile?: { email: string; fullName: string; avatarUrl?: string }
+      user: any
+      token: string
+      isNewUser: boolean
+    }>('/auth/google', { idToken, ...(registrationData || {}) }),
 
   // Avatar
   uploadAvatar: (base64: string, mimeType: string) =>
