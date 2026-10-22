@@ -14,7 +14,12 @@ export default function OneSignalInit() {
     if (!isAuthenticated || !user) return
 
     const hostname = window.location.hostname
-    const isSupportedDomain = hostname === 'gunubirlik.space-z.ai' || hostname.endsWith('.space-z.ai')
+    const isSupportedDomain =
+      hostname === 'gunubirlik.qrders.com.tr' ||
+      hostname.endsWith('.qrders.com.tr') ||
+      hostname === 'gunubirlik.space-z.ai' ||
+      hostname.endsWith('.space-z.ai') ||
+      hostname.endsWith('.vercel.app')
     if (!isSupportedDomain) {
       return
     }

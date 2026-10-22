@@ -27,7 +27,7 @@ const JobMap = dynamic(() => import('@/components/shared/job-map'), {
 })
 
 export default function JobDetailScreen() {
-  const { selectedJobId, go, back } = useApp()
+  const { selectedJobId, go, back, openAuthModal } = useApp()
   const { user } = useAuth()
   const [job, setJob] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -76,6 +76,13 @@ export default function JobDetailScreen() {
   }
 
   const handleSave = async () => {
+    if (!user) {
+      openAuthModal({
+        title: 'İlanı Kaydetmek İçin Giriş Yapın',
+        description: 'İlanları favorilerinize eklemek ve istediğiniz zaman kolayca erişmek için lütfen giriş yapın.',
+      })
+      return
+    }
     try {
       const result = await jobsApi.save(selectedJobId!)
       setSaved(!result.removed)
@@ -86,6 +93,13 @@ export default function JobDetailScreen() {
   }
 
   const handleSendMessage = async () => {
+    if (!user) {
+      openAuthModal({
+        title: 'İşverenle İletişim İçin Giriş Yapın',
+        description: 'İşveren ile mesajlaşmak, iş detaylarını sormak veya konum bilgisi almak için giriş yapın.',
+      })
+      return
+    }
     if (!job?.employer) return
     try {
       await import('@/lib/api').then(({ conversationsApi }) =>
@@ -193,6 +207,22 @@ export default function JobDetailScreen() {
             {/* Aksiyonlar - 3D Tactile Buttons */}
             {!isOwner && (
               <div className="flex gap-2.5 mt-5 sm:mt-6 flex-wrap preserve-3d">
+                {!user && job.status === 'OPEN' && (
+                  <button
+                    type="button"
+                    className="btn-3d-emerald btn-3d-pill flex-1 min-w-[200px] h-12 text-sm font-black flex items-center justify-center gap-2 translate-z-4 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg rounded-2xl cursor-pointer"
+                    onClick={() =>
+                      openAuthModal({
+                        title: 'Bu İşe Başvurmak İçin Giriş Yapın',
+                        description: `"${job.title}" ilanına başvurmak ve günlük ${job.wageAmount}₺ yevmiyenizi kazanmak için lütfen giriş yapın veya ücretsiz hesap oluşturun.`,
+                        tab: 'login',
+                      })
+                    }
+                  >
+                    <Briefcase className="w-4 h-4" />
+                    <span>Giriş Yap ve Hemen Başvur</span>
+                  </button>
+                )}
                 {canApply && (
                   <button
                     type="button"

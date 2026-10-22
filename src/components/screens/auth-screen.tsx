@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-store'
+import { useApp } from '@/lib/app-store'
 import { authApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -53,7 +54,7 @@ export const COUNTRY_OPTIONS: CountryOption[] = [
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || ''
 
-export default function AuthScreen() {
+export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
   const { login, register, loginWithGoogle } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -207,6 +208,7 @@ export default function AuthScreen() {
     setError('')
     try {
       await login(loginEmail, loginPassword)
+      useApp.getState().closeAuthModal()
       toast.success('Hoş geldiniz! Giriş başarılı.', {
         description: 'Hesabınıza erişim sağlanıyor...',
       })
@@ -361,6 +363,7 @@ export default function AuthScreen() {
         companyName: regRole === 'EMPLOYER' ? regCompanyName : undefined,
         adminSecret: regRole === 'ADMIN' ? adminSecret : undefined,
       })
+      useApp.getState().closeAuthModal()
       toast.success('Kayıt başarılı! Hoş geldiniz. 🎉')
     } catch (err: any) {
       const msg = err.message || 'Kayıt yapılamadı.'
@@ -450,6 +453,7 @@ export default function AuthScreen() {
           try {
             setLoading(true)
             await loginWithGoogle(idToken)
+            useApp.getState().closeAuthModal()
             toast.success('Google ile giriş başarılı! Hoş geldiniz.')
           } catch (err: any) {
             console.error('Google login error:', err)
@@ -562,7 +566,13 @@ export default function AuthScreen() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-900 flex items-center justify-center p-4 selection:bg-emerald-500 selection:text-white">
+    <div
+      className={
+        isModal
+          ? 'w-full relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 flex items-center justify-center p-2 sm:p-4 rounded-2xl'
+          : 'min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-900 flex items-center justify-center p-4 selection:bg-emerald-500 selection:text-white'
+      }
+    >
       {/* 3D Spatial Grid & Volumetric Lighting */}
       <div className="absolute inset-0 bg-spatial-grid opacity-25 pointer-events-none" />
       <div className="absolute inset-0 overflow-hidden pointer-events-none">

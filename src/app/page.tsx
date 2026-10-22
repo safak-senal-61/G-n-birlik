@@ -6,6 +6,8 @@ import { useApp } from '@/lib/app-store'
 import { on, connectSocket, getSocket } from '@/lib/socket'
 import Header from '@/components/shared/header'
 import AuthScreen from '@/components/screens/auth-screen'
+import AuthModal from '@/components/shared/auth-modal'
+import AuthGateCard from '@/components/shared/auth-gate-card'
 import dynamic from 'next/dynamic'
 
 const JobsListScreen = dynamic(() => import('@/components/screens/jobs-list-screen'))
@@ -111,14 +113,11 @@ export default function Home() {
     )
   }
 
-  // Auth değilse login ekranı
-  if (!isAuthenticated || !user) {
-    return <AuthScreen />
-  }
-
-  // Header + ana içerik
+  // Header + ana içerik (Misafirler de tüm arayüzü görebilir, işlemler için girişe yönlendirilir)
   return (
     <div className="w-full min-h-screen flex flex-col bg-slate-50/70 dark:bg-slate-950 relative selection:bg-emerald-500 selection:text-white transition-colors duration-300">
+      {/* Global Auth Modal */}
+      <AuthModal />
 
       {maintenanceMode && user?.role === 'ADMIN' && (
         <div className="relative z-50 bg-amber-500/90 backdrop-blur-md text-amber-950 text-xs font-bold px-4 py-2 text-center border-b border-amber-600/30 shadow-sm">
@@ -129,15 +128,80 @@ export default function Home() {
       <main className="flex-1 relative z-10 pt-20 sm:pt-22">
         {view === 'home' && <JobsListScreen />}
         {view === 'job-detail' && <JobDetailScreen />}
-        {view === 'post-job' && <PostJobScreen />}
-        {view === 'my-jobs' && <MyJobsScreen />}
-        {view === 'applications' && <ApplicationsScreen />}
-        {view === 'messages' && <MessagesScreen />}
-        {view === 'profile' && <ProfileScreen />}
-        {view === 'notifications' && <NotificationsScreen />}
-        {view === 'notification-settings' && <NotificationSettingsScreen />}
-        {view === 'saved-jobs' && <SavedJobsScreen />}
-        {view === 'wallet' && <WalletScreen />}
+        {view === 'post-job' &&
+          (user ? (
+            <PostJobScreen />
+          ) : (
+            <AuthGateCard
+              title="İlan Yayınlamak İçin Giriş Yapın"
+              description="İş ilanı vermek, acil eleman bulmak ve yevmiyeli çalışanlarla iletişime geçmek için lütfen işveren hesabınızla giriş yapın."
+              targetRole="EMPLOYER"
+            />
+          ))}
+        {view === 'my-jobs' &&
+          (user ? (
+            <MyJobsScreen />
+          ) : (
+            <AuthGateCard
+              title="İlanlarınızı Yönetmek İçin Giriş Yapın"
+              description="Yayınladığınız ilanları, gelen başvuruları ve çalışma durumlarını takip etmek için giriş yapın."
+              targetRole="EMPLOYER"
+            />
+          ))}
+        {view === 'applications' &&
+          (user ? (
+            <ApplicationsScreen />
+          ) : (
+            <AuthGateCard
+              title="Başvurularınızı Görmek İçin Giriş Yapın"
+              description="Yaptığınız iş başvurularını, kabul durumlarını ve onaylanan yevmiyelerinizi görmek için giriş yapın."
+            />
+          ))}
+        {view === 'messages' &&
+          (user ? (
+            <MessagesScreen />
+          ) : (
+            <AuthGateCard
+              title="Mesajlaşmak İçin Giriş Yapın"
+              description="İşverenler veya adaylarla anlık görüşmek ve adres detaylarını öğrenmek için lütfen giriş yapın."
+            />
+          ))}
+        {view === 'profile' &&
+          (user ? (
+            <ProfileScreen />
+          ) : (
+            <AuthGateCard title="Profilinizi Düzenlemek İçin Giriş Yapın" />
+          ))}
+        {view === 'notifications' &&
+          (user ? (
+            <NotificationsScreen />
+          ) : (
+            <AuthGateCard title="Bildirimlerinizi Görmek İçin Giriş Yapın" />
+          ))}
+        {view === 'notification-settings' &&
+          (user ? (
+            <NotificationSettingsScreen />
+          ) : (
+            <AuthGateCard title="Bildirim Ayarları İçin Giriş Yapın" />
+          ))}
+        {view === 'saved-jobs' &&
+          (user ? (
+            <SavedJobsScreen />
+          ) : (
+            <AuthGateCard
+              title="Kaydettiğiniz İlanlar İçin Giriş Yapın"
+              description="Beğendiğiniz ve sonradan başvurmak istediğiniz işleri saklamak için hesabınıza giriş yapın."
+            />
+          ))}
+        {view === 'wallet' &&
+          (user ? (
+            <WalletScreen />
+          ) : (
+            <AuthGateCard
+              title="Cüzdan ve Yevmiye Bakiyeniz İçin Giriş Yapın"
+              description="Kazandığınız yevmiyeleri, emanet havuzundaki tutarları ve banka transferlerini yönetmek için giriş yapın."
+            />
+          ))}
         {view === 'help' && <HelpScreen />}
         {view === 'api-docs' && <ApiDocsScreen />}
       </main>

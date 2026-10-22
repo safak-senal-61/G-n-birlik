@@ -1,5 +1,7 @@
 import React from 'react'
 
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.qrders.com.tr'
+
 export interface JobPostingData {
   id: string
   title: string
@@ -26,8 +28,8 @@ export function OrganizationSchema() {
     '@type': 'Organization',
     name: 'Günübirlik İş Bul',
     alternateName: 'Günübirlik',
-    url: 'https://gunubirlik.space-z.ai',
-    logo: 'https://gunubirlik.space-z.ai/logo.svg',
+    url: BASE_URL,
+    logo: `${BASE_URL}/logo.png`,
     description: "Türkiye'nin güvenilir konum bazlı günübirlik ve part-time iş platformu.",
     sameAs: [
       'https://www.instagram.com/gunubirlikapp',
@@ -57,12 +59,12 @@ export function WebSiteSchema() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Günübirlik İş Bul',
-    url: 'https://gunubirlik.space-z.ai',
+    url: BASE_URL,
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: 'https://gunubirlik.space-z.ai/?search={search_term_string}',
+        urlTemplate: `${BASE_URL}/?search={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },
@@ -92,8 +94,8 @@ export function JobPostingSchema({ job }: { job: JobPostingData }) {
     hiringOrganization: {
       '@type': 'Organization',
       name: hiringOrgName,
-      sameAs: 'https://gunubirlik.space-z.ai',
-      logo: 'https://gunubirlik.space-z.ai/logo.svg',
+      sameAs: BASE_URL,
+      logo: `${BASE_URL}/logo.png`,
     },
     jobLocation: {
       '@type': 'Place',
@@ -122,6 +124,58 @@ export function JobPostingSchema({ job }: { job: JobPostingData }) {
         unitText: job.wageType === 'HOURLY' ? 'HOUR' : 'DAY',
       },
     },
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+export function ArticleSchema({
+  title,
+  description,
+  url,
+  datePublished,
+  dateModified,
+  author = 'Günübirlik Editör Ekibi',
+  imageUrl,
+}: {
+  title: string
+  description: string
+  url: string
+  datePublished: string
+  dateModified?: string
+  author?: string
+  imageUrl?: string
+}) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: title,
+    description,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
+    datePublished,
+    dateModified: dateModified || datePublished,
+    author: {
+      '@type': 'Person',
+      name: author,
+      url: BASE_URL,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Günübirlik İş Bul',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${BASE_URL}/logo.png`,
+      },
+    },
+    image: imageUrl || `${BASE_URL}/logo.png`,
   }
 
   return (

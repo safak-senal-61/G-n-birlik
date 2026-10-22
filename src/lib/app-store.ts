@@ -25,6 +25,12 @@ interface AppState {
   selectedJobId: string | null
   selectedConversationId: string | null
   selectedUserId: string | null
+  authModalOpen: boolean
+  authModalTitle: string
+  authModalDescription: string
+  authModalTab: 'login' | 'register'
+  openAuthModal: (options?: { title?: string; description?: string; tab?: 'login' | 'register' }) => void
+  closeAuthModal: () => void
   go: (view: View, params?: { jobId?: string; conversationId?: string; userId?: string }) => void
   back: () => void
   history: View[]
@@ -35,7 +41,26 @@ export const useApp = create<AppState>((set, get) => ({
   selectedJobId: null,
   selectedConversationId: null,
   selectedUserId: null,
+  authModalOpen: false,
+  authModalTitle: 'Günübirlik\'e Giriş Yapın',
+  authModalDescription: 'İlanlara başvurmak, iş ilanı yayınlamak ve güvenli yevmiye kazanmak için giriş yapın.',
+  authModalTab: 'login',
   history: [],
+
+  openAuthModal: (options) => {
+    set({
+      authModalOpen: true,
+      authModalTitle: options?.title || 'Günübirlik\'e Giriş Yapın',
+      authModalDescription:
+        options?.description ||
+        'İlanlara başvurmak, iş ilanı yayınlamak ve güvenli yevmiye kazanmak için giriş yapın.',
+      authModalTab: options?.tab || 'login',
+    })
+  },
+
+  closeAuthModal: () => {
+    set({ authModalOpen: false })
+  },
 
   go: (view, params) => {
     const state = get()

@@ -18,7 +18,13 @@ declare global {
 function isOneSignalSupported(): boolean {
   if (typeof window === 'undefined') return false
   const hostname = window.location.hostname
-  return hostname === 'gunubirlik.space-z.ai' || hostname.endsWith('.space-z.ai')
+  return (
+    hostname === 'gunubirlik.qrders.com.tr' ||
+    hostname.endsWith('.qrders.com.tr') ||
+    hostname === 'gunubirlik.space-z.ai' ||
+    hostname.endsWith('.space-z.ai') ||
+    hostname.endsWith('.vercel.app')
+  )
 }
 
 /**

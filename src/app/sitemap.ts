@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { db } from '@/lib/db'
+import { BLOG_POSTS } from '@/lib/blog-data'
 
 export const revalidate = 3600 // Her saat otomatik yenilenir
 
@@ -34,16 +35,40 @@ const CATEGORIES = [
 ]
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.space-z.ai'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.qrders.com.tr'
   const now = new Date()
 
-  // 1. Ana Statik Sayfalar
+  // 1. Ana Statik Sayfalar & Onboarding
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified: now,
       changeFrequency: 'daily',
       priority: 1.0,
+    },
+    {
+      url: `${baseUrl}/nasil-calisir`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/is-arayanlar`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/isverenler`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.85,
     },
     {
       url: `${baseUrl}/api-doc`,
@@ -89,5 +114,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('[Sitemap] Aktif ilanlar çekilemedi:', err)
   }
 
-  return [...staticRoutes, ...cityRoutes, ...categoryRoutes, ...jobRoutes]
+  // 5. Blog Makaleleri (SEO & Discover)
+  const blogRoutes: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: new Date(post.date),
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  }))
+
+  return [...staticRoutes, ...cityRoutes, ...categoryRoutes, ...blogRoutes, ...jobRoutes]
 }

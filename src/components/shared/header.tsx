@@ -31,16 +31,18 @@ import { ThemeToggle } from '@/components/shared/theme-toggle'
 import Logo from '@/components/shared/logo'
 import { WhatsAppIcon, TelegramIcon, TwitterXIcon } from '@/components/shared/social-icons'
 
+import Link from 'next/link'
+
 export default function Header() {
   const { user, logout } = useAuth()
-  const { view, go, back, history } = useApp()
+  const { view, go, back, history, openAuthModal } = useApp()
   const [unreadCount, setUnreadCount] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
   // Site URL — production'da gerçek domain, dev'de localhost
-  const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://gunubirlik.com'
+  const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://gunubirlik.qrders.com.tr'
 
   const handleCopyLink = async () => {
     try {
@@ -96,7 +98,176 @@ export default function Header() {
     return () => window.removeEventListener('notifications-read', handleRead)
   }, [view])
 
-  if (!user) return null
+  if (!user) {
+    return (
+      <header className="fixed top-2 sm:top-3.5 left-0 right-0 z-50 px-2.5 sm:px-4 transition-all pointer-events-none">
+        <div className="max-w-7xl mx-auto rounded-2xl sm:rounded-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)] px-3 sm:px-4 py-1.5 sm:py-2 pointer-events-auto">
+          <div className="flex items-center justify-between h-10 sm:h-11 gap-2">
+            {/* Logo */}
+            <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => go('home')}
+                className="flex items-center group transition-transform active:scale-95 text-left flex-shrink-0"
+                title="Günübirlik"
+                aria-label="Günübirlik — Ana Sayfa"
+              >
+                <Logo size="md" variant="full" />
+              </button>
+            </div>
+
+            {/* Desktop Navigation Links */}
+            <nav className="hidden md:flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300">
+              <button
+                onClick={() => go('home')}
+                className={`px-3 py-1.5 rounded-full transition-colors ${
+                  view === 'home'
+                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold'
+                    : 'hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                }`}
+              >
+                İş İlanları
+              </button>
+              <Link
+                href="/nasil-calisir"
+                className="px-3 py-1.5 rounded-full hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+              >
+                Nasıl Çalışır?
+              </Link>
+              <Link
+                href="/is-arayanlar"
+                className="px-3 py-1.5 rounded-full hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+              >
+                İş Arayanlar
+              </Link>
+              <Link
+                href="/isverenler"
+                className="px-3 py-1.5 rounded-full hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+              >
+                İşverenler
+              </Link>
+              <Link
+                href="/blog"
+                className="px-3 py-1.5 rounded-full hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+              >
+                Blog
+              </Link>
+            </nav>
+
+            {/* Right Actions */}
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs sm:text-sm font-semibold rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
+                onClick={() => openAuthModal({ title: 'Giriş Yapın', tab: 'login' })}
+              >
+                Giriş Yap
+              </Button>
+
+              <Button
+                size="sm"
+                className="text-xs sm:text-sm font-semibold rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
+                onClick={() =>
+                  openAuthModal({
+                    title: 'İş İlanı Verin',
+                    description: 'Acil eleman ihtiyacınızı dakikalar içinde karşılamak için işveren olarak kayıt olun.',
+                    tab: 'register',
+                  })
+                }
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                İlan Ver
+              </Button>
+
+              {/* Mobile Menu Button */}
+              <Button
+                size="icon"
+                variant="ghost"
+                className="md:hidden h-9 w-9 rounded-full"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Menü"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile Menu Dropdown */}
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-800 flex flex-col gap-1 pb-2">
+              <button
+                onClick={() => {
+                  go('home')
+                  setMobileMenuOpen(false)
+                }}
+                className="text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                İş İlanları
+              </button>
+              <Link
+                href="/nasil-calisir"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                Nasıl Çalışır?
+              </Link>
+              <Link
+                href="/is-arayanlar"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                İş Arayanlar
+              </Link>
+              <Link
+                href="/isverenler"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                İşverenler
+              </Link>
+              <Link
+                href="/blog"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                Blog & Rehber
+              </Link>
+              <div className="pt-2 mt-2 border-t border-slate-200/80 dark:border-slate-800 flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 rounded-full text-xs font-semibold"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    openAuthModal({ title: 'Giriş Yapın', tab: 'login' })
+                  }}
+                >
+                  Giriş Yap
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    openAuthModal({
+                      title: 'İlan Verin',
+                      tab: 'register',
+                      description: 'İşveren hesabı açarak hemen ilan yayınlayın.',
+                    })
+                  }}
+                >
+                  Kayıt Ol / İlan Ver
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
+    )
+  }
 
   const isWorker = user.role === 'WORKER'
   const isEmployer = user.role === 'EMPLOYER'

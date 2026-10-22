@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://gunubirlik.space-z.ai"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://gunubirlik.qrders.com.tr"),
   title: {
     default: "Günübirlik — Günlük İş, Part-Time & Acil Yevmiyeli İş İlanları",
     template: "%s | Günübirlik",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     "güvenli emanet ödeme",
     "günübirlik iş bul",
   ],
-  authors: [{ name: "Günübirlik Platformu", url: "https://gunubirlik.space-z.ai" }],
+  authors: [{ name: "Günübirlik Platformu", url: "https://gunubirlik.qrders.com.tr" }],
   creator: "Günübirlik",
   publisher: "Günübirlik",
   icons: {
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     title: "Günübirlik — Konum Bazlı Günlük ve Part-Time İş İlanları",
     description:
       "Trabzon, İstanbul ve tüm Türkiye'de günlük yevmiyeli iş fırsatları. Anında başvur, emanet ödeme güvencesiyle aynı gün kazan.",
-    url: "https://gunubirlik.space-z.ai",
+    url: "https://gunubirlik.qrders.com.tr",
     siteName: "Günübirlik",
     locale: "tr_TR",
     type: "website",
