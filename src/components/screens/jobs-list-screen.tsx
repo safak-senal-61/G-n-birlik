@@ -200,24 +200,24 @@ export default function JobsListScreen() {
   }
 
   const categories = [
-    { value: 'ALL', label: 'Tümü', icon: '🌐' },
-    { value: 'INSAAT', label: 'İnşaat', icon: '🔨' },
-    { value: 'RESTAURANT', label: 'Restoran', icon: '🍽️' },
-    { value: 'TEMIZLIK', label: 'Temizlik', icon: '✨' },
-    { value: 'NAKLIYE', label: 'Nakliyat', icon: '🚚' },
-    { value: 'TARIM', label: 'Tarım', icon: '🌾' },
-    { value: 'TEKNIK', label: 'Teknik', icon: '🔧' },
-    { value: 'SAGLIK', label: 'Sağlık', icon: '❤️' },
-    { value: 'DIGER', label: 'Diğer', icon: '💼' },
+    { value: 'ALL', label: 'Tüm İlanlar', code: 'TÜM' },
+    { value: 'RESTAURANT', label: 'Restoran & Servis', code: 'RST' },
+    { value: 'INSAAT', label: 'İnşaat & Yapı', code: 'İNŞ' },
+    { value: 'TEMIZLIK', label: 'Temizlik & Düzen', code: 'TMZ' },
+    { value: 'NAKLIYE', label: 'Nakliyat & Taşıma', code: 'NKL' },
+    { value: 'TEKNIK', label: 'Teknik & Montaj', code: 'TKN' },
+    { value: 'TARIM', label: 'Tarım & Bahçe', code: 'TRM' },
+    { value: 'SAGLIK', label: 'Bakım & Destek', code: 'BKM' },
+    { value: 'DIGER', label: 'Genel Saha', code: 'GNL' },
   ]
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-7xl">
-      {/* 21st.dev + Three.js + Framer Motion 3D Master Hero */}
+    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-7xl">
       {page === 1 && !search && (
-        <div className="mb-8">
+        <div className="mb-6">
           <InteractiveHero3D
             totalJobs={total || jobs.length}
+            onSelectCategory={(catKey) => setCategory(catKey)}
             onExploreClick={() => {
               const el = document.getElementById('jobs-search-section')
               if (el) el.scrollIntoView({ behavior: 'smooth' })
@@ -408,8 +408,8 @@ export default function JobsListScreen() {
           </button>
         </div>
 
-        {/* Hızlı kategori filtreleri - 3D Tactile Buttons */}
-        <div className="flex gap-2.5 overflow-x-auto pb-2 no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
+        {/* Hızlı kategori filtreleri */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
           {categories.map((cat) => {
             const isActive = category === cat.value
             return (
@@ -417,13 +417,13 @@ export default function JobsListScreen() {
                 key={cat.value}
                 type="button"
                 onClick={() => setCategory(cat.value)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all flex-shrink-0 ${
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-semibold whitespace-nowrap transition-colors flex-shrink-0 cursor-pointer border ${
                   isActive
-                    ? 'btn-3d-emerald btn-3d-pill z-10'
-                    : 'btn-3d-white btn-3d-pill text-slate-700'
+                    ? 'bg-[#141615] text-white border-[#141615] dark:bg-[#F2F1ED] dark:text-[#141615] dark:border-[#F2F1ED]'
+                    : 'bg-white dark:bg-[#141716] text-[#4A4F4C] dark:text-[#A5ACA8] border-[#D8D5CC] dark:border-[#252B28] hover:border-[#141615] dark:hover:border-[#5CD6A5]'
                 }`}
               >
-                <span className="text-base">{cat.icon}</span>
+                <span className="font-mono text-[10px] opacity-70">{cat.code}</span>
                 <span>{cat.label}</span>
               </button>
             )
@@ -647,7 +647,7 @@ function FilterPanel({
               <SelectValue placeholder="Tüm Türkiye" />
             </SelectTrigger>
             <SelectContent className="max-h-60 dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
-              <SelectItem value="ALL">🌐 Tüm Türkiye (Tümü)</SelectItem>
+              <SelectItem value="ALL">Tüm Türkiye</SelectItem>
               {TURKEY_CITIES.map((c) => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
@@ -675,12 +675,12 @@ function FilterPanel({
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
-            <SelectItem value="NEWEST">📅 En Yeni</SelectItem>
-            <SelectItem value="OLDEST">📂 En Eski</SelectItem>
-            <SelectItem value="WAGE_HIGH">💰 Ücret (Yüksek→Düşük)</SelectItem>
-            <SelectItem value="WAGE_LOW">💳 Ücret (Düşük→Yüksek)</SelectItem>
-            <SelectItem value="URGENT">🔥 Acil Olanlar</SelectItem>
-            {useMyLocation && <SelectItem value="NEAREST">📍 En Yakın</SelectItem>}
+            <SelectItem value="NEWEST">En Yeni İlanlar</SelectItem>
+            <SelectItem value="OLDEST">En Eski İlanlar</SelectItem>
+            <SelectItem value="WAGE_HIGH">Yevmiye (Yüksekten Düşüğe)</SelectItem>
+            <SelectItem value="WAGE_LOW">Yevmiye (Düşükten Yükseğe)</SelectItem>
+            <SelectItem value="URGENT">Acil Vardiyalar</SelectItem>
+            {useMyLocation && <SelectItem value="NEAREST">Mesafeye Göre En Yakın</SelectItem>}
           </SelectContent>
         </Select>
       </div>
@@ -696,7 +696,7 @@ function ListView({ jobs, loading, onSelect }: { jobs: JobItem[]; loading: boole
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="h-44" />
+          <Skeleton key={i} className="h-44 rounded-lg" />
         ))}
       </div>
     )
@@ -712,131 +712,94 @@ function ListView({ jobs, loading, onSelect }: { jobs: JobItem[]; loading: boole
 }
 
 function JobCard({ job, onClick }: { job: JobItem; onClick: () => void }) {
-  const urgency = urgencyLabel(job.urgency)
   const remaining = job.openingsTotal - job.openingsFilled
   const isUrgent = job.urgency === 'URGENT'
   const isHigh = job.urgency === 'HIGH'
-
-  // Kategori renkleri & 3D bevels
-  const categoryStyles: Record<string, { bg: string; border: string }> = {
-    INSAAT: { bg: 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300', border: 'border-amber-300 dark:border-amber-700/60' },
-    RESTAURANT: { bg: 'bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300', border: 'border-rose-300 dark:border-rose-700/60' },
-    TEMIZLIK: { bg: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950/70 dark:text-cyan-300', border: 'border-cyan-300 dark:border-cyan-700/60' },
-    NAKLIYE: { bg: 'bg-violet-100 text-violet-800 dark:bg-violet-950/70 dark:text-violet-300', border: 'border-violet-300 dark:border-violet-700/60' },
-    TARIM: { bg: 'bg-lime-100 text-lime-800 dark:bg-lime-950/70 dark:text-lime-300', border: 'border-lime-300 dark:border-lime-700/60' },
-    TEKNIK: { bg: 'bg-sky-100 text-sky-800 dark:bg-sky-950/70 dark:text-sky-300', border: 'border-sky-300 dark:border-sky-700/60' },
-    SAGLIK: { bg: 'bg-pink-100 text-pink-800 dark:bg-pink-950/70 dark:text-pink-300', border: 'border-pink-300 dark:border-pink-700/60' },
-    DIGER: { bg: 'bg-slate-100 text-slate-800 dark:bg-slate-800/80 dark:text-slate-200', border: 'border-slate-300 dark:border-slate-700/60' },
-  }
-  const catStyle = categoryStyles[job.category] || { bg: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300', border: 'border-emerald-300 dark:border-emerald-700/60' }
+  const employerName = job.employer?.companyName || job.employer?.fullName || 'Onaylı İşveren'
 
   return (
-    <Card3D maxTilt={5} scale={1} glare={true} className="h-full">
-      <div
-        className={`card-3d-spatial rounded-2xl h-full p-4 sm:p-5 flex flex-col justify-between group cursor-pointer overflow-hidden border ${
-          isUrgent
-            ? 'border-red-300/80 dark:border-red-800/60 bg-gradient-to-br from-red-50/40 dark:from-red-950/30 via-white dark:via-slate-900 to-white dark:to-slate-900'
-            : isHigh
-            ? 'border-orange-300/80 dark:border-orange-800/60 bg-gradient-to-br from-orange-50/30 dark:from-orange-950/30 via-white dark:via-slate-900 to-white dark:to-slate-900'
-            : 'border-slate-200/90 dark:border-white/10 hover:border-emerald-400/80 dark:hover:border-emerald-500/50'
-        }`}
-        onClick={onClick}
-      >
-        {/* Aciliyet 3D Üst Şerit */}
-        {isUrgent && (
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500 shadow-[0_2px_8px_rgba(239,68,68,0.4)]" />
-        )}
-        {isHigh && (
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-400" />
-        )}
-
-        <div className="flex items-start gap-3.5 preserve-3d">
-          {/* 3D Extruded Kategori Rozeti */}
-          <div
-            className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${catStyle.bg} border-t border-white/80 dark:border-white/15 border-b-2 ${catStyle.border} shadow-[0_6px_14px_-2px_rgba(0,0,0,0.08),inset_0_1px_0_0_rgba(255,255,255,0.8)] dark:shadow-[0_6px_14px_-2px_rgba(0,0,0,0.4),inset_0_1px_0_0_rgba(255,255,255,0.1)] translate-z-4`}
-          >
-            {categoryIcon(job.category)}
+    <article
+      onClick={onClick}
+      className={`group bg-white dark:bg-[#141716] rounded-lg p-4 sm:p-5 flex flex-col justify-between cursor-pointer border transition-colors ${
+        isUrgent
+          ? 'border-[#D9826C] dark:border-[#7A3222] hover:border-[#C84B31]'
+          : 'border-[#E2E0D8] dark:border-[#252B28] hover:border-[#141615] dark:hover:border-[#5CD6A5]'
+      }`}
+    >
+      <div>
+        {/* Üst Satır: Sektör Kodu, Konum ve Aciliyet */}
+        <div className="flex items-center justify-between gap-2 mb-2.5">
+          <div className="flex items-center gap-2 text-xs min-w-0">
+            <span className="font-mono text-[11px] font-semibold px-1.5 py-0.5 rounded-sm bg-[#F0EFEA] dark:bg-[#1D2220] text-[#141615] dark:text-[#F2F1ED] border border-[#D8D5CC] dark:border-[#2E3633]">
+              {categoryIcon(job.category)}
+            </span>
+            <span className="font-semibold text-[#4A4F4C] dark:text-[#A5ACA8] truncate">
+              {categoryLabel(job.category)}
+            </span>
+            <span className="text-[#C5C1B6] dark:text-[#3A443F]">/</span>
+            <span className="text-[#5C615E] dark:text-[#949B97] truncate flex items-center gap-1">
+              <MapPin className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{job.district}, {job.city}</span>
+            </span>
           </div>
 
-          <div className="flex-1 min-w-0 preserve-3d">
-            <div className="flex items-start justify-between gap-2">
-              <h3 className="font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors line-clamp-1 text-sm sm:text-base translate-z-2">
-                {job.title}
-              </h3>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {job.distanceKm !== undefined && (
+              <span className="font-mono text-[11px] font-semibold text-[#0D6847] dark:text-[#5CD6A5] bg-[#EAF3EE] dark:bg-[#162921] px-2 py-0.5 rounded-sm border border-[#C5DDD0] dark:border-[#244738]">
+                {formatDistance(job.distanceKm)}
+              </span>
+            )}
+            {(isUrgent || isHigh) && (
               <span
-                className={`flex-shrink-0 text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full font-bold translate-z-2 ${
+                className={`font-mono text-[11px] font-semibold px-2 py-0.5 rounded-sm border ${
                   isUrgent
-                    ? 'badge-3d-urgent'
-                    : isHigh
-                    ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700/60 shadow-xs'
-                    : `${urgency.color} border`
+                    ? 'bg-[#FBEEE9] text-[#B43B21] border-[#EFC7BD] dark:bg-[#2E1611] dark:text-[#F5937E] dark:border-[#5C281E]'
+                    : 'bg-[#FDF6E7] text-[#946200] border-[#EAD29C] dark:bg-[#2B210B] dark:text-[#E5B85B] dark:border-[#523E14]'
                 }`}
               >
-                {urgency.text}
+                {isUrgent ? 'ACİL VARDİYA' : 'ÖNCELİKLİ'}
               </span>
-            </div>
-
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-1 flex-wrap translate-z-2">
-              <span className="font-bold text-slate-700 dark:text-slate-300">{categoryLabel(job.category)}</span>
-              <span>•</span>
-              <span className="flex items-center gap-0.5 truncate text-slate-600 dark:text-slate-400">
-                <MapPin className="w-3 h-3 flex-shrink-0 text-slate-400" />
-                <span className="truncate">{job.district}, {job.city}</span>
-              </span>
-              {job.distanceKm !== undefined && (
-                <>
-                  <span>•</span>
-                  <span className="text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-0.5 flex-shrink-0 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded-full shadow-2xs">
-                    <Navigation className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                    {formatDistance(job.distanceKm)}
-                  </span>
-                </>
-              )}
-            </div>
-
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-2 line-clamp-2 leading-relaxed">
-              {job.description}
-            </p>
+            )}
           </div>
         </div>
 
-        {/* Alt Bilgi & 3D Yevmiye Rozeti */}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100/90 dark:border-white/10 gap-2 preserve-3d">
-          <div className="flex items-center gap-2 sm:gap-3 text-sm flex-wrap">
-            {/* 3D Tactile Yevmiye Rozeti */}
-            <div className="badge-3d-emerald px-3 py-1 rounded-xl text-xs sm:text-sm font-black flex items-center gap-1.5 translate-z-4">
-              <Wallet className="w-3.5 h-3.5 drop-shadow-xs" />
-              <span>{formatWage(job.wageAmount, job.wageType)}</span>
-            </div>
+        {/* İlan Başlığı & Özeti */}
+        <h3 className="text-[16px] sm:text-[17px] font-bold text-[#141615] dark:text-[#F2F1ED] group-hover:text-[#0D6847] dark:group-hover:text-[#5CD6A5] transition-colors leading-snug line-clamp-1">
+          {job.title}
+        </h3>
 
-            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium translate-z-2">
-              <Clock className="w-3.5 h-3.5 text-slate-400" />
-              {daysUntil(job.workDate)}
-            </div>
+        <p className="text-xs sm:text-[13px] text-[#5C615E] dark:text-[#949B97] mt-1.5 line-clamp-2 leading-relaxed">
+          {job.description}
+        </p>
+      </div>
 
-            {remaining > 0 && (
-              <div className="text-[11px] text-slate-700 dark:text-slate-200 font-bold bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-white/10 px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-2xs translate-z-2">
-                <Users className="w-3 h-3 text-slate-500 dark:text-slate-400" />
-                {remaining} kişi
-              </div>
-            )}
+      {/* Alt Cetvel: Yevmiye, Tarih, Kontenjan ve İşveren */}
+      <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-[#ECEAE4] dark:border-[#222624] gap-2">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="font-mono text-xs sm:text-[13px] font-semibold bg-[#EAF3EE] dark:bg-[#162921] text-[#0D6847] dark:text-[#5CD6A5] border border-[#C5DDD0] dark:border-[#244738] px-2.5 py-1 rounded-sm">
+            {formatWage(job.wageAmount, job.wageType)}
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 flex-shrink-0 translate-z-2">
-            <Avatar className="w-6 h-6 border border-emerald-500/30 shadow-2xs">
-              <AvatarFallback className="text-[10px] font-extrabold bg-gradient-to-tr from-emerald-100 to-teal-100 dark:from-emerald-950 dark:to-teal-900 text-emerald-800 dark:text-emerald-300">
-                {initials(job.employer?.companyName || job.employer?.fullName)}
-              </AvatarFallback>
-            </Avatar>
-            {job.employer?.isVerified && (
-              <span title="Onaylı işveren" className="text-blue-500 dark:text-blue-400">
-                <CheckCircle2 className="w-3.5 h-3.5 fill-blue-100 dark:fill-blue-950/60 text-blue-600 dark:text-blue-400" />
-              </span>
-            )}
+          <div className="font-mono text-[11px] text-[#5C615E] dark:text-[#949B97] flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            <span>{daysUntil(job.workDate)}</span>
           </div>
+
+          {remaining > 0 && (
+            <div className="font-mono text-[11px] text-[#4A4F4C] dark:text-[#A5ACA8] bg-[#F6F5F2] dark:bg-[#1A1F1D] border border-[#E2E0D8] dark:border-[#282F2B] px-2 py-0.5 rounded-sm">
+              {remaining} kişilik kontenjan
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 text-xs text-[#5C615E] dark:text-[#949B97] flex-shrink-0">
+          <span className="max-w-[110px] truncate font-medium hidden sm:inline">{employerName}</span>
+          {job.employer?.isVerified && (
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#5CD6A5]" />
+          )}
         </div>
       </div>
-    </Card3D>
+    </article>
   )
 }
 

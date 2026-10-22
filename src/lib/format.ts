@@ -60,29 +60,29 @@ export function daysUntil(date: string | Date): string {
 export function categoryLabel(category: string): string {
   const labels: Record<string, string> = {
     INSAAT: 'İnşaat & Yapı',
-    RESTAURANT: 'Restoran',
-    TEMIZLIK: 'Temizlik',
-    NAKLIYE: 'Nakliyat',
-    TARIM: 'Tarım',
-    TEKNIK: 'Teknik',
-    SAGLIK: 'Sağlık',
-    DIGER: 'Diğer',
+    RESTAURANT: 'Restoran & Servis',
+    TEMIZLIK: 'Temizlik & Düzen',
+    NAKLIYE: 'Nakliyat & Taşıma',
+    TARIM: 'Tarım & Bahçe',
+    TEKNIK: 'Teknik & Montaj',
+    SAGLIK: 'Bakım & Destek',
+    DIGER: 'Genel Saha İşi',
   }
   return labels[category] || category
 }
 
 export function categoryIcon(category: string): string {
-  const icons: Record<string, string> = {
-    INSAAT: '🔨',
-    RESTAURANT: '🍽️',
-    TEMIZLIK: '✨',
-    NAKLIYE: '🚚',
-    TARIM: '🌾',
-    TEKNIK: '🔧',
-    SAGLIK: '❤️',
-    DIGER: '💼',
+  const codes: Record<string, string> = {
+    INSAAT: 'İNŞ',
+    RESTAURANT: 'RST',
+    TEMIZLIK: 'TMZ',
+    NAKLIYE: 'NKL',
+    TARIM: 'TRM',
+    TEKNIK: 'TKN',
+    SAGLIK: 'BKM',
+    DIGER: 'GNL',
   }
-  return icons[category] || '💼'
+  return codes[category] || 'İŞ'
 }
 
 export function urgencyLabel(urgency: string): { text: string; color: string } {

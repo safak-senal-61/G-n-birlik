@@ -1,10 +1,8 @@
 'use client'
 
 import React from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { useApp } from '@/lib/app-store'
-import { ShieldCheck, Lock, UserPlus, LogIn, ArrowRight } from 'lucide-react'
+import { Lock, LogIn } from 'lucide-react'
 
 interface AuthGateCardProps {
   title?: string
@@ -14,66 +12,53 @@ interface AuthGateCardProps {
 }
 
 export default function AuthGateCard({
-  title = 'Giriş Yapmanız Gerekiyor',
-  description = 'Bu sayfayı görüntülemek, ilan vermek veya başvurularınızı yönetmek için lütfen hesabınıza giriş yapın.',
+  title = 'Bu İşlem İçin Oturum Açın',
+  description = 'İlan yayınlamak, başvuru yapmak veya cüzdan hareketlerinizi görüntülemek için hesabınıza giriş yapın.',
   actionLabel = 'Giriş Yap veya Kayıt Ol',
   targetRole,
 }: AuthGateCardProps) {
   const { openAuthModal, go } = useApp()
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-16 text-center">
-      <Card className="rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md overflow-hidden">
-        <div className="h-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-500" />
-        <CardContent className="p-8 sm:p-10 space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center shadow-inner">
-            <Lock className="w-8 h-8" />
-          </div>
+    <div className="max-w-lg mx-auto px-4 py-16">
+      <div className="bg-white dark:bg-[#141716] border border-[#D8D5CC] dark:border-[#252B28] rounded-lg p-6 sm:p-8 space-y-5">
+        <div className="w-10 h-10 rounded-md bg-[#EAF3EE] dark:bg-[#162921] text-[#0D6847] dark:text-[#5CD6A5] border border-[#C5DDD0] dark:border-[#244738] flex items-center justify-center">
+          <Lock className="w-4 h-4" />
+        </div>
 
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              {title}
-            </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-md mx-auto">
-              {description}
-            </p>
-          </div>
+        <div className="space-y-1.5">
+          <h2 className="text-xl font-bold text-[#141615] dark:text-white tracking-tight">
+            {title}
+          </h2>
+          <p className="text-sm text-[#5C615E] dark:text-[#949B97] leading-relaxed">
+            {description}
+          </p>
+        </div>
 
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Button
-              className="w-full sm:w-auto h-11 px-8 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md"
-              onClick={() =>
-                openAuthModal({
-                  title,
-                  description,
-                  tab: targetRole === 'EMPLOYER' ? 'register' : 'login',
-                })
-              }
-            >
-              <LogIn className="w-4 h-4 mr-2" />
-              {actionLabel}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto h-11 px-6 rounded-full font-medium"
-              onClick={() => go('home')}
-            >
-              İlanlara Dön
-            </Button>
-          </div>
-
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              Ücretsiz Kayıt
-            </span>
-            <span>•</span>
-            <span>Aynı Gün Yevmiye</span>
-            <span>•</span>
-            <span>Emanet Ödeme</span>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
+          <button
+            type="button"
+            className="w-full sm:w-auto h-10 px-5 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold inline-flex items-center justify-center gap-2 cursor-pointer"
+            onClick={() =>
+              openAuthModal({
+                title,
+                description,
+                tab: targetRole === 'EMPLOYER' ? 'register' : 'login',
+              })
+            }
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            <span>{actionLabel}</span>
+          </button>
+          <button
+            type="button"
+            className="w-full sm:w-auto h-10 px-4 rounded-md border border-[#D6D3C9] dark:border-[#2B322E] text-xs font-semibold text-[#141615] dark:text-[#F2F1ED] hover:bg-[#F0EFEA] dark:hover:bg-[#1D2220] cursor-pointer"
+            onClick={() => go('home')}
+          >
+            Açık İlanlara Dön
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

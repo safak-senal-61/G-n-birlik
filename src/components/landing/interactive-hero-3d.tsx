@@ -1,191 +1,182 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
-import {
-  Compass,
-  ShieldCheck,
-  Zap,
-  QrCode,
-  ArrowRight,
-  MapPin,
-  Building2,
-  Wallet,
-  CheckCircle2,
-  Lock,
-  BadgePercent,
-  Clock,
-  Sparkles,
-  Search,
-  Briefcase,
-  Users,
-} from 'lucide-react'
+import { ArrowRight, Plus } from 'lucide-react'
 import { useApp } from '@/lib/app-store'
 import { useAuth } from '@/lib/auth-store'
-import { Button } from '@/components/ui/button'
 
 interface InteractiveHero3DProps {
   onExploreClick?: () => void
+  onSelectCategory?: (categoryKey: string) => void
   totalJobs?: number
 }
 
-const QUICK_CATEGORIES = [
-  { key: 'RESTAURANT', label: 'Garson & Komi', icon: '🍽️' },
-  { key: 'TEMIZLIK', label: 'Temizlik', icon: '🧹' },
-  { key: 'NAKLIYE', label: 'Kurye & Dağıtım', icon: '📦' },
-  { key: 'INSAAT', label: 'İnşaat & Tadilat', icon: '🔨' },
-  { key: 'TARIM', label: 'Tarım & Bahçe', icon: '🌾' },
-  { key: 'DIGER', label: 'Etkinlik & Tanıtım', icon: '🎪' },
+const SECTORS = [
+  { key: 'RESTAURANT', code: 'RST', label: 'Restoran & Servis' },
+  { key: 'INSAAT', code: 'İNŞ', label: 'İnşaat & Yapı' },
+  { key: 'TEMIZLIK', code: 'TMZ', label: 'Temizlik & Düzen' },
+  { key: 'NAKLIYE', code: 'NKL', label: 'Nakliyat & Taşıma' },
+  { key: 'TEKNIK', code: 'TKN', label: 'Teknik & Montaj' },
+  { key: 'TARIM', code: 'TRM', label: 'Tarım & Bahçe' },
 ]
 
-export function InteractiveHero3D({ onExploreClick, totalJobs = 48 }: InteractiveHero3DProps) {
+export function InteractiveHero3D({
+  onExploreClick,
+  onSelectCategory,
+  totalJobs = 48,
+}: InteractiveHero3DProps) {
   const { go, openAuthModal } = useApp()
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState<'worker' | 'employer'>('worker')
 
   return (
-    <section className="relative w-full overflow-hidden pt-3 sm:pt-6 pb-8 sm:pb-14">
-      <div className="container mx-auto px-4 max-w-6xl relative z-10">
-        
-        {/* Güven Bandı */}
-        <div className="flex flex-wrap items-center gap-2.5 mb-6">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Türkiye Geneli Canlı Günlük İş Platformu
-          </span>
-          <span className="hidden sm:inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            Emanet Ödeme Koruması
-          </span>
-        </div>
+    <section className="w-full border-b border-[#E2E0D8] dark:border-[#252B28] pb-8 pt-2 sm:pt-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Sol Sütun: Ana İlan Panosu Başlığı */}
+        <div className="lg:col-span-7 space-y-5">
+          <div className="flex items-center gap-3 text-xs text-[#5C615E] dark:text-[#949B97]">
+            <span className="font-mono font-semibold text-[#0D6847] dark:text-[#5CD6A5] bg-[#EAF3EE] dark:bg-[#162921] px-2 py-0.5 rounded-sm border border-[#C5DDD0] dark:border-[#244738]">
+              CANLI PANO
+            </span>
+            <span>Türkiye geneli yevmiyeli iş ve acil personel ağı</span>
+          </div>
 
-        {/* Hero Ana Başlık & Açıklama */}
-        <div className="max-w-3xl space-y-5">
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-            Sabah başla, <br className="hidden sm:inline" />
-            akşam yevmiyeni güvenle al.
+          <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-bold tracking-[-0.025em] text-[#141615] dark:text-[#F2F1ED] leading-[1.12]">
+            Sabah vardiyaya başla, akşam yevmiyeni net al.
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal max-w-2xl">
-            Konumuna en yakın günübirlik ve part-time işleri haritada gör, aynı gün başvur.
-            İşverenin yatırdığı ücret emanet kasasında güvence altında tutulur; mesai bitiminde tek kuruş kesinti olmadan hesabına geçer.
+          <p className="text-[15px] sm:text-base text-[#4A4F4C] dark:text-[#A5ACA8] leading-relaxed max-w-[62ch]">
+            Semtindeki açık günlük işleri incele, şartları uyan vardiyaya başvur. İşveren ücreti
+            mesai başlamadan emanet kasasına yatırır; akşam çıkış QR onayıyla tutar kesintisiz
+            hesabına geçer.
           </p>
 
-          {/* Aksiyon Butonları */}
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <Button
-              size="lg"
-              className="h-12 px-6 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md transition-all flex items-center gap-2 cursor-pointer"
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <button
+              type="button"
               onClick={onExploreClick}
+              className="h-11 px-5 rounded-md bg-[#141615] hover:bg-[#272B29] dark:bg-[#F2F1ED] dark:hover:bg-white text-white dark:text-[#141615] text-sm font-semibold inline-flex items-center gap-2 transition-colors cursor-pointer"
             >
-              <Compass className="w-5 h-5" />
-              <span>Açık İşleri Keşfet</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+              <span>Açık İlanlara Göz At</span>
+              <span className="font-mono text-xs opacity-75">({totalJobs})</span>
+            </button>
 
-            {user?.role === 'EMPLOYER' || user?.role === 'ADMIN' ? (
-              <Button
-                variant="outline"
-                size="lg"
-                className="h-12 px-6 rounded-full font-semibold border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-                onClick={() => go('post-job')}
-              >
-                <Building2 className="w-4 h-4 mr-2 text-emerald-600" />
-                İlan Yayınla
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="lg"
-                className="h-12 px-6 rounded-full font-semibold border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
-                onClick={() => {
-                  if (user) {
-                    go('wallet')
-                  } else {
-                    openAuthModal({
-                      title: 'İşveren İlanı Yayınlayın',
-                      description: 'Acil personel ve günübirlik usta ihtiyacınızı karşılamak için işveren olarak kayıt olun.',
-                      tab: 'register',
-                    })
-                  }
-                }}
-              >
-                <Building2 className="w-4 h-4 mr-2 text-emerald-600" />
-                {user ? 'Cüzdanım' : 'Eleman Arıyorum (İlan Ver)'}
-              </Button>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                if (user?.role === 'EMPLOYER' || user?.role === 'ADMIN') {
+                  go('post-job')
+                } else if (user) {
+                  go('wallet')
+                } else {
+                  openAuthModal({
+                    title: 'İşveren İlanı Oluşturun',
+                    description:
+                      'Restoran, şantiye, depo veya temizlik işleriniz için aynı gün personel bulmak üzere giriş yapın.',
+                    tab: 'register',
+                  })
+                }
+              }}
+              className="h-11 px-5 rounded-md bg-white dark:bg-[#141716] hover:bg-[#F0EFEA] dark:hover:bg-[#1D2220] text-[#141615] dark:text-[#F2F1ED] border border-[#D6D3C9] dark:border-[#2B322E] text-sm font-semibold inline-flex items-center gap-2 transition-colors cursor-pointer"
+            >
+              <Plus className="w-4 h-4 text-[#0D6847] dark:text-[#5CD6A5]" />
+              <span>{user ? 'Emanet & Cüzdan' : 'Eleman Arıyorum (İlan Aç)'}</span>
+            </button>
 
             <Link
               href="/nasil-calisir"
-              className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-2 transition-colors inline-flex items-center gap-1"
+              className="text-xs font-semibold text-[#5C615E] dark:text-[#949B97] hover:text-[#141615] dark:hover:text-white px-2 py-2 inline-flex items-center gap-1 transition-colors"
             >
-              Sistem Nasıl Çalışır?
+              <span>Emanet sistemi nasıl işler?</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-        </div>
 
-        {/* Hızlı Kategori Seçimi */}
-        <div className="mt-8 pt-6 border-t border-slate-200/80 dark:border-slate-800/80">
-          <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3">
-            Popüler Günlük İş Kategorileri:
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {QUICK_CATEGORIES.map((cat) => (
-              <button
-                key={cat.key}
-                type="button"
-                onClick={() => {
-                  onExploreClick?.()
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:border-emerald-500 dark:hover:text-emerald-400 transition-all shadow-xs"
-              >
-                <span>{cat.icon}</span>
-                <span>{cat.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 3 Güven Temeli (Reel ve somut) */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-xs">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
-              <Lock className="w-5 h-5" />
+          {/* Sektör Fihristi */}
+          <div className="pt-4 border-t border-[#E2E0D8] dark:border-[#252B28]">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {SECTORS.map((sec) => (
+                <button
+                  key={sec.key}
+                  type="button"
+                  onClick={() => {
+                    onSelectCategory?.(sec.key)
+                    onExploreClick?.()
+                  }}
+                  className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] hover:border-[#0D6847] dark:hover:border-[#5CD6A5] text-xs font-medium text-[#141615] dark:text-[#F2F1ED] transition-colors cursor-pointer"
+                >
+                  <span className="font-mono text-[10px] font-semibold text-[#5C615E] dark:text-[#949B97]">
+                    {sec.code}
+                  </span>
+                  <span>{sec.label}</span>
+                </button>
+              ))}
             </div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">
-              Emanet Havuzu Güvencesi
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              İşveren ilanı açarken yevmiye tutarı emanet kasasında kilitlenir. Emeğin asla karşılıksız kalmaz.
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-xs">
-            <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center mb-3">
-              <MapPin className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">
-              Yakındaki İşler & Konum Radarı
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              GPS radarı sayesinde yol parası ve zaman harcamadan semtindeki en yakın işleri haritada gör.
-            </p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-xs">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-3">
-              <Zap className="w-5 h-5" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1">
-              Aynı Gün Komisyonsuz Ödeme
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              Mesai bitiminde çıkış QR koduyla teyit alınır. Yevmiyen kesintisiz ve net olarak cüzdanına yansır.
-            </p>
           </div>
         </div>
 
+        {/* Sağ Sütun: Saha & Emanet Protokolü Tablosu */}
+        <div className="lg:col-span-5">
+          <div className="bg-white dark:bg-[#141716] border border-[#D8D5CC] dark:border-[#252B28] rounded-lg overflow-hidden">
+            <div className="px-4 py-3 bg-[#F0EFEA] dark:bg-[#1A1F1D] border-b border-[#D8D5CC] dark:border-[#252B28] flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#141615] dark:text-white">
+                Günlük Yevmiye Güvence Protokolü
+              </span>
+              <span className="font-mono text-[11px] text-[#0D6847] dark:text-[#5CD6A5] font-medium">
+                ESCROW / QR
+              </span>
+            </div>
+
+            <div className="divide-y divide-[#ECEAE4] dark:divide-[#222624]">
+              <div className="p-4 flex items-start gap-3.5">
+                <span className="font-mono text-xs font-semibold text-[#0D6847] dark:text-[#5CD6A5] pt-0.5">
+                  01
+                </span>
+                <div className="space-y-0.5">
+                  <div className="text-xs font-semibold text-[#141615] dark:text-white">
+                    İlan Açılışında Emanet Blokajı
+                  </div>
+                  <p className="text-xs text-[#5C615E] dark:text-[#949B97] leading-relaxed">
+                    İşveren ilanı yayınlarken günlük yevmiye tutarı emanet hesabına alınır; karşılıksız ilan açılmaz.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 flex items-start gap-3.5">
+                <span className="font-mono text-xs font-semibold text-[#0D6847] dark:text-[#5CD6A5] pt-0.5">
+                  02
+                </span>
+                <div className="space-y-0.5">
+                  <div className="text-xs font-semibold text-[#141615] dark:text-white">
+                    Sabah Saha Girişi (QR Teyit)
+                  </div>
+                  <p className="text-xs text-[#5C615E] dark:text-[#949B97] leading-relaxed">
+                    Çalışan iş yerine ulaştığında QR kod okutulur; vardiya başlangıç saati ve konum kayda geçer.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 flex items-start gap-3.5">
+                <span className="font-mono text-xs font-semibold text-[#0D6847] dark:text-[#5CD6A5] pt-0.5">
+                  03
+                </span>
+                <div className="space-y-0.5">
+                  <div className="text-xs font-semibold text-[#141615] dark:text-white">
+                    Mesai Bitimi Doğrudan Ödeme
+                  </div>
+                  <p className="text-xs text-[#5C615E] dark:text-[#949B97] leading-relaxed">
+                    Akşam çıkış onayıyla emanetteki tutar komisyon kesintisi olmadan çalışanın hesabına aktarılır.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-4 py-2.5 bg-[#F6F5F2] dark:bg-[#101312] border-t border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-between text-[11px] font-mono text-[#5C615E] dark:text-[#949B97]">
+              <span>Çalışan Komisyonu: %0</span>
+              <span>Ödeme: Aynı Gün Net</span>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   )

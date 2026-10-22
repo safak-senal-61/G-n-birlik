@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useAuth } from '@/lib/auth-store'
 import { useApp } from '@/lib/app-store'
 import { Button } from '@/components/ui/button'
@@ -21,7 +22,27 @@ import {
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Briefcase, Bell, MessageSquare, User as UserIcon, LogOut, Menu, X, Plus, Heart, FileText, BookOpen, LayoutGrid, ChevronLeft, ChevronDown, Wallet, LifeBuoy, Share2, QrCode, Copy, Check, Sparkles } from 'lucide-react'
+import {
+  Briefcase,
+  Bell,
+  MessageSquare,
+  User as UserIcon,
+  LogOut,
+  Menu,
+  X,
+  Plus,
+  Heart,
+  FileText,
+  BookOpen,
+  LayoutGrid,
+  ChevronDown,
+  Wallet,
+  LifeBuoy,
+  Share2,
+  QrCode,
+  Copy,
+  Check,
+} from 'lucide-react'
 import { initials } from '@/lib/format'
 import { useEffect, useState } from 'react'
 import { notificationsApi } from '@/lib/api'
@@ -29,26 +50,26 @@ import { usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import Logo from '@/components/shared/logo'
+import AuthModal from '@/components/shared/auth-modal'
 import { WhatsAppIcon, TelegramIcon, TwitterXIcon } from '@/components/shared/social-icons'
-
-import Link from 'next/link'
 
 export default function Header() {
   const { user, logout } = useAuth()
-  const { view, go, back, history, openAuthModal } = useApp()
+  const { view, go, openAuthModal } = useApp()
+  const pathname = usePathname()
   const [unreadCount, setUnreadCount] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  // Site URL — production'da gerçek domain, dev'de localhost
-  const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://gunubirlik.qrders.com.tr'
+  const siteUrl =
+    typeof window !== 'undefined' ? window.location.origin : 'https://gunubirlik.qrders.com.tr'
 
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(siteUrl)
       setCopied(true)
-      toast.success('Link kopyalandı! 📋')
+      toast.success('Bağlantı kopyalandı')
       setTimeout(() => setCopied(false), 2000)
     } catch {
       toast.error('Kopyalanamadı')
@@ -60,7 +81,7 @@ export default function Header() {
       try {
         await (navigator as any).share({
           title: 'Günübirlik İş Bul',
-          text: 'Türkiye\'nin günübirlik iş bulma platformu. İlanları gör, hemen iş bul!',
+          text: 'Türkiye geneli günlük ve yevmiyeli iş panosu.',
           url: siteUrl,
         })
       } catch {
@@ -88,7 +109,6 @@ export default function Header() {
     return () => clearInterval(interval)
   }, [user, view])
 
-  // Bildirimler sayfasına girildiğinde veya okundu eventi tetiklendiğinde sayacı hemen sıfırla
   useEffect(() => {
     if (view === 'notifications') {
       setUnreadCount(0)
@@ -98,174 +118,138 @@ export default function Header() {
     return () => window.removeEventListener('notifications-read', handleRead)
   }, [view])
 
+  const publicLinks = [
+    { href: '/', label: 'Açık İlanlar', isHome: true },
+    { href: '/nasil-calisir', label: 'İşleyiş' },
+    { href: '/is-arayanlar', label: 'Çalışanlar' },
+    { href: '/isverenler', label: 'İşverenler' },
+    { href: '/blog', label: 'Yevmiye Rehberi' },
+  ]
+
   if (!user) {
     return (
-      <header className="fixed top-2 sm:top-3.5 left-0 right-0 z-50 px-2.5 sm:px-4 transition-all pointer-events-none">
-        <div className="max-w-7xl mx-auto rounded-2xl sm:rounded-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.06)] px-3 sm:px-4 py-1.5 sm:py-2 pointer-events-auto">
-          <div className="flex items-center justify-between h-10 sm:h-11 gap-2">
-            {/* Logo */}
-            <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
-              <button
-                type="button"
-                onClick={() => go('home')}
-                className="flex items-center group transition-transform active:scale-95 text-left flex-shrink-0"
-                title="Günübirlik"
-                aria-label="Günübirlik — Ana Sayfa"
-              >
-                <Logo size="md" variant="full" />
-              </button>
-            </div>
+      <>
+        <AuthModal />
+        <header className="sticky top-0 z-50 w-full bg-[#F6F5F2]/95 dark:bg-[#0C0E0D]/95 backdrop-blur-md border-b border-[#E2E0D8] dark:border-[#252B28]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-6 min-w-0">
+            <Link
+              href="/"
+              onClick={() => go('home')}
+              className="flex items-center flex-shrink-0"
+              aria-label="Günübirlik — Ana Sayfa"
+            >
+              <Logo size="sm" variant="full" />
+            </Link>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center gap-1 text-sm font-medium text-slate-600 dark:text-slate-300">
-              <button
-                onClick={() => go('home')}
-                className={`px-3 py-1.5 rounded-full transition-colors ${
-                  view === 'home'
-                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold'
-                    : 'hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                }`}
-              >
-                İş İlanları
-              </button>
-              <Link
-                href="/nasil-calisir"
-                className="px-3 py-1.5 rounded-full hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-              >
-                Nasıl Çalışır?
-              </Link>
-              <Link
-                href="/is-arayanlar"
-                className="px-3 py-1.5 rounded-full hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-              >
-                İş Arayanlar
-              </Link>
-              <Link
-                href="/isverenler"
-                className="px-3 py-1.5 rounded-full hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-              >
-                İşverenler
-              </Link>
-              <Link
-                href="/blog"
-                className="px-3 py-1.5 rounded-full hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-              >
-                Blog
-              </Link>
+            <nav className="hidden md:flex items-center gap-1" aria-label="Ana Gezinti">
+              {publicLinks.map((link) => {
+                const active = link.isHome
+                  ? pathname === '/' && view === 'home'
+                  : pathname?.startsWith(link.href)
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => {
+                      if (link.isHome) go('home')
+                    }}
+                    className={`px-3 py-1.5 rounded-md text-[13px] transition-colors ${
+                      active
+                        ? 'text-[#141615] dark:text-white font-semibold bg-[#E9E7E0] dark:bg-[#1D2220]'
+                        : 'text-[#5C615E] dark:text-[#949B97] hover:text-[#141615] dark:hover:text-white font-medium'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                )
+              })}
             </nav>
-
-            {/* Right Actions */}
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs sm:text-sm font-semibold rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                onClick={() => openAuthModal({ title: 'Giriş Yapın', tab: 'login' })}
-              >
-                Giriş Yap
-              </Button>
-
-              <Button
-                size="sm"
-                className="text-xs sm:text-sm font-semibold rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all"
-                onClick={() =>
-                  openAuthModal({
-                    title: 'İş İlanı Verin',
-                    description: 'Acil eleman ihtiyacınızı dakikalar içinde karşılamak için işveren olarak kayıt olun.',
-                    tab: 'register',
-                  })
-                }
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                İlan Ver
-              </Button>
-
-              {/* Mobile Menu Button */}
-              <Button
-                size="icon"
-                variant="ghost"
-                className="md:hidden h-9 w-9 rounded-full"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                aria-label="Menü"
-              >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </Button>
-            </div>
           </div>
 
-          {/* Mobile Menu Dropdown */}
-          {mobileMenuOpen && (
-            <div className="md:hidden mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-800 flex flex-col gap-1 pb-2">
-              <button
+          <div className="flex items-center gap-2">
+            <ThemeToggle variant="icon" />
+
+            <button
+              type="button"
+              onClick={() => openAuthModal({ title: 'Hesabınıza Giriş Yapın', tab: 'login' })}
+              className="px-3.5 py-1.5 rounded-md text-[13px] font-semibold text-[#141615] dark:text-[#F2F1ED] hover:bg-[#EAE8E1] dark:hover:bg-[#1D2220] transition-colors cursor-pointer"
+            >
+              Giriş Yap
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                openAuthModal({
+                  title: 'Yeni İş İlanı Yayınla',
+                  description:
+                    'Acil personel veya günübirlik usta ihtiyacınız için işveren hesabıyla giriş yapın.',
+                  tab: 'register',
+                })
+              }
+              className="px-3.5 py-1.5 rounded-md text-[13px] font-semibold bg-[#0D6847] hover:bg-[#095237] text-white transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>İlan Aç</span>
+            </button>
+
+            <button
+              type="button"
+              className="md:hidden p-2 rounded-md text-[#141615] dark:text-[#F2F1ED] hover:bg-[#EAE8E1] dark:hover:bg-[#1D2220]"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Menü"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-[#E2E0D8] dark:border-[#252B28] bg-[#F6F5F2] dark:bg-[#0C0E0D] px-4 py-3 space-y-1">
+            {publicLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
                 onClick={() => {
-                  go('home')
+                  if (link.isHome) go('home')
                   setMobileMenuOpen(false)
                 }}
-                className="text-left px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="block px-3 py-2 rounded-md text-sm font-medium text-[#141615] dark:text-[#F2F1ED] hover:bg-[#EAE8E1] dark:hover:bg-[#1D2220]"
               >
-                İş İlanları
+                {link.label}
+              </Link>
+            ))}
+            <div className="pt-2 mt-2 border-t border-[#E2E0D8] dark:border-[#252B28] grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="py-2 rounded-md border border-[#D6D3C9] dark:border-[#2B322E] text-xs font-semibold text-[#141615] dark:text-white"
+                onClick={() => {
+                  setMobileMenuOpen(false)
+                  openAuthModal({ title: 'Hesabınıza Giriş Yapın', tab: 'login' })
+                }}
+              >
+                Giriş Yap
               </button>
-              <Link
-                href="/nasil-calisir"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              <button
+                type="button"
+                className="py-2 rounded-md bg-[#0D6847] text-white text-xs font-semibold"
+                onClick={() => {
+                  setMobileMenuOpen(false)
+                  openAuthModal({
+                    title: 'İş İlanı Yayınla',
+                    tab: 'register',
+                    description: 'İşveren hesabı açarak hemen ilan yayınlayın.',
+                  })
+                }}
               >
-                Nasıl Çalışır?
-              </Link>
-              <Link
-                href="/is-arayanlar"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                İş Arayanlar
-              </Link>
-              <Link
-                href="/isverenler"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                İşverenler
-              </Link>
-              <Link
-                href="/blog"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-3 py-2 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                Blog & Rehber
-              </Link>
-              <div className="pt-2 mt-2 border-t border-slate-200/80 dark:border-slate-800 flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 rounded-full text-xs font-semibold"
-                  onClick={() => {
-                    setMobileMenuOpen(false)
-                    openAuthModal({ title: 'Giriş Yapın', tab: 'login' })
-                  }}
-                >
-                  Giriş Yap
-                </Button>
-                <Button
-                  size="sm"
-                  className="flex-1 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold"
-                  onClick={() => {
-                    setMobileMenuOpen(false)
-                    openAuthModal({
-                      title: 'İlan Verin',
-                      tab: 'register',
-                      description: 'İşveren hesabı açarak hemen ilan yayınlayın.',
-                    })
-                  }}
-                >
-                  Kayıt Ol / İlan Ver
-                </Button>
-              </div>
+                Kayıt Ol / İlan Aç
+              </button>
             </div>
-          )}
-        </div>
-      </header>
+          </div>
+        )}
+        </header>
+      </>
     )
   }
 
@@ -273,39 +257,35 @@ export default function Header() {
   const isEmployer = user.role === 'EMPLOYER'
 
   const navItems: Array<{ key: any; label: string; icon: any; roles?: string[] }> = [
-    { key: 'home', label: 'İşleri Keşfet', icon: LayoutGrid },
+    { key: 'home', label: 'Açık İlanlar', icon: LayoutGrid },
     ...(isWorker ? [{ key: 'applications', label: 'Başvurularım', icon: FileText }] : []),
-    ...(isWorker ? [{ key: 'saved-jobs', label: 'Kaydettiklerim', icon: Heart }] : []),
+    ...(isWorker ? [{ key: 'saved-jobs', label: 'Kaydedilenler', icon: Heart }] : []),
     ...(isEmployer ? [{ key: 'my-jobs', label: 'İlanlarım', icon: Briefcase }] : []),
-    ...(isEmployer ? [{ key: 'post-job', label: 'İlan Ver', icon: Plus }] : []),
+    ...(isEmployer ? [{ key: 'post-job', label: 'İlan Aç', icon: Plus }] : []),
     { key: 'messages', label: 'Mesajlar', icon: MessageSquare },
     { key: 'notifications', label: 'Bildirimler', icon: Bell },
     { key: 'profile', label: 'Profil', icon: UserIcon },
-    { key: 'api-docs', label: 'API Dokümantasyonu', icon: BookOpen, roles: ['EMPLOYER', 'ADMIN'] },
-    { key: 'help', label: 'Yardım & Destek', icon: LifeBuoy },
+    { key: 'api-docs', label: 'API', icon: BookOpen, roles: ['EMPLOYER', 'ADMIN'] },
+    { key: 'help', label: 'Destek', icon: LifeBuoy },
   ]
 
   const visibleNav = navItems.filter((n) => !n.roles || n.roles.includes(user.role))
 
   return (
-    <header className="fixed top-2 sm:top-3.5 left-0 right-0 z-50 px-2.5 sm:px-4 transition-all pointer-events-none">
-      <div className="max-w-7xl mx-auto rounded-2xl sm:rounded-full acrylic-3d border border-white/70 dark:border-white/10 shadow-[0_8px_32px_rgba(15,23,42,0.18),0_1px_0_0_rgba(255,255,255,0.85)] px-3 sm:px-4 py-1.5 sm:py-2 pointer-events-auto">
-        <div className="flex items-center justify-between h-10 sm:h-11 gap-2">
-          {/* Logo & Brand */}
-          <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => go('home')}
-              className="flex items-center group transition-transform active:scale-95 min-w-0 text-left flex-shrink-0"
-              title="Günübirlik — Ana Sayfa"
-              aria-label="Günübirlik — Ana Sayfa"
-            >
-              <Logo size="md" variant="full" />
-            </button>
-          </div>
+    <header className="sticky top-0 z-50 w-full bg-[#F6F5F2]/95 dark:bg-[#0C0E0D]/95 backdrop-blur-md border-b border-[#E2E0D8] dark:border-[#252B28]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-5 min-w-0">
+          <button
+            type="button"
+            onClick={() => go('home')}
+            className="flex items-center flex-shrink-0 text-left cursor-pointer"
+            title="Günübirlik — Ana Sayfa"
+            aria-label="Günübirlik — Ana Sayfa"
+          >
+            <Logo size="sm" variant="full" />
+          </button>
 
-          {/* Desktop Navigation - 3D Inset Tactile Pill Bar */}
-          <nav className="hidden lg:flex items-center p-1 rounded-full inset-3d gap-1 min-w-0" aria-label="Ana Gezinti Menüsü">
+          <nav className="hidden lg:flex items-center gap-1 min-w-0" aria-label="Ana Gezinti Menüsü">
             {visibleNav.slice(0, 7).map((item) => {
               const isActive = view === item.key
               return (
@@ -314,16 +294,16 @@ export default function Header() {
                   type="button"
                   onClick={() => go(item.key)}
                   aria-label={item.label}
-                  className={`relative px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 whitespace-nowrap transition-all duration-150 ${
+                  className={`relative px-3 py-1.5 rounded-md text-[13px] flex items-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer ${
                     isActive
-                      ? 'btn-3d-emerald rounded-full shadow-sm z-10'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-emerald-800 dark:hover:text-emerald-400 hover:bg-white/90 dark:hover:bg-slate-800/80'
+                      ? 'bg-[#141615] dark:bg-[#F2F1ED] text-white dark:text-[#141615] font-semibold'
+                      : 'text-[#5C615E] dark:text-[#949B97] hover:text-[#141615] dark:hover:text-white hover:bg-[#EAE8E1] dark:hover:bg-[#1D2220] font-medium'
                   }`}
                 >
-                  <item.icon className={`w-3.5 h-3.5 transition-colors ${isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400'}`} />
+                  <item.icon className="w-3.5 h-3.5" />
                   <span>{item.label}</span>
                   {item.key === 'notifications' && unreadCount > 0 && (
-                    <span className="ml-1 bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full min-w-[16px] h-[16px] flex items-center justify-center shadow-[0_2px_6px_rgba(244,63,94,0.4)] animate-pulse">
+                    <span className="ml-1 bg-[#C84B31] text-white text-[10px] font-mono font-semibold px-1.5 rounded-sm min-w-[16px] h-[16px] flex items-center justify-center">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
@@ -331,299 +311,208 @@ export default function Header() {
               )
             })}
           </nav>
+        </div>
 
-          {/* User Menu & Action Tools */}
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-            {/* Wallet Button Chip - 3D Tactile */}
-            <button
-              type="button"
-              onClick={() => go('wallet')}
-              className="btn-3d-white btn-3d-pill flex items-center gap-1.5 px-3 py-1.5 text-emerald-800 dark:text-emerald-300 text-xs font-bold"
-              title="Cüzdanım"
-              aria-label="Cüzdanım"
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => go('wallet')}
+            className="btn-3d-white rounded-md flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold cursor-pointer"
+            title="Cüzdanım"
+            aria-label="Cüzdanım"
+          >
+            <Wallet className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#5CD6A5]" />
+            <span className="hidden sm:inline">Emanet & Cüzdan</span>
+          </button>
+
+          <ThemeToggle variant="icon" />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden h-9 w-9 rounded-md relative"
+            onClick={() => go('notifications')}
+            aria-label="Bildirimler"
+          >
+            <Bell className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <Badge className="absolute -top-0.5 -right-0.5 bg-[#C84B31] text-white text-[9px] px-1 min-w-[15px] h-[15px] flex items-center justify-center rounded-sm">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </Badge>
+            )}
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden h-9 w-9 rounded-md"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="hidden lg:flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] hover:border-[#B8C4BE] transition-colors cursor-pointer"
+                aria-label="Kullanıcı Menüsü"
+              >
+                <Avatar className="w-6 h-6 rounded-sm">
+                  <AvatarFallback className="rounded-sm bg-[#EAF3EE] dark:bg-[#1D2E27] text-[#0D6847] dark:text-[#5CD6A5] font-mono font-semibold text-[11px]">
+                    {initials(user.fullName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col text-left">
+                  <span className="text-xs font-semibold text-[#141615] dark:text-white max-w-[90px] truncate leading-tight">
+                    {user.fullName.split(' ')[0]}
+                  </span>
+                  <span className="text-[10px] text-[#5C615E] dark:text-[#949B97] leading-none">
+                    {user.role === 'WORKER' ? 'Çalışan' : user.role === 'EMPLOYER' ? 'İşveren' : 'Yönetici'}
+                  </span>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-[#5C615E]" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              sideOffset={8}
+              className="w-64 rounded-lg shadow-lg border border-[#E2E0D8] dark:border-[#252B28] p-1.5 bg-white dark:bg-[#141716]"
             >
-              <Wallet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 drop-shadow-xs" />
-              <span className="hidden sm:inline">Cüzdan</span>
-            </button>
-
-            {/* Dark Mode Theme Toggle - 3D Tactile */}
-            <ThemeToggle variant="icon" />
-
-            {/* Quick notifications button - mobile 3D */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden h-9 w-9 rounded-full relative hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-300 active:scale-95"
-              onClick={() => go('notifications')}
-              aria-label="Bildirimler"
-            >
-              <Bell className="w-4 h-4" />
-              {unreadCount > 0 && (
-                <Badge className="absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[9px] px-1 min-w-[15px] h-[15px] flex items-center justify-center rounded-full shadow-[0_2px_4px_rgba(244,63,94,0.4)]">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </Badge>
-              )}
-            </Button>
-
-            {/* Mobile Menu Toggle Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden h-9 w-9 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-300 active:scale-95"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label={mobileMenuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
-
-            {/* User Dropdown Pill Menu - 3D Spatial */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="hidden lg:flex items-center gap-2 pl-1 pr-3 py-1 rounded-full card-3d-spatial hover:shadow-md transition-shadow group cursor-pointer"
-                  aria-label="Kullanıcı Menüsü"
-                >
-                  <Avatar className="w-7 h-7 border-2 border-emerald-500/50 shadow-[0_2px_6px_rgba(16,185,129,0.3)]">
-                    <AvatarFallback className="bg-gradient-to-tr from-emerald-100 to-teal-100 dark:from-emerald-950 dark:to-teal-900 text-emerald-800 dark:text-emerald-300 font-extrabold text-[11px]">
+              <DropdownMenuLabel className="p-2.5 rounded-md bg-[#F6F5F2] dark:bg-[#1A1F1D] mb-1 border border-[#E2E0D8] dark:border-[#252B28]">
+                <div className="flex items-center gap-2.5">
+                  <Avatar className="w-8 h-8 rounded-sm">
+                    <AvatarFallback className="rounded-sm bg-[#0D6847] text-white font-mono font-semibold text-xs">
                       {initials(user.fullName)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col text-left">
-                    <span className="text-xs font-bold text-gray-800 dark:text-slate-100 max-w-[85px] truncate leading-tight group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
-                      {user.fullName.split(' ')[0]}
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="font-semibold text-xs text-[#141615] dark:text-white truncate">
+                      {user.fullName}
                     </span>
-                    <span className="text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 leading-none">
-                      {user.role === 'WORKER' ? 'İş Arayan' : user.role === 'EMPLOYER' ? 'İşveren' : 'Yönetici'}
+                    <span className="text-[11px] text-[#5C615E] dark:text-[#949B97] truncate">
+                      {user.email}
                     </span>
                   </div>
-                  <ChevronDown className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-transform group-data-[state=open]:rotate-180" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" sideOffset={8} className="w-72 sm:w-80 rounded-2xl shadow-2xl border border-slate-200/90 dark:border-white/10 p-2 bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-100 backdrop-blur-2xl">
-                <DropdownMenuLabel className="p-3 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 dark:from-slate-800/90 dark:via-emerald-950/40 dark:to-slate-800/90 rounded-xl mb-1.5 border border-emerald-100/70 dark:border-white/10">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10 border-2 border-emerald-400 dark:border-emerald-500 shadow-xs">
-                      <AvatarFallback className="bg-emerald-600 text-white font-black text-sm">
-                        {initials(user.fullName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className="font-extrabold text-sm text-slate-900 dark:text-slate-100 truncate">{user.fullName}</span>
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</span>
-                      <Badge variant="outline" className="mt-1 w-fit text-[9px] border-emerald-300 dark:border-emerald-700/60 text-emerald-800 dark:text-emerald-300 bg-white/80 dark:bg-slate-900/80 py-0.5 px-2 font-bold">
-                        {user.role === 'WORKER' ? '👷 İş Arayan' : user.role === 'EMPLOYER' ? '🏢 İşveren' : '🛡️ Yönetici'}
-                      </Badge>
-                    </div>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator className="my-1 dark:bg-slate-800" />
-                <DropdownMenuItem onClick={() => go('profile')} className="rounded-xl text-xs font-semibold cursor-pointer py-2.5 px-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/90 focus:bg-slate-100 dark:focus:bg-slate-800/90 transition-all flex items-center">
-                  <UserIcon className="w-4 h-4 mr-2.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>Profilim</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => go('wallet')} className="rounded-xl text-xs font-semibold cursor-pointer py-2.5 px-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/90 focus:bg-slate-100 dark:focus:bg-slate-800/90 transition-all flex items-center">
-                  <Wallet className="w-4 h-4 mr-2.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>Cüzdanım</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => go('notifications')} className="rounded-xl text-xs font-semibold cursor-pointer py-2.5 px-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/90 focus:bg-slate-100 dark:focus:bg-slate-800/90 transition-all flex items-center">
-                  <Bell className="w-4 h-4 mr-2.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>Bildirimler</span>
-                  {unreadCount > 0 && <Badge className="ml-auto bg-rose-500 text-white text-[10px] py-0 px-1.5 font-bold shadow-xs">{unreadCount}</Badge>}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => go('help')} className="rounded-xl text-xs font-semibold cursor-pointer py-2.5 px-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/90 focus:bg-slate-100 dark:focus:bg-slate-800/90 transition-all flex items-center">
-                  <LifeBuoy className="w-4 h-4 mr-2.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>Yardım & Destek</span>
-                </DropdownMenuItem>
-                {['EMPLOYER', 'ADMIN'].includes(user.role) && (
-                  <DropdownMenuItem onClick={() => go('api-docs')} className="rounded-xl text-xs font-semibold cursor-pointer py-2.5 px-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/90 focus:bg-slate-100 dark:focus:bg-slate-800/90 transition-all flex items-center">
-                    <BookOpen className="w-4 h-4 mr-2.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>API Dokümantasyonu</span>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator className="my-1.5 dark:bg-slate-800" />
-                <div className="px-2.5 py-2 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Görünüm Teması</span>
-                  </div>
-                  <ThemeToggle variant="segmented" className="w-full" />
                 </div>
-                <DropdownMenuSeparator className="my-1.5 dark:bg-slate-800" />
-                <DropdownMenuItem onClick={() => logout()} className="rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40 focus:bg-red-50 dark:focus:bg-red-950/40 cursor-pointer py-2.5 px-3 transition-all flex items-center">
-                  <LogOut className="w-4 h-4 mr-2.5 text-red-500 dark:text-red-400 shrink-0" />
-                  <span>Çıkış Yap</span>
+              </DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => go('profile')} className="rounded-md text-xs font-medium cursor-pointer py-2 px-2.5">
+                <UserIcon className="w-3.5 h-3.5 mr-2 text-[#5C615E]" />
+                <span>Profil Bilgileri</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => go('wallet')} className="rounded-md text-xs font-medium cursor-pointer py-2 px-2.5">
+                <Wallet className="w-3.5 h-3.5 mr-2 text-[#5C615E]" />
+                <span>Emanet & Cüzdan</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => go('notifications')} className="rounded-md text-xs font-medium cursor-pointer py-2 px-2.5">
+                <Bell className="w-3.5 h-3.5 mr-2 text-[#5C615E]" />
+                <span>Bildirimler</span>
+                {unreadCount > 0 && (
+                  <Badge className="ml-auto bg-[#C84B31] text-white text-[10px] py-0 px-1.5 rounded-sm">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => go('help')} className="rounded-md text-xs font-medium cursor-pointer py-2 px-2.5">
+                <LifeBuoy className="w-3.5 h-3.5 mr-2 text-[#5C615E]" />
+                <span>Yardım & Destek</span>
+              </DropdownMenuItem>
+              {['EMPLOYER', 'ADMIN'].includes(user.role) && (
+                <DropdownMenuItem onClick={() => go('api-docs')} className="rounded-md text-xs font-medium cursor-pointer py-2 px-2.5">
+                  <BookOpen className="w-3.5 h-3.5 mr-2 text-[#5C615E]" />
+                  <span>API Dokümantasyonu</span>
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200/80 dark:border-slate-800 py-3 space-y-1 max-h-[calc(100vh-3.5rem)] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
-            {/* User info at top of mobile menu */}
-            <div className="flex items-center gap-3 p-2.5 mb-2 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 dark:from-emerald-950/40 dark:via-slate-900/50 dark:to-blue-950/40 border border-emerald-100 dark:border-emerald-900/30">
-              <Avatar className="w-10 h-10 border border-emerald-300 flex-shrink-0 shadow-xs">
-                <AvatarFallback className="bg-emerald-600 text-white font-bold text-sm">
-                  {initials(user.fullName)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <div className="font-bold text-sm text-gray-900 dark:text-white truncate">{user.fullName}</div>
-                <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{user.email}</div>
+              )}
+              <DropdownMenuSeparator className="my-1" />
+              <div className="px-2 py-1.5 space-y-1.5">
+                <span className="text-[11px] font-medium text-[#5C615E]">Görünüm</span>
+                <ThemeToggle variant="segmented" className="w-full" />
               </div>
-              <Badge variant="outline" className="text-[10px] border-emerald-300 text-emerald-800 dark:text-emerald-300 bg-white dark:bg-slate-900 font-semibold py-0.5 px-2 flex-shrink-0">
-                {user.role === 'WORKER' ? 'İş Arayan' : user.role === 'EMPLOYER' ? 'İşveren' : 'Yönetici'}
-              </Badge>
-            </div>
-
-            {visibleNav.map((item) => {
-              const isActive = view === item.key
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => {
-                    go(item.key)
-                    setMobileMenuOpen(false)
-                  }}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                    isActive
-                      ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
-                      : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100/90 dark:hover:bg-slate-800/80 hover:text-emerald-700 dark:hover:text-emerald-400'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400'}`} />
-                    <span className="truncate">{item.label}</span>
-                  </div>
-                  {item.key === 'notifications' && unreadCount > 0 && (
-                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full min-w-[16px] h-[16px] flex items-center justify-center ${
-                      isActive ? 'bg-white text-emerald-800' : 'bg-rose-500 text-white'
-                    }`}>
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-
-            {/* Tema Tercihi (Mobil) */}
-            <div className="p-3 my-2 rounded-xl bg-gray-50/80 dark:bg-slate-900/60 border border-gray-200/60 dark:border-white/5 space-y-2">
-              <span className="text-xs font-bold text-gray-700 dark:text-slate-300">Tema Tercihi</span>
-              <ThemeToggle variant="segmented" className="w-full" />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                logout()
-                setMobileMenuOpen(false)
-              }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors mt-2 border-t border-gray-100 dark:border-slate-800 pt-3"
-            >
-              <LogOut className="w-4 h-4 flex-shrink-0 text-red-500" />
-              Çıkış Yap
-            </button>
-          </div>
-        )}
+              <DropdownMenuSeparator className="my-1" />
+              <DropdownMenuItem
+                onClick={() => logout()}
+                className="rounded-md text-xs font-semibold text-[#C84B31] focus:text-[#C84B31] cursor-pointer py-2 px-2.5"
+              >
+                <LogOut className="w-3.5 h-3.5 mr-2" />
+                <span>Oturumu Kapat</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
-      {/* Site Paylaş Dialog */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden border-t border-[#E2E0D8] dark:border-[#252B28] bg-[#F6F5F2] dark:bg-[#0C0E0D] px-4 py-3 space-y-1">
+          {visibleNav.map((item) => {
+            const isActive = view === item.key
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => {
+                  go(item.key)
+                  setMobileMenuOpen(false)
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold ${
+                  isActive
+                    ? 'bg-[#141615] text-white dark:bg-white dark:text-[#141615]'
+                    : 'text-[#141615] dark:text-[#F2F1ED] hover:bg-[#EAE8E1] dark:hover:bg-[#1D2220]'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <item.icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </div>
+                {item.key === 'notifications' && unreadCount > 0 && (
+                  <span className="text-[10px] font-mono bg-[#C84B31] text-white px-1.5 rounded-sm">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+          <button
+            type="button"
+            onClick={() => {
+              logout()
+              setMobileMenuOpen(false)
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold text-[#C84B31] mt-2 border-t border-[#E2E0D8] dark:border-[#252B28] pt-2.5"
+          >
+            <LogOut className="w-4 h-4" />
+            Oturumu Kapat
+          </button>
+        </div>
+      )}
+
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Share2 className="w-5 h-5 text-emerald-600" />
-              Siteyi Paylaş
+              <Share2 className="w-4 h-4 text-[#0D6847]" />
+              Bağlantıyı Paylaş
             </DialogTitle>
             <DialogDescription>
-              Günübirlik İş Bul platformunu arkadaşlarınla paylaş
+              Günübirlik iş panosunu paylaşın.
             </DialogDescription>
           </DialogHeader>
-
           <div className="space-y-4 py-2">
-            {/* URL Preview */}
-            <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-white/10">
+            <div className="flex items-center gap-2">
               <Input
                 value={siteUrl}
                 readOnly
-                className="flex-1 h-10 bg-white dark:bg-slate-800 text-sm dark:text-slate-100 dark:border-white/10"
+                className="flex-1 h-10 text-sm font-mono"
                 onClick={(e) => (e.target as HTMLInputElement).select()}
               />
-              <Button
-                size="icon"
-                variant="outline"
-                className="h-10 w-10 flex-shrink-0 dark:border-white/10 dark:hover:bg-slate-800"
-                onClick={handleCopyLink}
-                title="Linki Kopyala"
-                aria-label="Linki Kopyala"
-              >
-                {copied ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
+              <Button size="icon" variant="outline" className="h-10 w-10" onClick={handleCopyLink}>
+                {copied ? <Check className="w-4 h-4 text-[#0D6847]" /> : <Copy className="w-4 h-4" />}
               </Button>
             </div>
-
-            {/* Native Share Button (mobilde WhatsApp/Telegram vb. açar) */}
-            <Button
-              className="w-full h-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold"
-              onClick={handleNativeShare}
-            >
-              <Share2 className="w-5 h-5 mr-2" />
-              Paylaş (WhatsApp, Telegram, SMS...)
+            <Button className="w-full bg-[#0D6847] hover:bg-[#095237] text-white" onClick={handleNativeShare}>
+              <Share2 className="w-4 h-4 mr-2" />
+              Paylaş
             </Button>
-
-            {/* Quick share buttons */}
-            <div className="grid grid-cols-3 gap-2">
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent('Günübirlik İş Bul — Türkiye\'nin günübirlik iş bulma platformu! ' + siteUrl)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-gray-200 dark:border-white/10 hover:border-emerald-500/50 hover:bg-emerald-50/60 dark:hover:bg-emerald-950/30 transition-all text-gray-700 dark:text-slate-200 group"
-              >
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-transform group-hover:scale-110">
-                  <WhatsAppIcon className="w-4 h-4 fill-current" />
-                </div>
-                <span className="text-[11px] font-semibold">WhatsApp</span>
-              </a>
-              <a
-                href={`https://t.me/share/url?url=${encodeURIComponent(siteUrl)}&text=${encodeURIComponent('Günübirlik İş Bul')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-gray-200 dark:border-white/10 hover:border-blue-500/50 hover:bg-blue-50/60 dark:hover:bg-blue-950/30 transition-all text-gray-700 dark:text-slate-200 group"
-              >
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-500 dark:text-blue-400 flex items-center justify-center transition-transform group-hover:scale-110">
-                  <TelegramIcon className="w-4 h-4 fill-current" />
-                </div>
-                <span className="text-[11px] font-semibold">Telegram</span>
-              </a>
-              <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Günübirlik İş Bul — Türkiye\'nin günübirlik iş bulma platformu!')}&url=${encodeURIComponent(siteUrl)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-gray-200 dark:border-white/10 hover:border-slate-500/50 hover:bg-slate-100/70 dark:hover:bg-slate-800/50 transition-all text-gray-700 dark:text-slate-200 group"
-              >
-                <div className="w-8 h-8 rounded-lg bg-slate-500/10 dark:bg-slate-500/20 text-slate-800 dark:text-slate-200 flex items-center justify-center transition-transform group-hover:scale-110">
-                  <TwitterXIcon className="w-3.5 h-3.5 fill-current" />
-                </div>
-                <span className="text-[11px] font-semibold">X (Twitter)</span>
-              </a>
-            </div>
-
-            {/* QR Kod ile hızlı erişim */}
-            <div className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-slate-900 rounded-lg border border-emerald-200 dark:border-emerald-800/40">
-              <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
-                <QrCode className="w-4 h-4" />
-                QR Kod ile Eriş
-              </div>
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(siteUrl)}`}
-                alt="QR Kod"
-                className="w-44 h-44 bg-white p-2 rounded-lg shadow-sm"
-              />
-              <p className="text-xs text-emerald-700 dark:text-emerald-400 text-center">
-                Telefon kamerasıyla tara, siteye anında eriş
-              </p>
-            </div>
           </div>
         </DialogContent>
       </Dialog>

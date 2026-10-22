@@ -99,33 +99,26 @@ export default function Home() {
   const hasStoredToken = typeof window !== 'undefined' ? !!localStorage.getItem('auth_token') : false
   if (!authChecked && hasStoredToken) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
-        <div className="text-center flex flex-col items-center">
-          <div className="mb-4 animate-bounce">
-            <Logo size="lg" variant="full" />
-          </div>
-          <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
-            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
-            <span>Günübirlik İş Bul yükleniyor...</span>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F6F5F2] dark:bg-[#0C0E0D]">
+        <div className="text-center flex flex-col items-center gap-3">
+          <Logo size="md" variant="full" />
+          <span className="text-xs font-mono text-[#5C615E] dark:text-[#949B97]">
+            Yükleniyor...
+          </span>
         </div>
       </div>
     )
   }
 
-  // Header + ana içerik (Misafirler de tüm arayüzü görebilir, işlemler için girişe yönlendirilir)
   return (
-    <div className="w-full min-h-screen flex flex-col bg-slate-50/70 dark:bg-slate-950 relative selection:bg-emerald-500 selection:text-white transition-colors duration-300">
-      {/* Global Auth Modal */}
-      <AuthModal />
-
+    <div className="w-full min-h-screen flex flex-col bg-[#F6F5F2] dark:bg-[#0C0E0D] text-[#141615] dark:text-[#F2F1ED] relative selection:bg-[#0D6847] selection:text-white">
       {maintenanceMode && user?.role === 'ADMIN' && (
-        <div className="relative z-50 bg-amber-500/90 backdrop-blur-md text-amber-950 text-xs font-bold px-4 py-2 text-center border-b border-amber-600/30 shadow-sm">
-          ⚠️ Bakım modu aktif. Sadece admin olarak erişebiliyorsunuz. Normal kullanıcılar bakım ekranı görüyor.
+        <div className="relative z-50 bg-[#C84B31] text-white text-xs font-semibold px-4 py-2 text-center">
+          Bakım modu aktif. Yalnızca yönetici hesabıyla görüntüleniyor.
         </div>
       )}
       <Header />
-      <main className="flex-1 relative z-10 pt-20 sm:pt-22">
+      <main className="flex-1 relative z-10 pt-2">
         {view === 'home' && <JobsListScreen />}
         {view === 'job-detail' && <JobDetailScreen />}
         {view === 'post-job' &&
@@ -205,12 +198,21 @@ export default function Home() {
         {view === 'help' && <HelpScreen />}
         {view === 'api-docs' && <ApiDocsScreen />}
       </main>
-      <footer className="mt-auto relative z-10 acrylic-3d border-t border-slate-200/60 dark:border-white/5 py-3.5 px-4 text-xs text-gray-500 dark:text-gray-400">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <Logo size="sm" variant="full" />
-          <p className="font-medium text-[11px] text-gray-500 dark:text-gray-400">
-            © 2026 Günübirlik İş Bul • Konum Bazlı Günlük İş Platformu
-          </p>
+      <footer className="mt-auto relative z-10 bg-white dark:bg-[#141716] border-t border-[#E2E0D8] dark:border-[#252B28] py-6 px-4 text-xs text-[#5C615E] dark:text-[#949B97]">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Logo size="sm" variant="full" />
+            <span className="text-[12px] text-[#5C615E] dark:text-[#949B97]">
+              Günlük ve yevmiyeli iş panosu
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-5 text-[12px] font-medium">
+            <a href="/nasil-calisir" className="hover:text-[#141615] dark:hover:text-white">İşleyiş</a>
+            <a href="/is-arayanlar" className="hover:text-[#141615] dark:hover:text-white">Çalışanlar</a>
+            <a href="/isverenler" className="hover:text-[#141615] dark:hover:text-white">İşverenler</a>
+            <a href="/blog" className="hover:text-[#141615] dark:hover:text-white">Yevmiye Rehberi</a>
+            <span className="font-mono text-[11px] text-[#8A8F8C]">© 2026 Günübirlik</span>
+          </div>
         </div>
       </footer>
     </div>

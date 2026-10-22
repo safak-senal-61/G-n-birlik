@@ -44,72 +44,72 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --radius: 0.5rem;
+  --background: #f6f5f2;
+  --foreground: #141615;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #141615;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #047857;
+  --popover-foreground: #141615;
+  --primary: #0d6847;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #10b981;
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --secondary: #edece7;
+  --secondary-foreground: #141615;
+  --muted: #edece7;
+  --muted-foreground: #5c615e;
+  --accent: #edece7;
+  --accent-foreground: #141615;
+  --destructive: #c84b31;
+  --border: #e2e0d8;
+  --input: #dcd9d0;
+  --ring: #0d6847;
+  --chart-1: #0d6847;
+  --chart-2: #1f5f8b;
+  --chart-3: #c84b31;
+  --chart-4: #b5830e;
+  --chart-5: #4f5d75;
   --sidebar: #ffffff;
-  --sidebar-foreground: #0f172a;
-  --sidebar-primary: #047857;
+  --sidebar-foreground: #141615;
+  --sidebar-primary: #0d6847;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f1f5f9;
-  --sidebar-accent-foreground: #0f172a;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #10b981;
+  --sidebar-accent: #edece7;
+  --sidebar-accent-foreground: #141615;
+  --sidebar-border: #e2e0d8;
+  --sidebar-ring: #0d6847;
 }
 
 .dark {
-  --background: #020617;
-  --foreground: #f8fafc;
-  --card: #0f172a;
-  --card-foreground: #f8fafc;
-  --popover: #0f172a;
-  --popover-foreground: #f8fafc;
-  --primary: #10b981;
-  --primary-foreground: #020617;
-  --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --accent: #1e293b;
-  --accent-foreground: #f8fafc;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: rgba(255, 255, 255, 0.12);
-  --input: rgba(255, 255, 255, 0.15);
-  --ring: #10b981;
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: #0f172a;
-  --sidebar-foreground: #f8fafc;
-  --sidebar-primary: #10b981;
-  --sidebar-primary-foreground: #020617;
-  --sidebar-accent: #1e293b;
-  --sidebar-accent-foreground: #f8fafc;
-  --sidebar-border: rgba(255, 255, 255, 0.12);
-  --sidebar-ring: #10b981;
+  --background: #0c0e0d;
+  --foreground: #f2f1ed;
+  --card: #141716;
+  --card-foreground: #f2f1ed;
+  --popover: #141716;
+  --popover-foreground: #f2f1ed;
+  --primary: #1f9d6e;
+  --primary-foreground: #07120d;
+  --secondary: #1d2220;
+  --secondary-foreground: #f2f1ed;
+  --muted: #1d2220;
+  --muted-foreground: #949b97;
+  --accent: #1d2220;
+  --accent-foreground: #f2f1ed;
+  --destructive: #e05a3f;
+  --border: #252b28;
+  --input: #252b28;
+  --ring: #1f9d6e;
+  --chart-1: #1f9d6e;
+  --chart-2: #3882b4;
+  --chart-3: #e05a3f;
+  --chart-4: #d9a126;
+  --chart-5: #7d8ca3;
+  --sidebar: #141716;
+  --sidebar-foreground: #f2f1ed;
+  --sidebar-primary: #1f9d6e;
+  --sidebar-primary-foreground: #07120d;
+  --sidebar-accent: #1d2220;
+  --sidebar-accent-foreground: #f2f1ed;
+  --sidebar-border: #252b28;
+  --sidebar-ring: #1f9d6e;
 }
 
 @layer base {
@@ -308,380 +308,189 @@
 }
 
 /* ============================================================
-   3D & SPATIAL UI DESIGN SYSTEM (BESPOKE TACTILE DEPTH)
+   ARCHITECTURAL & LEDGER UI SYSTEM (CLEAN, NON-TEMPLATE SURFACES)
    ============================================================ */
 
-/* 3D Perspective & Preservation */
-.perspective-800 {
-  perspective: 800px;
-}
-.perspective-1000 {
-  perspective: 1000px;
-}
-.perspective-1500 {
-  perspective: 1500px;
-}
-.preserve-3d {
-  transform-style: preserve-3d;
-}
-.backface-hidden {
-  backface-visibility: hidden;
-}
-
-/* Z-Layer Elevators for 3D Cards */
-.translate-z-2 {
-  transform: translateZ(8px);
-}
-.translate-z-4 {
-  transform: translateZ(16px);
-}
-.translate-z-6 {
-  transform: translateZ(24px);
-}
+.perspective-800,
+.perspective-1000,
+.perspective-1500,
+.preserve-3d,
+.backface-hidden,
+.translate-z-2,
+.translate-z-4,
+.translate-z-6,
 .translate-z-8 {
-  transform: translateZ(32px);
+  transform: none;
 }
 
-/* Tactile 3D Buttons (Physical mechanical push response) */
 .btn-3d-emerald {
-  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  background-color: #0d6847;
   color: #ffffff;
-  border-top: 1px solid rgba(255, 255, 255, 0.35);
-  border-left: 1px solid rgba(255, 255, 255, 0.2);
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
-  border-bottom: 3.5px solid #047857;
-  box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.4);
-  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  border: 1px solid #094d34;
+  box-shadow: 0 1px 2px rgba(20, 22, 21, 0.08);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 .btn-3d-emerald:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px -2px rgba(16, 185, 129, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+  background-color: #095237;
 }
 .btn-3d-emerald:active {
-  transform: translateY(1.5px);
-  box-shadow: 0 2px 6px -1px rgba(16, 185, 129, 0.3), inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  background-color: #073f2a;
 }
 
 .btn-3d-white {
-  background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
-  color: #1f2937;
-  border-top: 1px solid rgba(255, 255, 255, 0.9);
-  border-left: 1px solid rgba(229, 231, 235, 0.8);
-  border-right: 1px solid rgba(229, 231, 235, 0.8);
-  border-bottom: 3.5px solid #d1d5db;
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 0 #ffffff;
-  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: #ffffff;
+  color: #141615;
+  border: 1px solid #d8d5cc;
+  box-shadow: 0 1px 2px rgba(20, 22, 21, 0.04);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 .btn-3d-white:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px -3px rgba(0, 0, 0, 0.12), inset 0 1px 0 0 #ffffff;
+  background-color: #f3f1ec;
+  border-color: #c5c1b6;
 }
 .btn-3d-white:active {
-  transform: translateY(1.5px);
-  box-shadow: 0 2px 6px -1px rgba(0, 0, 0, 0.06), inset 0 2px 3px rgba(0, 0, 0, 0.05);
+  background-color: #e9e6df;
 }
 
 .btn-3d-pill {
-  border-radius: 9999px;
-  border-bottom-width: 3px;
-  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.btn-3d-pill:hover {
-  transform: translateY(-1.5px);
-}
-.btn-3d-pill:active {
-  transform: translateY(2px);
-  border-bottom-width: 1px;
+  border-radius: 6px;
 }
 
-/* 3D Elevated Spatial Cards (Light default, overrideable by utility classes) */
 :where(.card-3d-spatial) {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.94) 100%);
-  border: 1px solid rgba(226, 232, 240, 0.85);
-  border-top-color: rgba(255, 255, 255, 1);
+  background-color: #ffffff;
+  border: 1px solid #e2e0d8;
 }
 .card-3d-spatial {
-  box-shadow: 
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 8px 20px -4px rgba(15, 23, 42, 0.06),
-    0 20px 40px -12px rgba(15, 23, 42, 0.08),
-    inset 0 1.5px 0 0 rgba(255, 255, 255, 0.9),
-    inset 0 -1px 0 0 rgba(15, 23, 42, 0.03);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  box-shadow: 0 1px 3px rgba(20, 22, 21, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   position: relative;
 }
 .card-3d-spatial:hover {
-  border-color: rgba(16, 185, 129, 0.35);
-  box-shadow: 
-    0 2px 4px rgba(15, 23, 42, 0.04),
-    0 16px 36px -6px rgba(15, 23, 42, 0.12),
-    0 30px 60px -15px rgba(16, 185, 129, 0.1),
-    inset 0 2px 0 0 rgba(255, 255, 255, 1),
-    inset 0 -1px 0 0 rgba(15, 23, 42, 0.02);
+  border-color: #b8c4be;
+  box-shadow: 0 4px 12px -2px rgba(20, 22, 21, 0.07);
 }
 
-/* 3D Elevated Spatial Dark Cards (Cyber/Vault/Hero Cockpit) - Dark obsidian & deep emerald with crystal-clear white text */
 .card-3d-dark {
-  background: linear-gradient(135deg, #020617 0%, #064e3b 60%, #022c22 100%) !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(52, 211, 153, 0.35) !important;
-  border-top: 1px solid rgba(110, 231, 183, 0.6) !important;
-  box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.4),
-    0 20px 50px -10px rgba(6, 78, 59, 0.5),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.6) !important;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  background-color: #141716 !important;
+  color: #f2f1ed !important;
+  border: 1px solid #28302c !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
   position: relative;
 }
-.card-3d-dark:hover {
-  border-color: rgba(52, 211, 153, 0.6) !important;
-  box-shadow: 
-    0 6px 12px -2px rgba(0, 0, 0, 0.5),
-    0 25px 60px -8px rgba(6, 78, 59, 0.65),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.25) !important;
-}
 
-/* 3D Glass Pill / Floating Glass Card for inside dark hero */
 .card-3d-glass {
-  background: rgba(15, 23, 42, 0.65) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  border: 1px solid rgba(52, 211, 153, 0.25) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.15) !important;
-  color: #ffffff !important;
+  background-color: #1a1f1d !important;
+  border: 1px solid #2b332f !important;
+  color: #f2f1ed !important;
 }
 
-/* 3D Acrylic Spatial Glass */
 .acrylic-3d {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-  box-shadow: 
-    0 4px 20px -2px rgba(15, 23, 42, 0.05),
-    0 12px 36px -4px rgba(15, 23, 42, 0.06),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+  background-color: rgba(246, 245, 242, 0.96);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid #e2e0d8;
 }
 
-/* Inset 3D Trench / Inputs */
 .inset-3d {
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  box-shadow: 
-    inset 0 2px 4px rgba(15, 23, 42, 0.05),
-    inset 0 1px 2px rgba(15, 23, 42, 0.04),
-    0 1px 0 0 #ffffff;
+  background-color: #ffffff;
+  border: 1px solid #d6d3c9;
 }
 .inset-3d:focus-within {
-  border-color: #10b981;
-  background: #ffffff;
-  box-shadow: 
-    inset 0 1px 2px rgba(16, 185, 129, 0.08),
-    0 0 0 3px rgba(16, 185, 129, 0.15),
-    0 1px 0 0 #ffffff;
+  border-color: #0d6847;
+  box-shadow: 0 0 0 2px rgba(13, 104, 71, 0.14);
 }
 
-/* 3D Floating Badges */
 .badge-3d-emerald {
-  background: linear-gradient(180deg, #d1fae5 0%, #a7f3d0 100%);
-  color: #065f46;
-  border: 1px solid #6ee7b7;
-  border-bottom: 2px solid #34d399;
-  box-shadow: 0 2px 6px -1px rgba(16, 185, 129, 0.25), inset 0 1px 0 0 #ffffff;
+  background-color: #eaf3ee;
+  color: #0d6847;
+  border: 1px solid #c5ddd0;
 }
 
 .badge-3d-urgent {
-  background: linear-gradient(180deg, #fee2e2 0%, #fecaca 100%);
-  color: #991b1b;
-  border: 1px solid #fca5a5;
-  border-bottom: 2px solid #f87171;
-  box-shadow: 0 2px 6px -1px rgba(239, 68, 68, 0.3), inset 0 1px 0 0 #ffffff;
+  background-color: #fbeee9;
+  color: #b43b21;
+  border: 1px solid #efc7bd;
 }
 
 .badge-3d-dark {
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-  color: #f8fafc;
-  border: 1px solid #334155;
-  border-bottom: 2px solid #020617;
-  box-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+  background-color: #1d2220;
+  color: #f2f1ed;
+  border: 1px solid #2e3633;
 }
 
-/* 3D Floating physics animation - GPU composited */
-@keyframes float3d {
-  0%, 100% {
-    transform: translate3d(0, 0px, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate3d(0, -8px, 0) rotate(0.8deg);
-  }
-}
-.animate-float-3d {
-  animation: float3d 5s ease-in-out infinite;
-  will-change: transform;
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
-}
-
-@keyframes float3dReverse {
-  0%, 100% {
-    transform: translate3d(0, 0px, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate3d(0, 8px, 0) rotate(-0.8deg);
-  }
-}
+.animate-float-3d,
 .animate-float-3d-reverse {
-  animation: float3dReverse 6s ease-in-out infinite;
-  will-change: transform;
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
+  animation: none;
 }
 
-/* 3D Holographic / Specular Sheen */
 .specular-sheen {
   position: relative;
   overflow: hidden;
 }
-.specular-sheen::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    60deg,
-    transparent 20%,
-    rgba(255, 255, 255, 0.35) 48%,
-    rgba(255, 255, 255, 0.6) 50%,
-    rgba(255, 255, 255, 0.35) 52%,
-    transparent 80%
-  );
-  transform: rotate(-25deg) translateY(-120%);
-  transition: transform 0.75s ease-in-out;
-  pointer-events: none;
-}
-.specular-sheen:hover::after {
-  transform: rotate(-25deg) translateY(120%);
-}
 
-/* Spatial Isometric Grid Mesh */
 .bg-spatial-grid {
-  background-image: 
-    linear-gradient(to right, rgba(16, 185, 129, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background-image: none;
 }
 
 /* ============================================================
-   DARK MODE ADAPTATIONS (3D TACTILE SPATIAL GLASS & SLATE)
+   DARK MODE ADAPTATIONS
    ============================================================ */
 .dark {
   color-scheme: dark;
 }
 
-/* 3D Elevated Spatial Cards in Dark Mode */
 .dark :where(.card-3d-spatial) {
-  background: linear-gradient(145deg, rgba(26, 35, 52, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-top-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.5),
-    0 10px 24px -4px rgba(0, 0, 0, 0.6),
-    0 25px 50px -12px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.6);
-  color: #f8fafc;
+  background-color: #141716;
+  border: 1px solid #252b28;
+  box-shadow: none;
+  color: #f2f1ed;
 }
 .dark .card-3d-spatial:hover {
-  border-color: rgba(52, 211, 153, 0.45);
-  box-shadow: 
-    0 4px 8px rgba(0, 0, 0, 0.6),
-    0 16px 36px -6px rgba(0, 0, 0, 0.75),
-    0 30px 60px -15px rgba(16, 185, 129, 0.2),
-    inset 0 1.5px 0 0 rgba(255, 255, 255, 0.22);
+  border-color: #38453f;
 }
 
-/* 3D White Buttons in Dark Mode -> Tactical Dark Slate */
 .dark .btn-3d-white {
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-  color: #f8fafc;
-  border-top: 1px solid rgba(255, 255, 255, 0.22);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  border-bottom: 3.5px solid #020617;
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+  background-color: #181c1a;
+  color: #f2f1ed;
+  border: 1px solid #2b322e;
+  box-shadow: none;
 }
 .dark .btn-3d-white:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px -3px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.25);
-  color: #34d399;
-}
-.dark .btn-3d-white:active {
-  transform: translateY(1.5px);
-  box-shadow: 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 2px 3px rgba(0, 0, 0, 0.4);
+  background-color: #212724;
+  border-color: #3a443f;
 }
 
-/* 3D Acrylic Spatial Glass in Dark Mode */
 .dark .acrylic-3d {
-  background: rgba(11, 18, 33, 0.88);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 
-    0 4px 20px -2px rgba(0, 0, 0, 0.5),
-    0 12px 36px -4px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  background-color: rgba(12, 14, 13, 0.96);
+  border-color: #252b28;
 }
 
-/* Inset 3D Trench / Inputs in Dark Mode */
 .dark .inset-3d {
-  background: rgba(13, 20, 36, 0.85);
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
-  color: #f8fafc;
-  box-shadow: 
-    inset 0 2px 4px rgba(0, 0, 0, 0.5),
-    inset 0 1px 2px rgba(0, 0, 0, 0.4),
-    0 1px 0 0 rgba(255, 255, 255, 0.04);
+  background-color: #141716;
+  border: 1px solid #282f2b;
+  color: #f2f1ed;
 }
 .dark .inset-3d:focus-within {
-  border-color: #10b981;
-  background: rgba(15, 23, 42, 0.95);
-  box-shadow: 
-    inset 0 1px 2px rgba(16, 185, 129, 0.15),
-    0 0 0 3px rgba(16, 185, 129, 0.3),
-    0 1px 0 0 rgba(255, 255, 255, 0.05);
+  border-color: #1f9d6e;
+  box-shadow: 0 0 0 2px rgba(31, 157, 110, 0.2);
 }
 
-/* 3D 3D Badges in Dark Mode */
 .dark .badge-3d-emerald {
-  background: linear-gradient(180deg, rgba(6, 78, 59, 0.9) 0%, rgba(4, 47, 46, 0.95) 100%);
-  color: #6ee7b7;
-  border: 1px solid rgba(52, 211, 153, 0.4);
-  border-bottom: 2px solid #10b981;
-  box-shadow: 0 2px 8px -1px rgba(16, 185, 129, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+  background-color: rgba(13, 104, 71, 0.2);
+  color: #5cd6a5;
+  border: 1px solid rgba(92, 214, 165, 0.25);
 }
 
 .dark .badge-3d-urgent {
-  background: linear-gradient(180deg, rgba(153, 27, 27, 0.85) 0%, rgba(127, 29, 29, 0.95) 100%);
-  color: #fca5a5;
-  border: 1px solid rgba(248, 113, 113, 0.4);
-  border-bottom: 2px solid #ef4444;
-  box-shadow: 0 2px 8px -1px rgba(239, 68, 68, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+  background-color: rgba(200, 75, 49, 0.2);
+  color: #f5937e;
+  border: 1px solid rgba(245, 147, 126, 0.3);
 }
 
 .dark .badge-3d-dark {
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-  color: #f8fafc;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-bottom: 2px solid #020617;
-  box-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+  background-color: #1d2220;
+  color: #f2f1ed;
+  border: 1px solid #2e3633;
 }
 
 /* Card, Dialog, Sheet, Popover & Dropdown Surfaces in Dark Mode */

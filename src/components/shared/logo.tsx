@@ -29,19 +29,18 @@ export default function Logo({
     const { h, w, pad } = fullHeightMap[size]
 
     const bgStyles = withBackground
-      ? `bg-slate-950/90 dark:bg-slate-950/80 border border-slate-800/90 dark:border-white/15 shadow-xs backdrop-blur-xs rounded-xl ${pad}`
+      ? `bg-[#141615] dark:bg-[#1A1E1C] border border-[#2A2F2C] rounded-md ${pad}`
       : ''
 
     const content = (
       <div className={`inline-flex items-center group select-none ${className}`}>
-        <div className={`relative inline-flex items-center justify-center transition-all duration-200 group-hover:scale-105 active:scale-95 group-hover:border-indigo-500/50 ${bgStyles}`}>
+        <div className={`relative inline-flex items-center justify-center transition-opacity duration-150 group-hover:opacity-90 ${bgStyles}`}>
           <Image
             src="/logo-wordmark.webp"
             alt="Günübirlik"
             width={w}
             height={h}
-            priority
-            className="h-auto object-contain drop-shadow-[0_2px_8px_rgba(99,102,241,0.4)]"
+            className="h-auto object-contain"
             style={{ height: `${h}px`, width: 'auto' }}
           />
         </div>

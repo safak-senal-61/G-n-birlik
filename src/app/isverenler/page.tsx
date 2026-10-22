@@ -3,19 +3,7 @@ import Link from 'next/link'
 import Header from '@/components/shared/header'
 import Logo from '@/components/shared/logo'
 import { BreadcrumbSchema } from '@/components/shared/seo-schema'
-import {
-  Building2,
-  Users,
-  ShieldCheck,
-  Zap,
-  Clock,
-  ArrowRight,
-  CheckCircle2,
-  PhoneCall,
-  UserCheck,
-  TrendingUp,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ArrowRight } from 'lucide-react'
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.qrders.com.tr'
 
@@ -27,8 +15,8 @@ export const metadata: Metadata = {
     canonical: `${BASE_URL}/isverenler`,
   },
   openGraph: {
-    title: 'Acil Günlük Eleman mı Lazım? | Günübirlik İşveren Platformu',
-    description: 'Dakikalar içinde yevmiyeli garson, usta, kurye veya temizlik personeli bulun.',
+    title: 'Acil Günlük Eleman Temini | Günübirlik İşveren Panosu',
+    description: 'Dakikalar içinde yevmiyeli garson, usta, depo elemanı veya temizlik personeli bulun.',
     url: `${BASE_URL}/isverenler`,
   },
 }
@@ -36,145 +24,156 @@ export const metadata: Metadata = {
 export default function IsverenlerPage() {
   const breadcrumbItems = [
     { name: 'Ana Sayfa', url: BASE_URL },
-    { name: 'İşverenler İçin', url: `${BASE_URL}/isverenler` },
+    { name: 'İşverenler', url: `${BASE_URL}/isverenler` },
   ]
 
-  const employerBenefits = [
+  const sectors = [
     {
-      title: 'Dakikalar İçinde Eleman',
-      desc: 'Acil durumlarda, yoğun hafta sonlarında veya ani sipariş patlamalarında aynı gün personel bulun.',
-      icon: Clock,
+      code: 'RST',
+      title: 'Restoran, Kafe & Organizasyon',
+      roles: 'Garson, komi, bulaşıkçı, barista, banket görevlisi',
     },
     {
-      title: 'Kimliği Doğrulanmış Adaylar',
-      desc: 'T.C. kimlik ve telefon doğrulaması yapılmış, referans puanı yüksek güvenilir adaylarla çalışın.',
-      icon: UserCheck,
+      code: 'İNŞ',
+      title: 'İnşaat, Şantiye & Tadilat',
+      roles: 'Boya ustası, alçıpan, tesisat, kırım ve taşıma ekibi',
     },
     {
-      title: 'Emanet Sistemi ile Sıfır Risk',
-      desc: 'Ücret çalışma gerçekleşmeden serbest bırakılmaz. Taahhüt edilen iş tamamlandığında onaylarsınız.',
-      icon: ShieldCheck,
+      code: 'TMZ',
+      title: 'Temizlik & Tesis Yönetimi',
+      roles: 'Ofis temizliği, inşaat sonrası temizlik, kat görevlisi',
     },
     {
-      title: 'Yerel ve Hızlı Eşleşme',
-      desc: 'İş yerinizin yakınındaki adaylara anında anlık bildirim gider; yol masrafı ve gecikme riski minimuma iner.',
-      icon: Zap,
+      code: 'NKL',
+      title: 'Depo, Lojistik & Sevkiyat',
+      roles: 'Yükleme-boşaltma, kolileme, etiketleme, saha kuryesi',
+    },
+  ]
+
+  const advantages = [
+    {
+      code: 'AVANTAJ 01',
+      title: 'Aynı Gün Personel Eşleşmesi',
+      desc: 'Rapor alan personel, hafta sonu yoğunluğu veya ani sevkiyat durumlarında ilanınız bölgedeki aktif çalışanlara anında iletilir.',
     },
     {
-      title: 'Esnek Maliyet Yönetimi',
-      desc: 'Sabit personel yükü ve yüksek bordro maliyetleri yerine sadece ihtiyacınız olduğu gün kadar ödeyin.',
-      icon: TrendingUp,
+      code: 'AVANTAJ 02',
+      title: 'Emanet Havuzu ile Kontrollü Ödeme',
+      desc: 'Yevmiye tutarı vardiya başında bloke edilir; ancak personel QR kod ile giriş yapıp mesaiyi tamamlamadan ödeme serbest bırakılmaz.',
     },
     {
-      title: 'QR Mesai Doğrulaması',
-      desc: 'İşe başlama ve bitiş saatleri QR kodla anlık takip edilir. Kaç saat çalışıldığı net ve şeffaftır.',
-      icon: CheckCircle2,
+      code: 'AVANTAJ 03',
+      title: 'Geçmiş Puan ve Referans Takibi',
+      desc: 'Başvuran adayların daha önce tamamladığı vardiya sayısını, işe zamanında geliş oranını ve önceki işveren yorumlarını görürsünüz.',
+    },
+    {
+      code: 'AVANTAJ 04',
+      title: 'Sadece Çalışılan Gün Kadar Maliyet',
+      desc: 'Sabit personel gideri altına girmeden, yalnızca iş yoğunluğunuzun arttığı günlerde bütçenize uygun yevmiye ile destek alırsınız.',
     },
   ]
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen flex flex-col bg-[#F6F5F2] dark:bg-[#0C0E0D] text-[#141615] dark:text-[#F2F1ED]">
       <BreadcrumbSchema items={breadcrumbItems} />
       <Header />
 
-      <main className="flex-1 pt-24 sm:pt-28 pb-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 space-y-16">
-          
-          {/* Hero */}
-          <div className="max-w-3xl mx-auto text-center space-y-5">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300">
-              🏢 İşletmeler & Yöneticiler İçin
-            </span>
-            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">
-              Acil eleman ihtiyacınızı dakikalar içinde karşılayın.
-            </h1>
-            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-              Restoranlar, kafeler, şantiyeler ve organizasyonlar için güvenilir günübirlik eleman temini.
-              İlanınızı açın, bölgenizdeki yüzlerce adaya anında ulaşın.
-            </p>
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/">
-                <Button size="lg" className="h-12 px-8 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md">
-                  Ücretsiz İlan Yayınla
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
+      <main className="flex-1 pt-8 sm:pt-12 pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
+          {/* Masthead */}
+          <div className="border-b border-[#D8D5CC] dark:border-[#262C29] pb-8">
+            <div className="font-mono text-[11px] uppercase tracking-wider text-[#C84B31] dark:text-[#F28B73] font-semibold mb-2">
+              İŞVEREN & İŞLETME ÇÖZÜMLERİ • ACİL VARDİYA DESTEĞİ
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
+              <div className="lg:col-span-8 space-y-3">
+                <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-[#141615] dark:text-white leading-[1.15]">
+                  Acil eleman ihtiyacınızı aynı gün, doğrulanmış adaylarla çözün.
+                </h1>
+                <p className="text-sm sm:text-base text-[#5C615E] dark:text-[#9AA19D] max-w-2xl leading-relaxed">
+                  Restoran, şantiye, depo ve organizasyonlarda yaşanan anlık personel eksikliklerini konum tabanlı bildirim ve emanet ödeme güvencesiyle kapatın.
+                </p>
+              </div>
+              <div className="lg:col-span-4 flex lg:justify-end">
+                <Link
+                  href="/"
+                  className="px-4 py-2.5 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold inline-flex items-center gap-2 transition-colors"
+                >
+                  <span>Panoya Git & İlan Aç</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             </div>
           </div>
 
-          {/* Sektörel Çözümler */}
-          <section className="space-y-6">
-            <h2 className="text-2xl font-bold text-center">Hangi Sektörlerde Çözüm Sunuyoruz?</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-                <div className="text-3xl mb-1">🍽️</div>
-                <h3 className="font-bold text-sm">Restoran & Kafe</h3>
-                <p className="text-xs text-slate-500">Garson, komi, bulaşıkçı, barista</p>
-              </div>
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-                <div className="text-3xl mb-1">🏗️</div>
-                <h3 className="font-bold text-sm">İnşaat & Tadilat</h3>
-                <p className="text-xs text-slate-500">Usta, kalfalar, taşıma personeli</p>
-              </div>
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-                <div className="text-3xl mb-1">🧹</div>
-                <h3 className="font-bold text-sm">Temizlik & Hizmet</h3>
-                <p className="text-xs text-slate-500">Ofis, ev, inşaat sonrası temizlik</p>
-              </div>
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-                <div className="text-3xl mb-1">📦</div>
-                <h3 className="font-bold text-sm">Depo & Lojistik</h3>
-                <p className="text-xs text-slate-500">Paketleme, yükleme, acil kurye</p>
-              </div>
+          {/* Sektörel Kapsam */}
+          <section className="space-y-4">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-lg sm:text-xl font-bold text-[#141615] dark:text-white">
+                En Çok Eleman Temin Edilen Sektörler
+              </h2>
+              <span className="font-mono text-xs text-[#5C615E] dark:text-[#949B97]">
+                AKTİF KATEGORİLER
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {sectors.map((s) => (
+                <div
+                  key={s.code}
+                  className="p-5 rounded-lg bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] space-y-2"
+                >
+                  <span className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded bg-[#F0EFEA] dark:bg-[#1E2421] text-[#454A47] dark:text-[#B8C0BC] border border-[#E2E0D8] dark:border-[#2C3330] inline-block">
+                    {s.code}
+                  </span>
+                  <h3 className="text-[15px] font-bold text-[#141615] dark:text-white">
+                    {s.title}
+                  </h3>
+                  <p className="text-[13px] text-[#5C615E] dark:text-[#949B97] leading-relaxed">
+                    {s.roles}
+                  </p>
+                </div>
+              ))}
             </div>
           </section>
 
-          {/* Avantajlar */}
-          <section className="space-y-6">
-            <h2 className="text-2xl font-bold text-center">İşletmenize Sağlanan Avantajlar</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {employerBenefits.map((b, i) => {
-                const Icon = b.icon
-                return (
-                  <div
-                    key={i}
-                    className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 shadow-xs"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center">
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <h3 className="font-bold text-base text-slate-900 dark:text-white">{b.title}</h3>
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                      {b.desc}
-                    </p>
+          {/* İşveren Avantajları */}
+          <section className="space-y-4">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-lg sm:text-xl font-bold text-[#141615] dark:text-white">
+                Operasyonel Güvence ve Kontrol
+              </h2>
+              <span className="font-mono text-xs text-[#5C615E] dark:text-[#949B97]">
+                İŞVEREN STANDARTLARI
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {advantages.map((a) => (
+                <div
+                  key={a.code}
+                  className="p-5 rounded-lg bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] space-y-2"
+                >
+                  <div className="font-mono text-[11px] font-semibold text-[#0D6847] dark:text-[#5CD6A5]">
+                    {a.code}
                   </div>
-                )
-              })}
+                  <h3 className="text-[15px] font-bold text-[#141615] dark:text-white">
+                    {a.title}
+                  </h3>
+                  <p className="text-[13px] text-[#5C615E] dark:text-[#949B97] leading-relaxed">
+                    {a.desc}
+                  </p>
+                </div>
+              ))}
             </div>
           </section>
-
-          {/* Alt Banner */}
-          <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-slate-900 to-indigo-950 text-white text-center space-y-5 shadow-xl">
-            <h2 className="text-2xl sm:text-3xl font-extrabold">Bugün İlk İlanınızı Yayınlayın</h2>
-            <p className="text-slate-300 max-w-xl mx-auto text-sm sm:text-base">
-              Dakikalar içinde kayıt olun, acil eleman ihtiyacınızı emanet güvencesiyle aynı gün çözün.
-            </p>
-            <div className="pt-2">
-              <Link href="/">
-                <Button size="lg" className="h-12 px-8 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold">
-                  Hemen Başla
-                </Button>
-              </Link>
-            </div>
-          </div>
-
         </div>
       </main>
 
-      <footer className="border-t border-slate-200/80 dark:border-slate-800 py-6 px-4 text-center text-xs text-slate-500">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <footer className="mt-auto bg-white dark:bg-[#141716] border-t border-[#E2E0D8] dark:border-[#252B28] py-6 px-4 text-xs text-[#5C615E] dark:text-[#949B97]">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <Logo size="sm" variant="full" />
-          <p>© 2026 Günübirlik • Konum Bazlı Günlük İş Platformu</p>
+          <span className="font-mono text-[11px]">© 2026 Günübirlik • Günlük ve Yevmiyeli İş Panosu</span>
         </div>
       </footer>
     </div>
