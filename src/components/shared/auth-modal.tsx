@@ -11,12 +11,12 @@ export default function AuthModal() {
 
   return (
     <Dialog open={authModalOpen} onOpenChange={(open) => !open && closeAuthModal()}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden border-slate-200 dark:border-slate-800 bg-transparent shadow-2xl max-h-[92vh] sm:max-h-[88vh]">
+      <DialogContent className="w-[calc(100vw-20px)] sm:max-w-[460px] p-0 overflow-hidden border border-[#D8D5CC] dark:border-[#262C29] bg-white dark:bg-[#141716] rounded-lg shadow-xl max-h-[92vh]">
         <VisuallyHidden>
           <DialogTitle>{authModalTitle}</DialogTitle>
           <DialogDescription>{authModalDescription}</DialogDescription>
         </VisuallyHidden>
-        <div className="w-full h-full overflow-y-auto max-h-[90vh]">
+        <div className="w-full overflow-y-auto max-h-[90vh]">
           <AuthScreen isModal={true} />
         </div>
       </DialogContent>

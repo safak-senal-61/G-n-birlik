@@ -39,7 +39,6 @@ import {
   Wallet,
   LifeBuoy,
   Share2,
-  QrCode,
   Copy,
   Check,
 } from 'lucide-react'
@@ -51,7 +50,6 @@ import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import Logo from '@/components/shared/logo'
 import AuthModal from '@/components/shared/auth-modal'
-import { WhatsAppIcon, TelegramIcon, TwitterXIcon } from '@/components/shared/social-icons'
 
 export default function Header() {
   const { user, logout } = useAuth()
@@ -80,7 +78,7 @@ export default function Header() {
     if (typeof navigator !== 'undefined' && (navigator as any).share) {
       try {
         await (navigator as any).share({
-          title: 'Günübirlik İş Bul',
+          title: 'Günübirlik',
           text: 'Türkiye geneli günlük ve yevmiyeli iş panosu.',
           url: siteUrl,
         })
@@ -131,123 +129,123 @@ export default function Header() {
       <>
         <AuthModal />
         <header className="sticky top-0 z-50 w-full bg-[#F6F5F2]/95 dark:bg-[#0C0E0D]/95 backdrop-blur-md border-b border-[#E2E0D8] dark:border-[#252B28]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-6 min-w-0">
-            <Link
-              href="/"
-              onClick={() => go('home')}
-              className="flex items-center flex-shrink-0"
-              aria-label="Günübirlik — Ana Sayfa"
-            >
-              <Logo size="sm" variant="full" />
-            </Link>
-
-            <nav className="hidden md:flex items-center gap-1" aria-label="Ana Gezinti">
-              {publicLinks.map((link) => {
-                const active = link.isHome
-                  ? pathname === '/' && view === 'home'
-                  : pathname?.startsWith(link.href)
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => {
-                      if (link.isHome) go('home')
-                    }}
-                    className={`px-3 py-1.5 rounded-md text-[13px] transition-colors ${
-                      active
-                        ? 'text-[#141615] dark:text-white font-semibold bg-[#E9E7E0] dark:bg-[#1D2220]'
-                        : 'text-[#5C615E] dark:text-[#949B97] hover:text-[#141615] dark:hover:text-white font-medium'
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                )
-              })}
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <ThemeToggle variant="icon" />
-
-            <button
-              type="button"
-              onClick={() => openAuthModal({ title: 'Hesabınıza Giriş Yapın', tab: 'login' })}
-              className="px-3.5 py-1.5 rounded-md text-[13px] font-semibold text-[#141615] dark:text-[#F2F1ED] hover:bg-[#EAE8E1] dark:hover:bg-[#1D2220] transition-colors cursor-pointer"
-            >
-              Giriş Yap
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                openAuthModal({
-                  title: 'Yeni İş İlanı Yayınla',
-                  description:
-                    'Acil personel veya günübirlik usta ihtiyacınız için işveren hesabıyla giriş yapın.',
-                  tab: 'register',
-                })
-              }
-              className="px-3.5 py-1.5 rounded-md text-[13px] font-semibold bg-[#0D6847] hover:bg-[#095237] text-white transition-colors inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>İlan Aç</span>
-            </button>
-
-            <button
-              type="button"
-              className="md:hidden p-2 rounded-md text-[#141615] dark:text-[#F2F1ED] hover:bg-[#EAE8E1] dark:hover:bg-[#1D2220]"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Menü"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-[#E2E0D8] dark:border-[#252B28] bg-[#F6F5F2] dark:bg-[#0C0E0D] px-4 py-3 space-y-1">
-            {publicLinks.map((link) => (
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-6 min-w-0 shrink-0">
               <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => {
-                  if (link.isHome) go('home')
-                  setMobileMenuOpen(false)
-                }}
-                className="block px-3 py-2 rounded-md text-sm font-medium text-[#141615] dark:text-[#F2F1ED] hover:bg-[#EAE8E1] dark:hover:bg-[#1D2220]"
+                href="/"
+                onClick={() => go('home')}
+                className="flex items-center shrink-0"
+                aria-label="Günübirlik — Ana Sayfa"
               >
-                {link.label}
+                <Logo size="sm" variant="full" />
               </Link>
-            ))}
-            <div className="pt-2 mt-2 border-t border-[#E2E0D8] dark:border-[#252B28] grid grid-cols-2 gap-2">
+
+              <nav className="hidden md:flex items-center gap-1" aria-label="Ana Gezinti">
+                {publicLinks.map((link) => {
+                  const active = link.isHome
+                    ? pathname === '/' && view === 'home'
+                    : pathname?.startsWith(link.href)
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => {
+                        if (link.isHome) go('home')
+                      }}
+                      className={`px-3 py-1.5 rounded-md text-[13px] whitespace-nowrap transition-colors ${
+                        active
+                          ? 'text-[#141615] dark:text-white font-semibold bg-[#E9E7E0] dark:bg-[#1D2220]'
+                          : 'text-[#5C615E] dark:text-[#949B97] hover:text-[#141615] dark:hover:text-white font-medium'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  )
+                })}
+              </nav>
+            </div>
+
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <ThemeToggle variant="icon" />
+
               <button
                 type="button"
-                className="py-2 rounded-md border border-[#D6D3C9] dark:border-[#2B322E] text-xs font-semibold text-[#141615] dark:text-white"
-                onClick={() => {
-                  setMobileMenuOpen(false)
-                  openAuthModal({ title: 'Hesabınıza Giriş Yapın', tab: 'login' })
-                }}
+                onClick={() => openAuthModal({ title: 'Hesabınıza Giriş Yapın', tab: 'login' })}
+                className="h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] text-xs sm:text-[13px] font-semibold text-[#141615] dark:text-[#F2F1ED] hover:bg-[#EAE8E1] dark:hover:bg-[#222825] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               >
                 Giriş Yap
               </button>
+
               <button
                 type="button"
-                className="py-2 rounded-md bg-[#0D6847] text-white text-xs font-semibold"
-                onClick={() => {
-                  setMobileMenuOpen(false)
+                onClick={() =>
                   openAuthModal({
-                    title: 'İş İlanı Yayınla',
+                    title: 'Yeni İş İlanı Yayınla',
+                    description:
+                      'Acil personel veya günübirlik usta ihtiyacınız için işveren hesabıyla giriş yapın.',
                     tab: 'register',
-                    description: 'İşveren hesabı açarak hemen ilan yayınlayın.',
                   })
-                }}
+                }
+                className="h-8 sm:h-9 px-2.5 sm:px-3.5 rounded-md text-xs sm:text-[13px] font-semibold bg-[#0D6847] hover:bg-[#095237] text-white transition-colors inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer"
               >
-                Kayıt Ol / İlan Aç
+                <Plus className="w-3.5 h-3.5 shrink-0" />
+                <span>İlan Aç</span>
+              </button>
+
+              <button
+                type="button"
+                className="md:hidden w-8 h-8 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] flex items-center justify-center text-[#141615] dark:text-[#F2F1ED] shrink-0"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Menü"
+              >
+                {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
               </button>
             </div>
           </div>
-        )}
+
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t border-[#E2E0D8] dark:border-[#252B28] bg-[#F6F5F2] dark:bg-[#0C0E0D] px-4 py-3 space-y-1">
+              {publicLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => {
+                    if (link.isHome) go('home')
+                    setMobileMenuOpen(false)
+                  }}
+                  className="block px-3 py-2.5 rounded-md text-sm font-medium text-[#141615] dark:text-[#F2F1ED] hover:bg-[#EAE8E1] dark:hover:bg-[#1D2220]"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <div className="pt-2.5 mt-2 border-t border-[#E2E0D8] dark:border-[#252B28] grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  className="h-9 rounded-md border border-[#D6D3C9] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] text-xs font-semibold text-[#141615] dark:text-white"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    openAuthModal({ title: 'Hesabınıza Giriş Yapın', tab: 'login' })
+                  }}
+                >
+                  Giriş Yap
+                </button>
+                <button
+                  type="button"
+                  className="h-9 rounded-md bg-[#0D6847] text-white text-xs font-semibold"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    openAuthModal({
+                      title: 'Yeni Hesap Oluştur',
+                      tab: 'register',
+                      description: 'Çalışan veya işveren hesabı açarak hemen başlayın.',
+                    })
+                  }}
+                >
+                  Kayıt Ol
+                </button>
+              </div>
+            </div>
+          )}
         </header>
       </>
     )
@@ -273,12 +271,12 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[#F6F5F2]/95 dark:bg-[#0C0E0D]/95 backdrop-blur-md border-b border-[#E2E0D8] dark:border-[#252B28]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-5 min-w-0">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-5 min-w-0 shrink-0">
           <button
             type="button"
             onClick={() => go('home')}
-            className="flex items-center flex-shrink-0 text-left cursor-pointer"
+            className="flex items-center shrink-0 text-left cursor-pointer"
             title="Günübirlik — Ana Sayfa"
             aria-label="Günübirlik — Ana Sayfa"
           >
@@ -313,44 +311,42 @@ export default function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button
             type="button"
             onClick={() => go('wallet')}
-            className="btn-3d-white rounded-md flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold cursor-pointer"
+            className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] flex items-center gap-1.5 text-xs font-semibold whitespace-nowrap shrink-0 cursor-pointer"
             title="Cüzdanım"
             aria-label="Cüzdanım"
           >
-            <Wallet className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#5CD6A5]" />
-            <span className="hidden sm:inline">Emanet & Cüzdan</span>
+            <Wallet className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#5CD6A5] shrink-0" />
+            <span>Cüzdan</span>
           </button>
 
           <ThemeToggle variant="icon" />
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden h-9 w-9 rounded-md relative"
+          <button
+            type="button"
+            className="lg:hidden w-8 h-8 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] flex items-center justify-center relative shrink-0"
             onClick={() => go('notifications')}
             aria-label="Bildirimler"
           >
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
-              <Badge className="absolute -top-0.5 -right-0.5 bg-[#C84B31] text-white text-[9px] px-1 min-w-[15px] h-[15px] flex items-center justify-center rounded-sm">
+              <span className="absolute -top-1 -right-1 bg-[#C84B31] text-white font-mono text-[9px] px-1 min-w-[15px] h-[15px] flex items-center justify-center rounded-sm">
                 {unreadCount > 9 ? '9+' : unreadCount}
-              </Badge>
+              </span>
             )}
-          </Button>
+          </button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden h-9 w-9 rounded-md"
+          <button
+            type="button"
+            className="lg:hidden w-8 h-8 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] flex items-center justify-center shrink-0"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? 'Menüyü kapat' : 'Menüyü aç'}
           >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </Button>
+            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -454,7 +450,7 @@ export default function Header() {
                   go(item.key)
                   setMobileMenuOpen(false)
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold ${
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-semibold ${
                   isActive
                     ? 'bg-[#141615] text-white dark:bg-white dark:text-[#141615]'
                     : 'text-[#141615] dark:text-[#F2F1ED] hover:bg-[#EAE8E1] dark:hover:bg-[#1D2220]'
@@ -478,7 +474,7 @@ export default function Header() {
               logout()
               setMobileMenuOpen(false)
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold text-[#C84B31] mt-2 border-t border-[#E2E0D8] dark:border-[#252B28] pt-2.5"
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-md text-xs font-semibold text-[#C84B31] mt-2 border-t border-[#E2E0D8] dark:border-[#252B28] pt-2.5"
           >
             <LogOut className="w-4 h-4" />
             Oturumu Kapat

@@ -6,22 +6,50 @@ import { jobsApi, applicationsApi } from '@/lib/api'
 import { useApp } from '@/lib/app-store'
 import { useAuth } from '@/lib/auth-store'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { MapPin, Clock, Users, Star, Briefcase, Calendar, Wallet, MessageSquare, Heart, Share2, AlertCircle, CheckCircle2, Loader2, Phone, Navigation } from 'lucide-react'
-import { formatWage, formatDate, categoryLabel, categoryIcon, urgencyLabel, daysUntil, statusLabel, initials } from '@/lib/format'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  MapPin,
+  Clock,
+  Users,
+  Star,
+  Briefcase,
+  Calendar,
+  Wallet,
+  MessageSquare,
+  Heart,
+  Share2,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Navigation,
+  ArrowLeft,
+} from 'lucide-react'
+import {
+  formatWage,
+  formatDate,
+  categoryLabel,
+  categoryIcon,
+  daysUntil,
+  statusLabel,
+  initials,
+} from '@/lib/format'
 import { toast } from 'sonner'
 
-// Leaflet haritasını dinamik import ile yükle (SSR'siz)
 const JobMap = dynamic(() => import('@/components/shared/job-map'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-full bg-gray-100 rounded-lg">
-      <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+    <div className="flex items-center justify-center h-full bg-[#F0EFEA] dark:bg-[#181C1A] rounded-md">
+      <Loader2 className="w-5 h-5 animate-spin text-[#0D6847]" />
     </div>
   ),
 })
@@ -63,7 +91,7 @@ export default function JobDetailScreen() {
         message: applyMessage,
         proposedWage: proposedWage ? Number(proposedWage) : undefined,
       })
-      toast.success('Başvurunuz gönderildi! 🎉')
+      toast.success('Başvurunuz iletildi')
       setApplyDialog(false)
       setApplyMessage('')
       setProposedWage('')
@@ -79,14 +107,15 @@ export default function JobDetailScreen() {
     if (!user) {
       openAuthModal({
         title: 'İlanı Kaydetmek İçin Giriş Yapın',
-        description: 'İlanları favorilerinize eklemek ve istediğiniz zaman kolayca erişmek için lütfen giriş yapın.',
+        description:
+          'İlanları kaydetmek ve daha sonra hızlıca ulaşmak için hesabınıza giriş yapın.',
       })
       return
     }
     try {
       const result = await jobsApi.save(selectedJobId!)
       setSaved(!result.removed)
-      toast.success(result.removed ? 'Kayıtlardan kaldırıldı.' : 'İlan kaydedildi! ❤️')
+      toast.success(result.removed ? 'Kayıtlardan çıkarıldı' : 'İlan kaydedildi')
     } catch (err: any) {
       toast.error(err.message)
     }
@@ -96,7 +125,8 @@ export default function JobDetailScreen() {
     if (!user) {
       openAuthModal({
         title: 'İşverenle İletişim İçin Giriş Yapın',
-        description: 'İşveren ile mesajlaşmak, iş detaylarını sormak veya konum bilgisi almak için giriş yapın.',
+        description:
+          'İşveren ile mesajlaşmak ve vardiya detaylarını sormak için oturum açın.',
       })
       return
     }
@@ -109,7 +139,7 @@ export default function JobDetailScreen() {
           content: `Merhaba, "${job.title}" ilanınız hakkında bilgi almak istiyorum.`,
         })
       )
-      toast.success('Mesaj gönderildi!')
+      toast.success('Mesaj gönderildi')
       go('messages')
     } catch (err: any) {
       toast.error(err.message)
@@ -118,11 +148,11 @@ export default function JobDetailScreen() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-3/4" />
-          <div className="h-4 bg-gray-200 rounded w-1/2" />
-          <div className="h-48 bg-gray-200 rounded" />
+          <div className="h-6 bg-[#E2E0D8] dark:bg-[#252B28] rounded w-48" />
+          <div className="h-32 bg-[#E2E0D8] dark:bg-[#252B28] rounded-lg" />
+          <div className="h-48 bg-[#E2E0D8] dark:bg-[#252B28] rounded-lg" />
         </div>
       </div>
     )
@@ -132,356 +162,397 @@ export default function JobDetailScreen() {
 
   const isOwner = user?.id === job.employerId
   const myApplication = job.myApplication
-  const urgency = urgencyLabel(job.urgency)
+  const isUrgent = job.urgency === 'URGENT'
   const remaining = job.openingsTotal - job.openingsFilled
   const canApply = user?.role === 'WORKER' && !isOwner && !myApplication && job.status === 'OPEN'
 
-  // Job'ı JobMap'in beklediği formata çevir
-  const jobForMap = job ? [{
-    id: job.id,
-    title: job.title,
-    description: job.description,
-    category: job.category,
-    workDate: job.workDate,
-    startTime: job.startTime,
-    endTime: job.endTime,
-    wageAmount: job.wageAmount,
-    wageType: job.wageType,
-    isWageNegotiable: job.isWageNegotiable,
-    city: job.city,
-    district: job.district,
-    address: job.address,
-    latitude: job.latitude,
-    longitude: job.longitude,
-    urgency: job.urgency,
-    openingsTotal: job.openingsTotal,
-    openingsFilled: job.openingsFilled,
-    distanceKm: job.distanceKm,
-    employer: job.employer,
-  }] : []
+  const jobForMap = job
+    ? [
+        {
+          id: job.id,
+          title: job.title,
+          description: job.description,
+          category: job.category,
+          workDate: job.workDate,
+          startTime: job.startTime,
+          endTime: job.endTime,
+          wageAmount: job.wageAmount,
+          wageType: job.wageType,
+          isWageNegotiable: job.isWageNegotiable,
+          city: job.city,
+          district: job.district,
+          address: job.address,
+          latitude: job.latitude,
+          longitude: job.longitude,
+          urgency: job.urgency,
+          openingsTotal: job.openingsTotal,
+          openingsFilled: job.openingsFilled,
+          distanceKm: job.distanceKm,
+          employer: job.employer,
+        },
+      ]
+    : []
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-5xl">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Sol: Ana içerik */}
-        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-          {/* Başlık kartı - 3D Spatial */}
-          <div className="card-3d-spatial rounded-3xl p-5 sm:p-7 border border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 shadow-md preserve-3d">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-emerald-100 to-teal-100 dark:from-emerald-950/60 dark:to-teal-950/40 border-t border-white/90 dark:border-emerald-500/40 border-b-2 border-emerald-300 dark:border-b-emerald-600 flex items-center justify-center text-3xl sm:text-4xl flex-shrink-0 shadow-[0_4px_12px_rgba(16,185,129,0.2)] translate-z-4">
-                {categoryIcon(job.category)}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-8 space-y-5">
+      {/* Üst Geri Dönüş Çubuğu */}
+      <div>
+        <button
+          type="button"
+          onClick={back}
+          className="inline-flex items-center gap-1.5 font-mono text-xs font-semibold text-[#5C615E] hover:text-[#141615] dark:text-[#949B97] dark:hover:text-white cursor-pointer"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>İlan Panosuna Dön</span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Sol Sütun: İlan Detayı ve Harita */}
+        <div className="lg:col-span-8 space-y-5">
+          {/* İlan Başlık Kartı */}
+          <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg p-5 sm:p-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded-sm bg-[#F0EFEA] dark:bg-[#1D2220] text-[#141615] dark:text-[#F2F1ED] border border-[#D8D5CC] dark:border-[#2E3633]">
+                  {categoryIcon(job.category)}
+                </span>
+                <span className="font-semibold text-[#4A4F4C] dark:text-[#A5ACA8]">
+                  {categoryLabel(job.category)}
+                </span>
+                <span className="text-[#C5C1B6] dark:text-[#3A443F]">/</span>
+                <span className="text-[#5C615E] dark:text-[#949B97] flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-[#0D6847]" />
+                  <span>{job.district}, {job.city}</span>
+                </span>
               </div>
-              <div className="flex-1 min-w-0 preserve-3d">
-                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 leading-tight tracking-tight translate-z-2">
-                  {job.title}
-                </h1>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 translate-z-2">
-                  <span className="font-extrabold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200/80 dark:border-emerald-800/60">
-                    {categoryLabel(job.category)}
-                  </span>
-                  <span className="hidden sm:inline text-slate-400">•</span>
-                  <span className="flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
-                    <MapPin className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                    <span className="truncate">{job.district}, {job.city}</span>
-                  </span>
-                  <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] sm:text-xs ${urgency.color} border`}>
-                    {urgency.text}
-                  </span>
-                  {job.employer?.isVerified && (
-                    <span className="badge-3d-emerald px-2 py-0.5 rounded-full text-[10px] font-black inline-flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-700" />
-                      ONAYLI İŞVEREN
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 mt-3 pt-2 border-t border-slate-100 dark:border-white/10">
-                  <span>{formatDate(job.createdAt)} yayınlandı</span>
-                  <span>•</span>
-                  <span>{job.viewCount} görüntülenme</span>
-                  <span>•</span>
-                  <span>{job.applicationCount} başvuru</span>
-                </div>
-              </div>
+
+              {isUrgent && (
+                <span className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded-sm bg-[#FBEEE9] text-[#B43B21] border border-[#EFC7BD] dark:bg-[#2E1611] dark:text-[#F5937E] dark:border-[#5C281E]">
+                  ACİL VARDİYA
+                </span>
+              )}
             </div>
 
-            {/* Aksiyonlar - 3D Tactile Buttons */}
+            <h1 className="text-xl sm:text-2xl font-bold text-[#141615] dark:text-white leading-snug">
+              {job.title}
+            </h1>
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] text-[#5C615E] dark:text-[#949B97] pt-3 border-t border-[#ECEAE4] dark:border-[#222624]">
+              <span>Yayın: {formatDate(job.createdAt)}</span>
+              <span>•</span>
+              <span>{job.viewCount} görüntülenme</span>
+              <span>•</span>
+              <span>{job.applicationCount} başvuru</span>
+            </div>
+
+            {/* Aksiyon Butonları */}
             {!isOwner && (
-              <div className="flex gap-2.5 mt-5 sm:mt-6 flex-wrap preserve-3d">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-2">
                 {!user && job.status === 'OPEN' && (
                   <button
                     type="button"
-                    className="btn-3d-emerald btn-3d-pill flex-1 min-w-[200px] h-12 text-sm font-black flex items-center justify-center gap-2 translate-z-4 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg rounded-2xl cursor-pointer"
+                    className="flex-1 h-11 px-5 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                     onClick={() =>
                       openAuthModal({
                         title: 'Bu İşe Başvurmak İçin Giriş Yapın',
-                        description: `"${job.title}" ilanına başvurmak ve günlük ${job.wageAmount}₺ yevmiyenizi kazanmak için lütfen giriş yapın veya ücretsiz hesap oluşturun.`,
+                        description: `"${job.title}" ilanına başvurmak için hesabınıza giriş yapın veya ücretsiz kayıt olun.`,
                         tab: 'login',
                       })
                     }
                   >
-                    <Briefcase className="w-4 h-4" />
+                    <Briefcase className="w-4 h-4 shrink-0" />
                     <span>Giriş Yap ve Hemen Başvur</span>
                   </button>
                 )}
+
                 {canApply && (
                   <button
                     type="button"
-                    className="btn-3d-emerald btn-3d-pill flex-1 min-w-[180px] h-12 text-sm font-black flex items-center justify-center gap-2 translate-z-4"
+                    className="flex-1 h-11 px-5 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                     onClick={() => setApplyDialog(true)}
                   >
-                    <Briefcase className="w-4 h-4" />
+                    <Briefcase className="w-4 h-4 shrink-0" />
                     <span>Bu İşe Başvur</span>
                   </button>
                 )}
+
                 {myApplication && (
                   <button
                     type="button"
-                    className="btn-3d-white btn-3d-pill flex-1 min-w-[180px] h-12 text-sm font-bold flex items-center justify-center gap-2 text-slate-900 dark:text-slate-100"
+                    className="flex-1 h-11 px-4 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-[#F6F5F2] dark:bg-[#181C1A] text-xs font-semibold flex items-center justify-center gap-2 text-[#141615] dark:text-white"
                     disabled
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <CheckCircle2 className="w-4 h-4 text-[#0D6847]" />
                     <span>Başvuru Durumu: {statusLabel(myApplication.status).text}</span>
                   </button>
                 )}
-                <button
-                  type="button"
-                  className="btn-3d-white h-12 w-12 rounded-2xl flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-red-600"
-                  onClick={handleSave}
-                  title={saved ? 'Kaydedilenlerden Çıkar' : 'Kaydet'}
-                  aria-label={saved ? 'Kaydedilenlerden Çıkar' : 'İlanı Kaydet'}
-                >
-                  <Heart className={`w-5 h-5 ${saved ? 'fill-red-500 text-red-500' : ''}`} />
-                </button>
-                <button
-                  type="button"
-                  className="btn-3d-white h-12 w-12 rounded-2xl flex items-center justify-center text-slate-700 dark:text-slate-200"
-                  onClick={() => toast.success('Paylaşım linki kopyalandı! 📋')}
-                  title="Paylaş"
-                  aria-label="İlanı Paylaş"
-                >
-                  <Share2 className="w-5 h-5" />
-                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="flex-1 sm:flex-none h-11 px-3.5 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] hover:bg-[#F0EFEA] dark:hover:bg-[#222825] flex items-center justify-center gap-1.5 text-xs font-semibold text-[#141615] dark:text-[#F2F1ED] cursor-pointer"
+                    onClick={handleSave}
+                    aria-label={saved ? 'Kaydedilenlerden Çıkar' : 'İlanı Kaydet'}
+                  >
+                    <Heart className={`w-4 h-4 ${saved ? 'fill-[#C84B31] text-[#C84B31]' : ''}`} />
+                    <span className="sm:hidden">{saved ? 'Kaydedildi' : 'Kaydet'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="flex-1 sm:flex-none h-11 px-3.5 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] hover:bg-[#F0EFEA] dark:hover:bg-[#222825] flex items-center justify-center gap-1.5 text-xs font-semibold text-[#141615] dark:text-[#F2F1ED] cursor-pointer"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        navigator.clipboard.writeText(window.location.href)
+                      }
+                      toast.success('İlan bağlantısı kopyalandı')
+                    }}
+                    aria-label="İlanı Paylaş"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span className="sm:hidden">Paylaş</span>
+                  </button>
+                </div>
               </div>
             )}
 
             {isOwner && (
-              <div className="card-3d-spatial bg-amber-50/80 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-800/60 rounded-2xl p-4 mt-5 flex items-start gap-2.5">
-                <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-amber-900 dark:text-amber-200 font-medium">
-                  Bu ilan size ait. Başvuruları yönetmek için{' '}
-                  <button type="button" className="font-bold underline text-amber-800 dark:text-amber-300" onClick={() => go('my-jobs')}>
+              <div className="bg-[#FDF6E7] dark:bg-[#2B210B] border border-[#EAD29C] dark:border-[#523E14] rounded-md p-3.5 flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-[#946200] dark:text-[#E5B85B] mt-0.5 shrink-0" />
+                <p className="text-xs text-[#141615] dark:text-[#F2F1ED]">
+                  Bu ilan size ait. Gelen başvuruları değerlendirmek için{' '}
+                  <button
+                    type="button"
+                    className="font-bold underline text-[#0D6847] dark:text-[#5CD6A5]"
+                    onClick={() => go('my-jobs')}
+                  >
                     İlanlarım
                   </button>{' '}
-                  bölümüne geçebilirsiniz.
+                  sayfasına gidebilirsiniz.
                 </p>
               </div>
             )}
           </div>
 
-          {/* Açıklama */}
-          <Card className="rounded-2xl border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 card-3d-spatial overflow-hidden">
-            <CardHeader className="p-4 sm:p-6 border-b border-slate-100 dark:border-white/10">
-              <CardTitle className="text-base sm:text-lg text-slate-900 dark:text-slate-100">İş Tanımı</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-4">
-              <p className="text-sm sm:text-base text-gray-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">{job.description}</p>
+          {/* İş Tanımı */}
+          <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#181C1A]">
+              <h2 className="text-sm font-bold text-[#141615] dark:text-white">
+                İş Tanımı ve Beklentiler
+              </h2>
+            </div>
+            <div className="p-5 sm:p-6 space-y-4">
+              <p className="text-sm text-[#252927] dark:text-[#DCE0DD] whitespace-pre-wrap leading-relaxed">
+                {job.description}
+              </p>
 
               {job.requiredSkills?.length > 0 && (
-                <div className="mt-4">
-                  <Label className="text-sm font-medium text-slate-700 dark:text-slate-300">Aranan Yetenekler</Label>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                <div className="pt-3 border-t border-[#ECEAE4] dark:border-[#222624]">
+                  <div className="font-mono text-[11px] font-semibold text-[#5C615E] dark:text-[#949B97] mb-2">
+                    ARANAN BECERİLER
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
                     {job.requiredSkills.map((skill: string) => (
-                      <Badge key={skill} variant="secondary" className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 font-semibold">
+                      <span
+                        key={skill}
+                        className="px-2.5 py-1 rounded bg-[#F0EFEA] dark:bg-[#1D2220] text-xs font-medium text-[#141615] dark:text-[#F2F1ED] border border-[#D8D5CC] dark:border-[#2E3633]"
+                      >
                         {skill}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Konum kartı - Gerçek Leaflet haritası */}
-          <Card className="rounded-2xl border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 card-3d-spatial overflow-hidden">
-            <CardHeader className="p-4 sm:p-6 border-b border-slate-100 dark:border-white/10">
-              <CardTitle className="text-base sm:text-lg flex items-center gap-2 text-slate-900 dark:text-slate-100">
-                <MapPin className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                İş Konumu
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-4">
-              <div className="rounded-xl overflow-hidden mb-3 h-[200px] sm:h-[280px] border border-slate-200 dark:border-white/10">
-                <JobMap
-                  jobs={jobForMap}
-                  userCoords={null}
-                  height="100%"
-                />
+          {/* Konum ve Harita */}
+          <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#181C1A] flex items-center justify-between">
+              <h2 className="text-sm font-bold text-[#141615] dark:text-white flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-[#0D6847]" />
+                <span>Çalışma Konumu</span>
+              </h2>
+              <span className="font-mono text-[11px] text-[#5C615E] dark:text-[#949B97]">
+                {job.district}, {job.city}
+              </span>
+            </div>
+            <div className="p-5 space-y-3">
+              <div className="rounded-md overflow-hidden h-[220px] sm:h-[260px] border border-[#D8D5CC] dark:border-[#2B322E]">
+                <JobMap jobs={jobForMap} userCoords={null} height="100%" />
               </div>
-              <div className="space-y-1 text-sm">
+              <div className="space-y-1 text-xs text-[#5C615E] dark:text-[#949B97]">
                 {job.address && (
-                  <p className="font-medium text-gray-900 dark:text-slate-100 flex items-start gap-1.5">
-                    <Navigation className="w-3.5 h-3.5 mt-0.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                  <p className="font-semibold text-[#141615] dark:text-white flex items-start gap-1.5">
+                    <Navigation className="w-3.5 h-3.5 mt-0.5 text-[#0D6847] shrink-0" />
                     <span>{job.address}</span>
                   </p>
                 )}
-                <p className="text-gray-600 dark:text-slate-400 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                  {job.district}, {job.city}
-                </p>
                 {job.locationNote && (
-                  <p className="text-gray-700 dark:text-amber-200 italic mt-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/50 p-2.5 rounded-xl">💡 {job.locationNote}</p>
+                  <p className="p-2.5 rounded bg-[#F6F5F2] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] text-[#141615] dark:text-[#DCE0DD]">
+                    Not: {job.locationNote}
+                  </p>
                 )}
-                <div className="text-xs text-gray-400 dark:text-slate-500 mt-2 font-mono">
-                  📍 {job.latitude.toFixed(5)}, {job.longitude.toFixed(5)}
-                </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
-        {/* Sağ: Yan panel - özet bilgiler */}
-        <div className="space-y-4">
-          {/* Ücret - 3D Gold / Emerald Vault Card */}
-          <div className="card-3d-spatial rounded-3xl p-5 border border-emerald-300/80 dark:border-emerald-800/60 bg-gradient-to-br from-emerald-500/10 dark:from-emerald-950/40 via-teal-500/5 dark:via-teal-950/20 to-white dark:to-slate-900 shadow-[0_10px_25px_-5px_rgba(16,185,129,0.15)] preserve-3d">
-            <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 text-xs font-black uppercase tracking-wider mb-1 translate-z-2">
-              <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Net Günlük Yevmiye</span>
-            </div>
-            <div className="text-3xl sm:text-4xl font-black text-emerald-700 dark:text-emerald-400 tracking-tight break-all translate-z-4">
-              {formatWage(job.wageAmount, job.wageType)}
-            </div>
-            {job.isWageNegotiable && (
-              <span className="inline-block mt-2 badge-3d-emerald px-2.5 py-0.5 rounded-full text-[11px] font-bold">
-                Pazarlık Edilebilir
+        {/* Sağ Sütun: Yevmiye Cetveli & İşveren */}
+        <div className="lg:col-span-4 space-y-5">
+          {/* Yevmiye Kartı */}
+          <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg overflow-hidden">
+            <div className="px-5 py-3.5 bg-[#EAF3EE] dark:bg-[#162921] border-b border-[#C5DDD0] dark:border-[#244738] flex items-center justify-between">
+              <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#0D6847] dark:text-[#5CD6A5] flex items-center gap-1.5">
+                <Wallet className="w-3.5 h-3.5" />
+                <span>NET GÜNLÜK YEVMİYE</span>
               </span>
-            )}
-            <div className="mt-3.5 pt-3 border-t border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-2 text-xs text-emerald-900 dark:text-emerald-300 font-bold">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span>Emanet Güvencesi: Yevmiye havuzda rezerve edilmiştir</span>
+              {job.isWageNegotiable && (
+                <span className="font-mono text-[10px] font-semibold text-[#0D6847] dark:text-[#5CD6A5]">
+                  TEKLİFE AÇIK
+                </span>
+              )}
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="font-mono text-2xl sm:text-3xl font-bold text-[#141615] dark:text-white">
+                {formatWage(job.wageAmount, job.wageType)}
+              </div>
+
+              <div className="pt-3 border-t border-[#ECEAE4] dark:border-[#222624] divide-y divide-[#ECEAE4] dark:divide-[#222624] text-xs">
+                <div className="py-2.5 flex items-center justify-between">
+                  <span className="text-[#5C615E] dark:text-[#949B97] flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>Vardiya Tarihi</span>
+                  </span>
+                  <span className="font-mono font-semibold text-[#141615] dark:text-white">
+                    {daysUntil(job.workDate)}
+                  </span>
+                </div>
+                <div className="py-2.5 flex items-center justify-between">
+                  <span className="text-[#5C615E] dark:text-[#949B97] flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>Çalışma Saatleri</span>
+                  </span>
+                  <span className="font-mono font-semibold text-[#141615] dark:text-white">
+                    {job.startTime} – {job.endTime} ({job.durationHours}s)
+                  </span>
+                </div>
+                <div className="py-2.5 flex items-center justify-between">
+                  <span className="text-[#5C615E] dark:text-[#949B97] flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5" />
+                    <span>Açık Kontenjan</span>
+                  </span>
+                  <span className="font-mono font-semibold text-[#141615] dark:text-white">
+                    {remaining} / {job.openingsTotal} kişi
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded bg-[#F6F5F2] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] flex items-center gap-2 text-[11px] font-medium text-[#0D6847] dark:text-[#5CD6A5]">
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                <span>Emanet Kasa & QR vardiya güvencesi</span>
+              </div>
             </div>
           </div>
 
-          {/* Tarih ve saat - 3D Spatial */}
-          <div className="card-3d-spatial rounded-3xl p-5 border border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 shadow-sm space-y-3.5">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 flex-shrink-0">
-                <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">İş Tarihi</div>
-                <div className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-slate-100">{formatDate(job.workDate)}</div>
-                <div className="text-xs text-emerald-700 dark:text-emerald-400 font-bold">{daysUntil(job.workDate)}</div>
-              </div>
+          {/* İşveren Bilgisi */}
+          <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg p-5 space-y-4">
+            <div className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#5C615E] dark:text-[#949B97]">
+              İŞVEREN KAYDI
             </div>
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 flex-shrink-0">
-                <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Mesai Saatleri</div>
-                <div className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-slate-100">{job.startTime} - {job.endTime}</div>
-                <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">{job.durationHours} saat toplam süre</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 flex-shrink-0">
-                <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Kontenjan Durumu</div>
-                <div className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-slate-100">{remaining} / {job.openingsTotal} kişi kaldı</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">{job.applicationCount} başvuru yapıldı</div>
-              </div>
-            </div>
-          </div>
 
-          {/* İşveren kartı - 3D Spatial */}
-          <div className="card-3d-spatial rounded-3xl p-5 border border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 shadow-sm">
-            <div className="text-[11px] text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider mb-2.5">İşveren Profili</div>
             <div className="flex items-center gap-3">
-              <Avatar className="w-12 h-12 border-2 border-emerald-400 shadow-sm flex-shrink-0">
-                <AvatarFallback className="bg-gradient-to-tr from-emerald-100 to-teal-100 dark:from-emerald-950/80 dark:to-teal-950/60 text-emerald-800 dark:text-emerald-300 font-black">
+              <Avatar className="w-10 h-10 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] shrink-0">
+                <AvatarFallback className="rounded-md bg-[#EAF3EE] dark:bg-[#162921] text-[#0D6847] dark:text-[#5CD6A5] font-mono font-bold text-xs">
                   {initials(job.employer?.companyName || job.employer?.fullName)}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="font-extrabold text-slate-900 dark:text-slate-100 truncate text-sm sm:text-base">
-                  {job.employer?.companyName || job.employer?.fullName}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex-wrap">
-                  <span className="flex items-center gap-0.5 font-bold text-slate-700 dark:text-slate-300">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-                    {job.employer?.ratingAvg || '0.0'} ({job.employer?.ratingCount || 0})
-                  </span>
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-sm text-[#141615] dark:text-white truncate flex items-center gap-1.5">
+                  <span className="truncate">{job.employer?.companyName || job.employer?.fullName}</span>
                   {job.employer?.isVerified && (
-                    <span className="badge-3d-emerald px-1.5 py-0.2 rounded-full text-[9px] font-black">
-                      ONAYLI
-                    </span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#5CD6A5] shrink-0" />
                   )}
+                </div>
+                <div className="flex items-center gap-2 font-mono text-xs text-[#5C615E] dark:text-[#949B97] mt-0.5">
+                  <span className="flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-[#D97706] text-[#D97706]" />
+                    <span>{job.employer?.ratingAvg || '0.0'}</span>
+                  </span>
+                  <span>•</span>
+                  <span>{job.employer?.ratingCount || 0} değerlendirme</span>
                 </div>
               </div>
             </div>
 
             {job.employer?.bio && (
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 line-clamp-3 leading-relaxed">{job.employer.bio}</p>
+              <p className="text-xs text-[#5C615E] dark:text-[#949B97] leading-relaxed">
+                {job.employer.bio}
+              </p>
             )}
 
             {!isOwner && (
               <button
                 type="button"
-                className="btn-3d-white btn-3d-pill w-full mt-4 h-11 text-xs font-bold flex items-center justify-center gap-2 text-slate-800 dark:text-slate-200"
+                className="w-full h-10 rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-[#F6F5F2] dark:bg-[#181C1A] hover:bg-[#EAE8E1] dark:hover:bg-[#222825] text-xs font-semibold text-[#141615] dark:text-white flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 onClick={handleSendMessage}
               >
-                <MessageSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>İşverene Mesaj Gönder</span>
+                <MessageSquare className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#5CD6A5]" />
+                <span>İşverene Soru Sor</span>
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Başvuru Dialog - Mobil uyumlu */}
+      {/* Başvuru Dialog */}
       <Dialog open={applyDialog} onOpenChange={setApplyDialog}>
-        <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
+        <DialogContent className="w-[calc(100vw-24px)] max-w-md rounded-lg bg-white dark:bg-[#141716] border border-[#D8D5CC] dark:border-[#252B28]">
           <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg dark:text-slate-100">İş Başvurusu</DialogTitle>
-            <DialogDescription className="text-sm dark:text-slate-400">
-              "{job.title}" ilanına başvurun. İşverene kendinizden bahsedin.
+            <DialogTitle className="text-base font-bold text-[#141615] dark:text-white">
+              Vardiya Başvurusu
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#5C615E] dark:text-[#949B97]">
+              &ldquo;{job.title}&rdquo; ilanı için işverene kısa bir not iletin.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-sm dark:text-slate-300">Başvuru Mesajı</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Başvuru Notunuz</Label>
               <Textarea
-                placeholder="Merhaba, bu işe uygun adayım çünkü..."
+                placeholder="Deneyiminizi ve vardiyaya uygunluğunuzu kısaca belirtin..."
                 value={applyMessage}
                 onChange={(e) => setApplyMessage(e.target.value)}
-                rows={5}
-                className="text-sm dark:bg-slate-800 dark:border-white/10 dark:text-white"
+                rows={4}
+                className="text-sm bg-white dark:bg-[#181C1A] border-[#D8D5CC] dark:border-[#2B322E]"
               />
-              <p className="text-xs text-gray-500 dark:text-slate-400">Kendinizi tanıtın, deneyim ve yeteneklerinizi paylaşın.</p>
             </div>
 
             {job.isWageNegotiable && (
-              <div className="space-y-2">
-                <Label className="text-sm dark:text-slate-300">Teklif Ettiğiniz Ücret (₺) - Opsiyonel</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Teklif Ettiğiniz Günlük Ücret (₺) — İsteğe Bağlı</Label>
                 <input
                   type="number"
-                  className="flex h-11 w-full rounded-md border border-input bg-background dark:bg-slate-800 dark:border-white/10 dark:text-white px-3 py-2 text-sm"
-                  placeholder="örn: 2500"
+                  className="flex h-10 w-full rounded-md border border-[#D8D5CC] dark:border-[#2B322E] bg-white dark:bg-[#181C1A] px-3 py-2 text-sm font-mono"
+                  placeholder="Örn: 1800"
                   value={proposedWage}
                   onChange={(e) => setProposedWage(e.target.value)}
                 />
-                <p className="text-xs text-gray-500 dark:text-slate-400">İlan pazarlık açık. Kendi ücret teklifinizi belirtebilirsiniz.</p>
               </div>
             )}
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setApplyDialog(false)} className="w-full sm:w-auto h-11 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200">İptal</Button>
-            <Button onClick={handleApply} disabled={applying} className="w-full sm:w-auto h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
-              {applying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            <Button variant="outline" onClick={() => setApplyDialog(false)} className="w-full sm:w-auto h-10 text-xs">
+              İptal
+            </Button>
+            <Button
+              onClick={handleApply}
+              disabled={applying}
+              className="w-full sm:w-auto h-10 bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold"
+            >
+              {applying ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : null}
               Başvuruyu Gönder
             </Button>
           </DialogFooter>

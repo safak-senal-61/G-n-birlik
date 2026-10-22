@@ -199,18 +199,21 @@ export default function Home() {
         {view === 'api-docs' && <ApiDocsScreen />}
       </main>
       <footer className="mt-auto relative z-10 bg-white dark:bg-[#141716] border-t border-[#E2E0D8] dark:border-[#252B28] py-6 px-4 text-xs text-[#5C615E] dark:text-[#949B97]">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
             <Logo size="sm" variant="full" />
+            <span className="text-[#C5C1B6] dark:text-[#3A443F]">•</span>
             <span className="text-[12px] text-[#5C615E] dark:text-[#949B97]">
               Günlük ve yevmiyeli iş panosu
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-5 text-[12px] font-medium">
-            <a href="/nasil-calisir" className="hover:text-[#141615] dark:hover:text-white">İşleyiş</a>
-            <a href="/is-arayanlar" className="hover:text-[#141615] dark:hover:text-white">Çalışanlar</a>
-            <a href="/isverenler" className="hover:text-[#141615] dark:hover:text-white">İşverenler</a>
-            <a href="/blog" className="hover:text-[#141615] dark:hover:text-white">Yevmiye Rehberi</a>
+          <div className="w-full sm:w-auto flex flex-wrap items-center justify-between sm:justify-end gap-x-5 gap-y-2 text-[12px] font-medium pt-3 sm:pt-0 border-t sm:border-t-0 border-[#ECEAE4] dark:border-[#222624]">
+            <div className="flex flex-wrap items-center gap-4">
+              <a href="/nasil-calisir" className="hover:text-[#141615] dark:hover:text-white">İşleyiş</a>
+              <a href="/is-arayanlar" className="hover:text-[#141615] dark:hover:text-white">Çalışanlar</a>
+              <a href="/isverenler" className="hover:text-[#141615] dark:hover:text-white">İşverenler</a>
+              <a href="/blog" className="hover:text-[#141615] dark:hover:text-white">Yevmiye Rehberi</a>
+            </div>
             <span className="font-mono text-[11px] text-[#8A8F8C]">© 2026 Günübirlik</span>
           </div>
         </div>

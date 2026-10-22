@@ -775,27 +775,27 @@ function JobCard({ job, onClick }: { job: JobItem; onClick: () => void }) {
 
       {/* Alt Cetvel: Yevmiye, Tarih, Kontenjan ve İşveren */}
       <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-[#ECEAE4] dark:border-[#222624] gap-2">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <div className="font-mono text-xs sm:text-[13px] font-semibold bg-[#EAF3EE] dark:bg-[#162921] text-[#0D6847] dark:text-[#5CD6A5] border border-[#C5DDD0] dark:border-[#244738] px-2.5 py-1 rounded-sm">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="font-mono text-xs sm:text-[13px] font-semibold bg-[#EAF3EE] dark:bg-[#162921] text-[#0D6847] dark:text-[#5CD6A5] border border-[#C5DDD0] dark:border-[#244738] px-2.5 py-1 rounded-sm whitespace-nowrap shrink-0">
             {formatWage(job.wageAmount, job.wageType)}
           </div>
 
-          <div className="font-mono text-[11px] text-[#5C615E] dark:text-[#949B97] flex items-center gap-1">
-            <Clock className="w-3 h-3" />
+          <div className="font-mono text-[11px] text-[#5C615E] dark:text-[#949B97] flex items-center gap-1 whitespace-nowrap shrink-0">
+            <Clock className="w-3 h-3 shrink-0" />
             <span>{daysUntil(job.workDate)}</span>
           </div>
 
           {remaining > 0 && (
-            <div className="font-mono text-[11px] text-[#4A4F4C] dark:text-[#A5ACA8] bg-[#F6F5F2] dark:bg-[#1A1F1D] border border-[#E2E0D8] dark:border-[#282F2B] px-2 py-0.5 rounded-sm">
-              {remaining} kişilik kontenjan
+            <div className="font-mono text-[11px] text-[#4A4F4C] dark:text-[#A5ACA8] bg-[#F6F5F2] dark:bg-[#1A1F1D] border border-[#E2E0D8] dark:border-[#282F2B] px-2 py-0.5 rounded-sm whitespace-nowrap shrink-0">
+              {remaining} kişi
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs text-[#5C615E] dark:text-[#949B97] flex-shrink-0">
-          <span className="max-w-[110px] truncate font-medium hidden sm:inline">{employerName}</span>
+        <div className="flex items-center gap-1 text-xs text-[#5C615E] dark:text-[#949B97] min-w-0 shrink-0">
+          <span className="max-w-[95px] sm:max-w-[130px] truncate font-medium">{employerName}</span>
           {job.employer?.isVerified && (
-            <CheckCircle2 className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#5CD6A5]" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#5CD6A5] shrink-0" />
           )}
         </div>
       </div>

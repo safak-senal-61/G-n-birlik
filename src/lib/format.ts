@@ -50,8 +50,7 @@ export function daysUntil(date: string | Date): string {
   d.setHours(0, 0, 0, 0)
   const diff = (d.getTime() - now.getTime()) / 86400000
 
-  if (diff < 0) return 'Geçmiş'
-  if (diff === 0) return 'Bugün'
+  if (diff <= 0) return 'Bugün'
   if (diff === 1) return 'Yarın'
   if (diff < 7) return `${diff} gün sonra`
   return formatDate(d)
