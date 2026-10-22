@@ -120,6 +120,24 @@ export default function AuthScreen({ isModal = false }: { isModal?: boolean }) {
   } | null>(null)
   const [googleRole, setGoogleRole] = useState<'WORKER' | 'EMPLOYER' | null>(null)
 
+  // Google One Tap ile gelen yeni kullanıcı: kayıt tamamlama ekranını aç
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const raw = window.sessionStorage.getItem('gb_google_pending_registration')
+      if (!raw) return
+      window.sessionStorage.removeItem('gb_google_pending_registration')
+      const pending = JSON.parse(raw)
+      if (pending?.token) {
+        setGooglePendingToken(pending.token)
+        setGoogleProfile(pending.profile || { email: '', fullName: '' })
+        if (pending.profile?.fullName) setRegFullName(pending.profile.fullName)
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
   // Modal açıldığında sekme ve rol bilgisini senkronize et
   useEffect(() => {
     if (authModalTab) {

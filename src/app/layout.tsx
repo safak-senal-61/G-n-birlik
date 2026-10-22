@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Plus_Jakarta_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import ErudaInit from "@/components/eruda-init";
 import OneSignalInit from "@/components/onesignal-init";
 import CookieConsentBanner from "@/components/shared/cookie-consent-banner";
+import NotificationPermissionPrompt from "@/components/shared/notification-permission-prompt";
+import GoogleOneTap from "@/components/shared/google-one-tap";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Plus_Jakarta_Sans({
@@ -121,6 +124,9 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico?v=5" sizes="any" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=5" />
 
+        {/* Yandex Webmaster Verification */}
+        <meta name="yandex-verification" content="3338b2789de88da8" />
+
         {/* Global SEO Structured Data */}
         <OrganizationSchema />
         <WebSiteSchema />
@@ -128,6 +134,25 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground transition-colors duration-200`}
       >
+        {/* Google Analytics (GA4) */}
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-HFXVQCRP6M"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-HFXVQCRP6M', {
+                page_path: window.location.pathname,
+              });
+            `,
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -138,6 +163,8 @@ export default function RootLayout({
           <ScrollMotoClient />
           <SonnerToaster />
           <CookieConsentBanner />
+          <NotificationPermissionPrompt />
+          <GoogleOneTap />
           <ErudaInit />
           <OneSignalInit />
         </ThemeProvider>

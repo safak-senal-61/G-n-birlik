@@ -11,7 +11,6 @@ export default function OneSignalInit() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    if (!isAuthenticated || !user) return
 
     const hostname = window.location.hostname
     const isSupportedDomain =
@@ -98,13 +97,13 @@ export default function OneSignalInit() {
 
             console.log('[OneSignal] Init başarılı')
 
-            // Kullanıcı kimliği (external_id) ve e-posta bağlama
+            // Kullanıcı kimliği (external_id) ve e-posta bağlama (yalnızca giriş yapmışsa)
             try {
-              if (user.id && OS.login) {
+              if (user?.id && OS.login) {
                 await OS.login(user.id)
                 console.log('[OneSignal] Logged in with external_id:', user.id)
               }
-              if (user.email && OS.User?.addEmail) {
+              if (user?.email && OS.User?.addEmail) {
                 await OS.User.addEmail(user.email)
                 console.log('[OneSignal] Email linked:', user.email)
               }
@@ -114,33 +113,23 @@ export default function OneSignalInit() {
 
             // Tag'leri ekle — try/catch ile sarmala
             try {
-              await OS.User.addTag('user_id', user.id)
-              await OS.User.addTag('role', user.role || 'WORKER')
-              if (user.fullName) await OS.User.addTag('name', user.fullName)
-              console.log('[OneSignal] Tag eklendi:', user.id, user.role)
+              if (user?.id) {
+                await OS.User.addTag('user_id', user.id)
+                await OS.User.addTag('role', user.role || 'WORKER')
+                if (user.fullName) await OS.User.addTag('name', user.fullName)
+                console.log('[OneSignal] Tag eklendi:', user.id, user.role)
+              }
             } catch (tagErr) {
               console.warn('[OneSignal] Tag ekleme hatası:', tagErr)
             }
 
-            // Push izni kontrol et — v16 API
+            // İzin penceresi artık NotificationPermissionPrompt bileşeninden,
+            // kullanıcı "İzin Ver"e tıkladığında açılır. Daha önce izin verildiyse abone et.
             try {
               const permission = await OS.Notifications.permission
               console.log('[OneSignal] İzin durumu:', permission)
-
-              if (permission === 'default') {
-                // 3 sn sonra otomatik izin iste
-                setTimeout(async () => {
-                  try {
-                    const granted = await OS.Notifications.requestPermission()
-                    console.log('[OneSignal] İzin sonucu:', granted)
-                    if (granted) {
-                      await OS.Notifications.subscribe()
-                      console.log('[OneSignal] Abone olundu!')
-                    }
-                  } catch (permErr) {
-                    console.warn('[OneSignal] İzin isteme hatası:', permErr)
-                  }
-                }, 3000)
+              if (permission === true || permission === 'granted') {
+                await OS.User.PushSubscription?.optIn?.()
               }
             } catch (permErr) {
               console.warn('[OneSignal] Permission API hatası:', permErr)
@@ -149,8 +138,10 @@ export default function OneSignalInit() {
             console.warn('[OneSignal] Init uyarısı:', initErr)
             // Fallback: tag'leri yine eklemeye çalış
             try {
-              await OS.User.addTag('user_id', user.id)
-              await OS.User.addTag('role', user.role || 'WORKER')
+              if (user?.id) {
+                await OS.User.addTag('user_id', user.id)
+                await OS.User.addTag('role', user.role || 'WORKER')
+              }
             } catch {}
           }
         })
@@ -160,7 +151,7 @@ export default function OneSignalInit() {
     }
 
     setupOneSignal()
-  }, [isAuthenticated, user])
+  }, [user?.id])
 
   return null
 }
