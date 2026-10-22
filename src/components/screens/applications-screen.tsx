@@ -1,35 +1,54 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { applicationsApi, walletApi } from '@/lib/api'
+import { applicationsApi } from '@/lib/api'
 import { useApp } from '@/lib/app-store'
 import { useAuth } from '@/lib/auth-store'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import QrScannerCamera from '@/components/qr-scanner-camera'
 import {
-  Briefcase, MessageSquare, Star, XCircle, CheckCircle2, Clock,
-  MapPin, Wallet, Calendar, ChevronRight, CheckCircle, XCircle as XIcon,
-  AlertCircle, FileText, QrCode, Loader2, ArrowRight, Phone, Camera,
+  Briefcase,
+  MessageSquare,
+  Star,
+  XCircle,
+  CheckCircle2,
+  Clock,
+  MapPin,
+  Wallet,
+  Calendar,
+  ChevronRight,
+  CheckCircle,
+  FileText,
+  QrCode,
+  Loader2,
+  Camera,
 } from 'lucide-react'
-import { formatWage, formatDate, categoryIcon, statusLabel, daysUntil, initials } from '@/lib/format'
+import {
+  formatWage,
+  formatDate,
+  categoryLabel,
+  statusLabel,
+  daysUntil,
+  initials,
+} from '@/lib/format'
 import { toast } from 'sonner'
 
-// ====================================================================
-// İş akışı adımları (stepper için)
-// ====================================================================
 const JOB_STEPS = [
-  { key: 'PENDING', label: 'Başvuruldu', icon: FileText, color: 'amber' },
-  { key: 'ACCEPTED', label: 'Onaylandı', icon: CheckCircle, color: 'emerald' },
-  { key: 'IN_PROGRESS', label: 'İşe Başlandı', icon: QrCode, color: 'indigo' },
-  { key: 'COMPLETED', label: 'Tamamlandı', icon: CheckCircle2, color: 'blue' },
-  { key: 'PAID', label: 'Ödendi', icon: Wallet, color: 'emerald' },
+  { key: 'PENDING', label: 'Başvuru', icon: FileText },
+  { key: 'ACCEPTED', label: 'Onay', icon: CheckCircle },
+  { key: 'IN_PROGRESS', label: 'Mesaide', icon: QrCode },
+  { key: 'COMPLETED', label: 'Tamamlandı', icon: CheckCircle2 },
+  { key: 'PAID', label: 'Ödendi', icon: Wallet },
 ] as const
 
 function getStepIndex(status: string): number {
@@ -38,9 +57,6 @@ function getStepIndex(status: string): number {
   return idx >= 0 ? idx : 0
 }
 
-// ====================================================================
-// Ana component
-// ====================================================================
 export default function ApplicationsScreen() {
   const { go } = useApp()
   const { user } = useAuth()
@@ -50,7 +66,7 @@ export default function ApplicationsScreen() {
   const [qrScanOpen, setQrScanOpen] = useState(false)
   const [qrToken, setQrToken] = useState('')
   const [qrLoading, setQrLoading] = useState(false)
-  const [qrManualMode, setQrManualMode] = useState(false) // kamera yoksa manuel token girişi
+  const [qrManualMode, setQrManualMode] = useState(false)
 
   const loadApps = useCallback(async () => {
     setLoading(true)
@@ -85,7 +101,7 @@ export default function ApplicationsScreen() {
       await conversationsApi.sendMessage({
         recipientId: job.employer.id,
         jobId: job.id,
-        content: `Merhaba, "${job.title}" ilanına yaptığım başvuru hakkında konuşmak istiyorum.`,
+        content: `Merhaba, "${job.title}" ilanına yaptığım başvuru hakkında görüşmek istiyorum.`,
       })
       go('messages')
     } catch (err: any) {
@@ -93,7 +109,6 @@ export default function ApplicationsScreen() {
     }
   }
 
-  // QR check-in/check-out tara (işçi tarafı) — kamera ile
   const handleQrCameraScan = async (token: string) => {
     setQrLoading(true)
     try {
@@ -101,18 +116,18 @@ export default function ApplicationsScreen() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
         },
         body: JSON.stringify({ token }),
       })
       const data = await res.json()
       if (data.success) {
-        toast.success(data.data.message || 'QR tarandı!')
+        toast.success(data.data.message || 'QR doğrulandı!')
         setQrScanOpen(false)
         setQrToken('')
         loadApps()
       } else {
-        toast.error(data.error || 'QR tarama başarısız')
+        toast.error(data.error || 'QR okutma başarısız')
         setQrScanOpen(false)
       }
     } catch (e: any) {
@@ -123,10 +138,9 @@ export default function ApplicationsScreen() {
     }
   }
 
-  // Manuel token ile tara (kamera yoksa)
   const handleQrManualScan = async () => {
     if (!qrToken || qrToken.length < 10) {
-      toast.error('Geçerli bir QR token girin')
+      toast.error('Geçerli bir QR kodu girin')
       return
     }
     setQrLoading(true)
@@ -135,19 +149,19 @@ export default function ApplicationsScreen() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
         },
         body: JSON.stringify({ token: qrToken }),
       })
       const data = await res.json()
       if (data.success) {
-        toast.success(data.data.message || 'QR tarandı!')
+        toast.success(data.data.message || 'QR doğrulandı!')
         setQrScanOpen(false)
         setQrToken('')
         setQrManualMode(false)
         loadApps()
       } else {
-        toast.error(data.error || 'QR tarama başarısız')
+        toast.error(data.error || 'QR doğrulama başarısız')
       }
     } catch (e: any) {
       toast.error(e.message)
@@ -165,79 +179,91 @@ export default function ApplicationsScreen() {
   }
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-3xl">
-      {/* Header */}
-      <div className="mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Başvurularım</h1>
-        <p className="text-gray-600 mt-1 text-xs sm:text-sm">İş başvurularınızı takip edin, QR ile işe başlayın</p>
-      </div>
-
-      {/* Filter Tabs - 3D Tactile Buttons */}
-      <div className="mb-5 -mx-3 sm:mx-0 px-3 sm:px-0 overflow-x-auto no-scrollbar">
-        <div className="flex gap-2 min-w-min pb-1">
-          {[
-            { v: 'ALL', l: 'Tümü', c: statusCounts.ALL },
-            { v: 'PENDING', l: 'Beklemede', c: statusCounts.PENDING },
-            { v: 'ACCEPTED', l: 'Onaylandı', c: statusCounts.ACCEPTED },
-            { v: 'IN_PROGRESS', l: 'İşe Başladı', c: statusCounts.IN_PROGRESS },
-            { v: 'COMPLETED', l: 'Tamamlandı', c: statusCounts.COMPLETED },
-          ].map((t) => {
-            const isActive = statusFilter === t.v
-            return (
-              <button
-                key={t.v}
-                onClick={() => setStatusFilter(t.v)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
-                  isActive
-                    ? 'btn-3d-emerald btn-3d-pill z-10'
-                    : 'btn-3d-white btn-3d-pill text-slate-700'
-                }`}
-              >
-                <span>{t.l}</span>
-                {t.c > 0 && (
-                  <span className={`ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-black ${
-                    isActive ? 'bg-white/25 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                  }`}>
-                    {t.c}
-                  </span>
-                )}
-              </button>
-            )
-          })}
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      {/* Masthead */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#D8D5CC] dark:border-[#262C29] pb-5">
+        <div className="space-y-1">
+          <div className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#0D6847] dark:text-[#5CD6A5]">
+            ÇALIŞAN VARDİYA ÇİZELGESİ • QR GİRİŞ & ÇIKIŞ
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#141615] dark:text-white">
+            Başvurularım ve Aktif Vardiyalar
+          </h1>
+          <p className="text-xs sm:text-sm text-[#5C615E] dark:text-[#949B97]">
+            Başvuru onaylarını takip edin, mesai saatinde QR kodu okutarak vardiyayı başlatın.
+          </p>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setQrScanOpen(true)}
+          className="h-10 px-4 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold inline-flex items-center gap-2 self-start sm:self-auto transition-colors cursor-pointer"
+        >
+          <QrCode className="w-4 h-4" />
+          <span>Saha QR Kodu Okut</span>
+        </button>
       </div>
 
-      {/* Loading */}
+      {/* Filtre Sekmeleri */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {[
+          { v: 'ALL', l: 'Tümü', c: statusCounts.ALL },
+          { v: 'PENDING', l: 'Beklemede', c: statusCounts.PENDING },
+          { v: 'ACCEPTED', l: 'Onaylandı', c: statusCounts.ACCEPTED },
+          { v: 'IN_PROGRESS', l: 'Mesaide', c: statusCounts.IN_PROGRESS },
+          { v: 'COMPLETED', l: 'Tamamlandı', c: statusCounts.COMPLETED },
+        ].map((t) => {
+          const isActive = statusFilter === t.v
+          return (
+            <button
+              key={t.v}
+              type="button"
+              onClick={() => setStatusFilter(t.v)}
+              className={`h-9 px-3.5 rounded-md text-xs font-semibold border inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+                isActive
+                  ? 'bg-[#141615] text-white border-[#141615] dark:bg-[#F2F1ED] dark:text-[#141615] dark:border-[#F2F1ED]'
+                  : 'bg-white dark:bg-[#141716] text-[#5C615E] dark:text-[#949B97] border-[#E2E0D8] dark:border-[#252B28] hover:border-[#0D6847]'
+              }`}
+            >
+              <span>{t.l}</span>
+              {t.c > 0 && (
+                <span className="font-mono text-[10px] opacity-80">({t.c})</span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
       {loading ? (
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-48 rounded-2xl" />
+            <Skeleton key={i} className="h-44 rounded-lg bg-[#E9E7E0] dark:bg-[#181C1A]" />
           ))}
         </div>
       ) : apps.length === 0 ? (
-        /* Empty State */
-        <Card className="border-dashed border-2 border-gray-200 dark:border-white/10 bg-gradient-to-br from-gray-50 to-white dark:from-slate-900/90 dark:to-slate-950/90 shadow-sm">
-          <CardContent className="p-6 sm:p-12 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-200/50 dark:border-emerald-800/50 mb-4 shadow-sm">
-              <FileText className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <h3 className="font-semibold text-gray-900 dark:text-slate-100 mb-1 text-base sm:text-lg">
-              {statusFilter === 'ALL' ? 'Henüz başvurunuz yok' : 'Bu durumda başvuru yok'}
+        <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg p-8 sm:p-12 text-center space-y-4">
+          <div className="w-10 h-10 rounded-md bg-[#F0EFEA] dark:bg-[#1E2421] border border-[#E2E0D8] dark:border-[#2C3330] flex items-center justify-center mx-auto text-[#5C615E] dark:text-[#949B97]">
+            <FileText className="w-5 h-5" />
+          </div>
+          <div className="space-y-1 max-w-sm mx-auto">
+            <h3 className="font-bold text-base text-[#141615] dark:text-white">
+              {statusFilter === 'ALL' ? 'Henüz başvurunuz bulunmuyor' : 'Bu filtrede başvuru yok'}
             </h3>
-            <p className="text-gray-500 dark:text-slate-400 mb-5 text-sm max-w-xs mx-auto">
-              {statusFilter === 'ALL'
-                ? 'İş ilanlarına göz atıp ilk başvurunuzu yapın.'
-                : 'Farklı bir filtre deneyin.'}
+            <p className="text-xs sm:text-sm text-[#5C615E] dark:text-[#949B97]">
+              Açık günlük iş ilanlarını inceleyip uygun vardiyalara başvurabilirsiniz.
             </p>
-            <Button className="bg-emerald-600 hover:bg-emerald-700 h-11 px-6 text-sm text-white" onClick={() => go('home')}>
-              <Briefcase className="w-4 h-4 mr-2" />
-              İşleri Keşfet
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
+          <button
+            type="button"
+            onClick={() => go('home')}
+            className="h-10 px-5 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold inline-flex items-center gap-2 transition-colors cursor-pointer"
+          >
+            <Briefcase className="w-3.5 h-3.5" />
+            <span>Açık İlanlara Göz At</span>
+          </button>
+        </div>
       ) : (
-        /* Application Cards */
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-3.5">
           {apps.map((app) => {
             const job = app.job
             if (!job) return null
@@ -245,335 +271,272 @@ export default function ApplicationsScreen() {
             const isNegative = ['REJECTED', 'WITHDRAWN', 'NO_SHOW'].includes(app.status)
 
             return (
-              <Card
+              <article
                 key={app.id}
-                className="overflow-hidden border border-gray-200 dark:border-white/10 dark:bg-slate-900/90 card-3d-spatial hover:shadow-lg transition-all duration-300"
+                className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg p-4 sm:p-5 space-y-4"
               >
-                {/* Status Color Bar */}
-                <div className={`h-1 ${
-                  app.status === 'PENDING' ? 'bg-amber-400' :
-                  app.status === 'ACCEPTED' ? 'bg-emerald-400' :
-                  app.status === 'IN_PROGRESS' ? 'bg-indigo-400' :
-                  app.status === 'COMPLETED' ? 'bg-blue-400' :
-                  app.status === 'REJECTED' || app.status === 'NO_SHOW' ? 'bg-red-400' :
-                  'bg-gray-300'
-                }`} />
-
-                <CardContent className="p-3 sm:p-4">
-                  {/* Job Header */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-950 dark:to-teal-900 border border-emerald-300/40 dark:border-emerald-700/40 flex items-center justify-center text-lg sm:text-2xl flex-shrink-0">
-                      {categoryIcon(job.category)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <button
-                        onClick={() => go('job-detail', { jobId: job.id })}
-                        className="font-semibold text-gray-900 dark:text-slate-100 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors text-left text-sm sm:text-base line-clamp-1"
+                {/* Başlık ve Ücret */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="space-y-1.5 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-sm bg-[#F0EFEA] dark:bg-[#1E2421] text-[#454A47] dark:text-[#B8C0BC] border border-[#E2E0D8] dark:border-[#2C3330]">
+                        {categoryLabel(job.category)}
+                      </span>
+                      <span
+                        className={`font-mono text-[10px] font-semibold px-2 py-0.5 rounded-sm border ${
+                          isNegative
+                            ? 'bg-[#FBEEE9] text-[#B43B21] border-[#EFC7BD] dark:bg-[#2A1915] dark:text-[#F28B73] dark:border-[#4A251D]'
+                            : 'bg-[#EAF3EE] text-[#0D6847] border-[#C5DDD0] dark:bg-[#162921] dark:text-[#5CD6A5] dark:border-[#244738]'
+                        }`}
                       >
-                        {job.title}
-                      </button>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs">
-                        <span className="flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400">
-                          <Wallet className="w-3 h-3" />
-                          {formatWage(job.wageAmount, job.wageType)}
-                        </span>
-                        <span className="flex items-center gap-1 text-gray-500 dark:text-slate-400">
-                          <Calendar className="w-3 h-3" />
-                          {daysUntil(job.workDate)}
-                        </span>
-                        <span className="flex items-center gap-1 text-gray-500 dark:text-slate-400">
-                          <MapPin className="w-3 h-3" />
-                          <span className="truncate max-w-[100px]">{job.district}, {job.city}</span>
-                        </span>
-                      </div>
+                        {statusLabel(app.status).text}
+                      </span>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className={`flex-shrink-0 text-[10px] sm:text-xs font-semibold ${
-                        app.status === 'PENDING' ? 'bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60' :
-                        app.status === 'ACCEPTED' ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60' :
-                        app.status === 'IN_PROGRESS' ? 'bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/60' :
-                        app.status === 'COMPLETED' ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/60' :
-                        app.status === 'REJECTED' || app.status === 'NO_SHOW' ? 'bg-red-50 dark:bg-red-950/70 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800/60' :
-                        'bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-slate-300 border-gray-200 dark:border-slate-700'
-                      }`}
+
+                    <button
+                      type="button"
+                      onClick={() => go('job-detail', { jobId: job.id })}
+                      className="text-left text-base sm:text-lg font-bold text-[#141615] dark:text-white hover:text-[#0D6847] dark:hover:text-[#5CD6A5] transition-colors cursor-pointer"
                     >
-                      {statusLabel(app.status).text}
-                    </Badge>
+                      {job.title}
+                    </button>
+
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-[#5C615E] dark:text-[#949B97]">
+                      <span className="inline-flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {daysUntil(job.workDate)}
+                      </span>
+                      <span>•</span>
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {job.district}, {job.city}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Stepper - İş Akışı (sadece pozitif durumlar için) */}
-                  {!isNegative && (
-                    <div className="mt-3 mb-2 px-0.5">
-                      <div className="flex items-center justify-between">
-                        {JOB_STEPS.map((step, i) => {
-                          const isDone = i < stepIndex
-                          const isCurrent = i === stepIndex
-                          const Icon = step.icon
-                          const shortLabels = ['Başvuru', 'Onay', 'Başladı', 'Bitti', 'Ödendi']
-                          return (
-                            <div key={step.key} className="flex items-center flex-1 last:flex-none">
-                              {/* Step Circle */}
-                              <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
-                                <div
-                                  className={`w-5 h-5 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all ${
-                                    isDone
-                                      ? 'bg-emerald-500 text-white'
-                                      : isCurrent
-                                      ? 'bg-indigo-500 text-white ring-2 ring-indigo-100 dark:ring-indigo-900 animate-pulse'
-                                      : 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500'
-                                  }`}
-                                >
-                                  <Icon className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
-                                </div>
-                                <span className={`text-[7px] sm:text-[9px] font-medium text-center leading-tight ${
-                                  isDone ? 'text-emerald-700 dark:text-emerald-400' : isCurrent ? 'text-indigo-700 dark:text-indigo-400' : 'text-gray-400 dark:text-slate-500'
-                                }`}>
-                                  {shortLabels[i] || step.label}
-                                </span>
+                  <div className="sm:text-right shrink-0">
+                    <div className="font-mono text-lg font-bold text-[#0D6847] dark:text-[#5CD6A5]">
+                      {formatWage(job.wageAmount, job.wageType)}
+                    </div>
+                    <div className="font-mono text-[11px] text-[#5C615E] dark:text-[#949B97]">
+                      NET YEVMİYE
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5 Adımlı Vardiya İlerleme Çizelgesi */}
+                {!isNegative && (
+                  <div className="py-2.5 px-3 rounded-md bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#ECEAE4] dark:border-[#222624]">
+                    <div className="flex items-center justify-between">
+                      {JOB_STEPS.map((step, i) => {
+                        const isDone = i < stepIndex
+                        const isCurrent = i === stepIndex
+                        const Icon = step.icon
+                        return (
+                          <div key={step.key} className="flex items-center flex-1 last:flex-none">
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <div
+                                className={`w-6 h-6 rounded flex items-center justify-center border ${
+                                  isDone || isCurrent
+                                    ? 'bg-[#0D6847] text-white border-[#0D6847]'
+                                    : 'bg-white dark:bg-[#141716] text-[#8A8F8C] border-[#E2E0D8] dark:border-[#252B28]'
+                                }`}
+                              >
+                                <Icon className="w-3 h-3" />
                               </div>
-                              {/* Connector Line */}
-                              {i < JOB_STEPS.length - 1 && (
-                                <div className={`flex-1 h-0.5 mx-0.5 sm:mx-1 mb-3 rounded-full ${
-                                  isDone ? 'bg-emerald-400 dark:bg-emerald-600' : 'bg-gray-200 dark:bg-slate-800'
-                                }`} />
-                              )}
+                              <span
+                                className={`hidden sm:inline font-mono text-[10px] font-semibold ${
+                                  isDone || isCurrent
+                                    ? 'text-[#141615] dark:text-white'
+                                    : 'text-[#8A8F8C]'
+                                }`}
+                              >
+                                {step.label}
+                              </span>
                             </div>
-                          )
-                        })}
-                      </div>
+                            {i < JOB_STEPS.length - 1 && (
+                              <div
+                                className={`flex-1 h-px mx-2 ${
+                                  isDone ? 'bg-[#0D6847]' : 'bg-[#E2E0D8] dark:bg-[#252B28]'
+                                }`}
+                              />
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Negatif durum mesajı */}
-                  {isNegative && (
-                    <div className={`mt-3 p-2.5 rounded-lg text-xs sm:text-sm ${
-                      app.status === 'REJECTED' || app.status === 'NO_SHOW'
-                        ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-900/40'
-                        : 'bg-gray-50 dark:bg-slate-800/60 text-gray-600 dark:text-slate-300 border border-transparent dark:border-white/10'
-                    }`}>
-                      {app.status === 'REJECTED' && (app.employerNote ? `⚠️ ${app.employerNote}` : '❌ Başvurunuz reddedildi veya iş iptal edildi.')}
-                      {app.status === 'NO_SHOW' && '❌ İş gününe gelinmedi olarak işaretlendi.'}
-                      {app.status === 'WITHDRAWN' && 'ℹ️ Başvurunuzu geri çektiniz.'}
-                    </div>
-                  )}
+                {/* Durum Mesajları */}
+                {app.status === 'ACCEPTED' && (
+                  <div className="p-3 rounded-md bg-[#EAF3EE] dark:bg-[#162921] border border-[#C5DDD0] dark:border-[#244738] text-xs text-[#0D6847] dark:text-[#5CD6A5] flex items-center justify-between gap-2">
+                    <span>
+                      Başvurunuz onaylandı. Sabah iş yerine vardığınızda işverenin Check-in QR kodunu okutun.
+                    </span>
+                  </div>
+                )}
 
-                  {/* Durum bazlı bilgi kutusu */}
-                  {app.status === 'ACCEPTED' && (
-                    <div className="mt-2 p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 rounded-lg text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
-                      <QrCode className="w-4 h-4 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="font-semibold">İşvereniniz QR ile işe başlatacak</p>
-                        <p className="mt-0.5">İş gününde işvereniniz check-in QR kodu üretecek. Siz taradığınızda işe başlamış olacaksınız.</p>
-                      </div>
-                    </div>
-                  )}
-                  {app.status === 'IN_PROGRESS' && (
-                    <div className="mt-2 p-2.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 rounded-lg text-xs text-indigo-800 dark:text-indigo-300 flex items-start gap-2">
-                      <Clock className="w-4 h-4 mt-0.5 shrink-0 animate-pulse" />
-                      <div>
-                        <p className="font-semibold">İş devam ediyor</p>
-                        <p className="mt-0.5">İş bitiminde işvereniniz check-out QR kodu üretecek. Taradığınızda iş tamamlanacak ve ödeme talebi oluşturulacak.</p>
-                      </div>
-                    </div>
-                  )}
-                  {app.status === 'COMPLETED' && (
-                    <div className="mt-2 p-2.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 rounded-lg text-xs text-blue-800 dark:text-blue-300 flex items-start gap-2">
-                      <Wallet className="w-4 h-4 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="font-semibold">Ödeme onay bekliyor</p>
-                        <p className="mt-0.5">{job.wageAmount.toLocaleString('tr-TR')}₺ ödemeniz admin onayı sonrası cüzdanınıza yansıyacak.</p>
-                      </div>
-                    </div>
-                  )}
+                {app.status === 'IN_PROGRESS' && (
+                  <div className="p-3 rounded-md bg-[#F0EFEA] dark:bg-[#1E2421] border border-[#E2E0D8] dark:border-[#2C3330] text-xs text-[#141615] dark:text-[#F2F1ED] flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-[#0D6847] shrink-0" />
+                    <span>
+                      Mesai devam ediyor. Vardiya bitiminde işverenin Çıkış (Check-out) QR kodunu okutarak ödemeyi tetikleyin.
+                    </span>
+                  </div>
+                )}
 
-                  {/* Employer info */}
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-white/10">
-                    <Avatar className="w-7 h-7 flex-shrink-0 border border-gray-200 dark:border-white/10">
-                      <AvatarFallback className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold">
+                {/* Alt Satır: İşveren & Aksiyonlar */}
+                <div className="pt-3 border-t border-[#ECEAE4] dark:border-[#222624] flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Avatar className="w-7 h-7 rounded border border-[#E2E0D8] dark:border-[#252B28]">
+                      <AvatarFallback className="rounded bg-[#F0EFEA] dark:bg-[#1E2421] text-[#0D6847] dark:text-[#5CD6A5] font-mono text-[10px] font-bold">
                         {initials(job.employer?.companyName || job.employer?.fullName)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                      <span className="text-xs text-gray-700 dark:text-slate-300 truncate font-medium">
-                        {job.employer?.companyName || job.employer?.fullName}
-                      </span>
-                      {job.employer?.isVerified && (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-                      )}
-                    </div>
-                    <span className="text-[11px] text-gray-400 dark:text-slate-500 flex-shrink-0">
-                      {formatDate(app.createdAt)}
+                    <span className="text-xs font-semibold text-[#141615] dark:text-[#F2F1ED] truncate">
+                      {job.employer?.companyName || job.employer?.fullName}
+                    </span>
+                    <span className="font-mono text-[11px] text-[#8A8F8C]">
+                      • {formatDate(app.createdAt)}
                     </span>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="mt-3 flex gap-2">
-                    {/* PENDING */}
+                  <div className="flex flex-wrap items-center gap-2">
                     {app.status === 'PENDING' && (
                       <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 h-10 text-xs sm:text-sm border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-slate-800 dark:text-slate-200"
+                        <button
+                          type="button"
                           onClick={() => handleSendMessage(job)}
+                          className="h-9 px-3 rounded-md bg-white dark:bg-[#141716] border border-[#D6D3C9] dark:border-[#2B322E] text-xs font-semibold text-[#141615] dark:text-[#F2F1ED] inline-flex items-center gap-1.5 cursor-pointer"
                         >
-                          <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
-                          Mesaj
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-10 px-3 text-xs sm:text-sm text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/40"
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>Mesaj</span>
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleWithdraw(app.id)}
+                          className="h-9 px-3 rounded-md border border-[#EFC7BD] dark:border-[#4A251D] bg-[#FBEEE9] dark:bg-[#2A1915] text-xs font-semibold text-[#B43B21] dark:text-[#F28B73] inline-flex items-center gap-1.5 cursor-pointer"
                         >
-                          <XCircle className="w-3.5 h-3.5 mr-1.5" />
-                          <span className="hidden sm:inline">Geri Çek</span>
-                          <span className="sm:hidden">Çek</span>
-                        </Button>
+                          <XCircle className="w-3.5 h-3.5" />
+                          <span>Geri Çek</span>
+                        </button>
                       </>
                     )}
 
-                    {/* ACCEPTED */}
-                    {app.status === 'ACCEPTED' && (
+                    {(app.status === 'ACCEPTED' || app.status === 'IN_PROGRESS') && (
                       <>
-                        <Button
-                          size="sm"
-                          className="flex-1 h-10 text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white"
+                        <button
+                          type="button"
                           onClick={() => handleSendMessage(job)}
+                          className="h-9 px-3 rounded-md bg-white dark:bg-[#141716] border border-[#D6D3C9] dark:border-[#2B322E] text-xs font-semibold text-[#141615] dark:text-[#F2F1ED] inline-flex items-center gap-1.5 cursor-pointer"
                         >
-                          <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
-                          Mesaj Gönder
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-10 px-3 text-xs sm:text-sm border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>Mesaj</span>
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => setQrScanOpen(true)}
+                          className="h-9 px-3.5 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
                         >
-                          <QrCode className="w-3.5 h-3.5 mr-1.5" />
-                          <span className="hidden sm:inline">QR Tara</span>
-                          <span className="sm:hidden">QR</span>
-                        </Button>
+                          <QrCode className="w-3.5 h-3.5" />
+                          <span>{app.status === 'IN_PROGRESS' ? 'Çıkış QR Okut' : 'Giriş QR Okut'}</span>
+                        </button>
                       </>
                     )}
 
-                    {/* IN_PROGRESS */}
-                    {app.status === 'IN_PROGRESS' && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 h-10 text-xs sm:text-sm border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-slate-800 dark:text-slate-200"
-                          onClick={() => handleSendMessage(job)}
-                        >
-                          <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
-                          Mesaj
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-10 px-3 text-xs sm:text-sm border-indigo-200 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
-                          onClick={() => setQrScanOpen(true)}
-                        >
-                          <QrCode className="w-3.5 h-3.5 mr-1.5" />
-                          <span className="hidden sm:inline">QR Tara (Çıkış)</span>
-                          <span className="sm:hidden">QR</span>
-                        </Button>
-                      </>
-                    )}
-
-                    {/* COMPLETED */}
                     {app.status === 'COMPLETED' && !app.rating && (
-                      <Button
-                        size="sm"
-                        className="flex-1 h-10 text-xs sm:text-sm bg-amber-500 hover:bg-amber-600 text-white font-medium"
+                      <button
+                        type="button"
                         onClick={() => go('job-detail', { jobId: job.id })}
+                        className="h-9 px-3.5 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer"
                       >
-                        <Star className="w-3.5 h-3.5 mr-1.5" />
-                        Değerlendir
-                      </Button>
-                    )}
-                    {app.status === 'COMPLETED' && app.rating && (
-                      <div className="flex-1 flex items-center justify-center gap-1 px-3 h-10 bg-gray-50 dark:bg-slate-800/80 rounded-lg border border-transparent dark:border-white/10">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-xs text-gray-600 dark:text-slate-300">Puanladınız: {app.rating}/5</span>
-                      </div>
+                        <Star className="w-3.5 h-3.5" />
+                        <span>İşvereni Değerlendir</span>
+                      </button>
                     )}
 
-                    {/* REJECTED / WITHDRAWN / NO_SHOW */}
-                    {(app.status === 'REJECTED' || app.status === 'WITHDRAWN' || app.status === 'NO_SHOW') && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 h-10 text-xs sm:text-sm border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-slate-800 dark:text-slate-200"
+                    {isNegative && (
+                      <button
+                        type="button"
                         onClick={() => go('job-detail', { jobId: job.id })}
+                        className="h-9 px-3 rounded-md border border-[#D6D3C9] dark:border-[#2B322E] text-xs font-semibold text-[#141615] dark:text-[#F2F1ED] inline-flex items-center gap-1 cursor-pointer"
                       >
-                        İlanı Görüntüle
-                        <ChevronRight className="w-3.5 h-3.5 ml-1" />
-                      </Button>
+                        <span>İlan Detayı</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </article>
             )
           })}
         </div>
       )}
 
-      {/* QR Camera Scanner (full screen) */}
+      {/* Kamera QR Tarayıcı */}
       {qrScanOpen && !qrManualMode && (
         <QrScannerCamera
           onScan={handleQrCameraScan}
           onClose={() => setQrScanOpen(false)}
           loading={qrLoading}
-          title="QR Kod Tara"
-          description="İşvereninizin gösterdiği QR kodunu kamera ile tarayın"
+          title="Saha QR Kod Okut"
+          description="İşverenin gösterdiği vardiya QR kodunu kamerayla okutun"
           onSwitchManual={() => setQrManualMode(true)}
         />
       )}
 
-      {/* QR Manual Token Dialog (fallback) */}
-      <Dialog open={qrScanOpen && qrManualMode} onOpenChange={(v) => { if (!v) { setQrScanOpen(false); setQrManualMode(false) } }}>
-        <DialogContent className="max-w-md">
+      {/* Manuel QR Token Girişi */}
+      <Dialog
+        open={qrScanOpen && qrManualMode}
+        onOpenChange={(v) => {
+          if (!v) {
+            setQrScanOpen(false)
+            setQrManualMode(false)
+          }
+        }}
+      >
+        <DialogContent className="max-w-md bg-white dark:bg-[#141716] border border-[#D8D5CC] dark:border-[#252B28] rounded-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <QrCode className="w-5 h-5 text-indigo-600" />
-              Manuel Token Girişi
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-[#141615] dark:text-white">
+              <QrCode className="w-4 h-4 text-[#0D6847]" />
+              Manuel QR Kodu Girişi
             </DialogTitle>
-            <DialogDescription>
-              Kamera çalışmıyorsa QR tokenı manuel olarak girin.
+            <DialogDescription className="text-xs text-[#5C615E] dark:text-[#949B97]">
+              Kameraya erişilemiyorsa doğrulama kodunu aşağıya girin.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <div className="space-y-3.5 py-2">
             <div>
-              <Label>QR Token</Label>
+              <Label className="text-xs font-semibold">QR Doğrulama Kodu</Label>
               <Input
                 value={qrToken}
                 onChange={(e) => setQrToken(e.target.value)}
-                placeholder="a1b2c3d4..."
+                placeholder="Kod değerini yapıştırın..."
+                className="h-10 mt-1 font-mono"
               />
             </div>
-            <Button
-              className="w-full bg-indigo-600 hover:bg-indigo-700"
+            <button
+              type="button"
               onClick={handleQrManualScan}
               disabled={qrLoading}
+              className="w-full h-10 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold inline-flex items-center justify-center gap-2"
             >
               {qrLoading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <QrCode className="w-4 h-4 mr-2" />
+                <QrCode className="w-3.5 h-3.5" />
               )}
-              {qrLoading ? 'Taranıyor...' : 'QR Tara'}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
+              <span>Doğrula</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setQrManualMode(false)}
+              className="w-full h-10 rounded-md border border-[#D6D3C9] dark:border-[#2B322E] text-xs font-semibold inline-flex items-center justify-center gap-2"
             >
-              <Camera className="w-4 h-4 mr-2" />
-              Kamera ile Tara
-            </Button>
+              <Camera className="w-3.5 h-3.5" />
+              <span>Kamera ile Okut</span>
+            </button>
           </div>
         </DialogContent>
       </Dialog>

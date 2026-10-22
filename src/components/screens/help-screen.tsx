@@ -1,54 +1,86 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import {
-  LifeBuoy, MessageSquare, AlertTriangle, Lightbulb, Bug,
-  UserCog, Wallet, HelpCircle, Mail, Phone, MessageCircle,
-  Globe, Send, Loader2, CheckCircle2, Clock, Trash2, ChevronLeft,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import {
+  AlertTriangle,
+  Lightbulb,
+  Bug,
+  UserCog,
+  Wallet,
+  HelpCircle,
+  Mail,
+  Phone,
+  Globe,
+  Send,
+  Loader2,
+  Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAuth } from '@/lib/auth-store'
 import { WhatsAppIcon } from '@/components/shared/social-icons'
 
 const CATEGORIES = [
-  { value: 'COMPLAINT', label: 'Şikayet', icon: AlertTriangle, color: 'text-red-600 bg-red-50' },
-  { value: 'SUGGESTION', label: 'Öneri', icon: Lightbulb, color: 'text-amber-600 bg-amber-50' },
-  { value: 'BUG', label: 'Hata Bildirimi', icon: Bug, color: 'text-orange-600 bg-orange-50' },
-  { value: 'ACCOUNT', label: 'Hesap', icon: UserCog, color: 'text-blue-600 bg-blue-50' },
-  { value: 'PAYMENT', label: 'Ödeme', icon: Wallet, color: 'text-emerald-600 bg-emerald-50' },
-  { value: 'OTHER', label: 'Diğer', icon: HelpCircle, color: 'text-gray-600 bg-gray-50' },
+  { value: 'COMPLAINT', label: 'Şikayet', icon: AlertTriangle },
+  { value: 'SUGGESTION', label: 'Öneri', icon: Lightbulb },
+  { value: 'BUG', label: 'Teknik Hata', icon: Bug },
+  { value: 'ACCOUNT', label: 'Hesap', icon: UserCog },
+  { value: 'PAYMENT', label: 'Emanet & Ödeme', icon: Wallet },
+  { value: 'OTHER', label: 'Diğer', icon: HelpCircle },
 ]
 
 const FAQ = [
-  { q: 'İş ilanlarına nasıl başvurabilirim?', a: 'Ana sayfadaki iş ilanına tıklayın, "Başvur" butonuna basın. İşveren onayladığında bildirim gelecektir.' },
-  { q: 'QR ile işe nasıl başlarım?', a: 'İşvereniniz size QR kodu gösterecek. "Başvurularım" sayfasından "QR Tara" butonuna basıp kamerayı QR koda doğrultun.' },
-  { q: 'Cüzdanıma nasıl para yüklerim?', a: 'Cüzdan sayfasından "Para Yatır" butonuna basın. IBAN bilgilerinizi girin, sistem banka hesabına EFT yapın, admin onayı sonrası bakiyenize yansır.' },
-  { q: 'Kazandığım parayı nasıl çekerim?', a: 'Cüzdan sayfasından "Para Çek" butonuna basın. IBAN bilgilerinizi girin, 3-5 iş günü içinde hesabınıza gönderilir.' },
-  { q: 'Bildirimleri nasıl kapatırım?', a: 'Bildirimler sayfasında ⚙️ ikonuna tıklayın. Her kategoriyi ayrı ayrı açıp kapatabilirsiniz.' },
-  { q: 'E-posta adresimi nasıl doğrularım?', a: 'Profil sayfanızda e-posta adresinizin yanındaki "Doğrula" butonuna tıklayın. Kod e-postanıza gelir, girin ve doğrulayın.' },
+  {
+    code: '01',
+    q: 'İş ilanlarına nasıl başvurabilirim?',
+    a: 'Ana sayfadaki iş ilanına tıklayıp "Başvur" butonuna basın. İşveren onayladığında bildirim alırsınız.',
+  },
+  {
+    code: '02',
+    q: 'QR ile mesaiye nasıl başlarım?',
+    a: 'Sabah iş yerine vardığınızda işvereniniz Check-in QR kodu üretir. "Başvurularım" sayfasından "QR Tara" butonuna basıp kamerayla okuttuğunuzda mesai başlar.',
+  },
+  {
+    code: '03',
+    q: 'Cüzdanıma nasıl bakiye yüklerim?',
+    a: 'Cüzdan ekranından "Para Yatır" adımını seçip kendi IBAN bilginizi girin ve belirtilen kurumsal hesaba EFT/Havale gönderin.',
+  },
+  {
+    code: '04',
+    q: 'Kazandığım yevmiyeyi banka hesabıma nasıl çekerim?',
+    a: 'Cüzdan ekranından "Bakiye Çek (IBAN)" butonuna tıklayıp kendi adınıza kayıtlı IBAN numaranızı girerek çekim talebi oluşturabilirsiniz.',
+  },
+  {
+    code: '05',
+    q: 'Bildirim tercihlerini nereden değiştirebilirim?',
+    a: 'Bildirimler ekranındaki ayarlar simgesine tıklayarak vardiya, mesaj ve ödeme bildirimlerini ayrı ayrı yönetebilirsiniz.',
+  },
+  {
+    code: '06',
+    q: 'E-posta adresimi nasıl doğrularım?',
+    a: 'Profil sayfanızda e-posta adresinizin yanındaki "Doğrula" butonuna tıklayarak gönderilen 6 haneli kodu girmeniz yeterlidir.',
+  },
 ]
 
 export default function HelpScreen() {
-  const { user } = useAuth()
   const [ticketOpen, setTicketOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [tickets, setTickets] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Ticket form
   const [category, setCategory] = useState('COMPLAINT')
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  // Delete form
   const [deleteReason, setDeleteReason] = useState('')
   const [deleteFeedback, setDeleteFeedback] = useState('')
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -56,221 +88,347 @@ export default function HelpScreen() {
   const loadTickets = useCallback(async () => {
     try {
       const res = await fetch('/api/v1/support/tickets', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
       })
       const data = await res.json()
       if (data.success) setTickets(data.data.items || [])
-    } catch {}
-    finally { setLoading(false) }
+    } catch {
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
-  useEffect(() => { loadTickets() }, [loadTickets])
+  useEffect(() => {
+    loadTickets()
+  }, [loadTickets])
 
   const handleSubmitTicket = async () => {
-    if (!subject.trim() || !message.trim()) { toast.error('Konu ve mesaj gerekli'); return }
+    if (!subject.trim() || !message.trim()) {
+      toast.error('Konu ve mesaj alanları zorunludur.')
+      return
+    }
     setSubmitting(true)
     try {
       const res = await fetch('/api/v1/support/tickets', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+        },
         body: JSON.stringify({ category, subject, message }),
       })
       const data = await res.json()
       if (data.success) {
-        toast.success('Destek talebiniz oluşturuldu! 🎫')
+        toast.success('Destek kaydınız oluşturuldu.')
         setTicketOpen(false)
-        setSubject(''); setMessage('')
+        setSubject('')
+        setMessage('')
         loadTickets()
-      } else { toast.error(data.error) }
-    } catch (e: any) { toast.error(e.message) }
-    finally { setSubmitting(false) }
+      } else {
+        toast.error(data.error)
+      }
+    } catch (e: any) {
+      toast.error(e.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleDeleteAccount = async () => {
-    if (!deleteReason.trim()) { toast.error('Silme sebebi gerekli'); return }
+    if (!deleteReason.trim()) {
+      toast.error('Lütfen hesap kapatma sebebinizi yazın.')
+      return
+    }
     if (!confirm('Hesabınızı silmek istediğinize emin misiniz? Bu işlem geri alınamaz!')) return
     setDeleteLoading(true)
     try {
       const res = await fetch('/api/v1/auth/delete-account', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+        },
         body: JSON.stringify({ reason: deleteReason, feedback: deleteFeedback }),
       })
       const data = await res.json()
       if (data.success) {
-        toast.success('Hesap silme talebiniz alındı. Admin onayı sonrası hesabınız silinecektir.')
+        toast.success('Hesap silme talebiniz incelemeye alındı.')
         setDeleteOpen(false)
-        setDeleteReason(''); setDeleteFeedback('')
-      } else { toast.error(data.error) }
-    } catch (e: any) { toast.error(e.message) }
-    finally { setDeleteLoading(false) }
+        setDeleteReason('')
+        setDeleteFeedback('')
+      } else {
+        toast.error(data.error)
+      }
+    } catch (e: any) {
+      toast.error(e.message)
+    } finally {
+      setDeleteLoading(false)
+    }
   }
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-3xl">
-      <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-4 sm:mb-6">
-        <LifeBuoy className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600 dark:text-indigo-400" />
-        Yardım & Destek
-      </h1>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      {/* Masthead */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#D8D5CC] dark:border-[#262C29] pb-5">
+        <div className="space-y-1">
+          <div className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#0D6847] dark:text-[#5CD6A5]">
+            OPERASYON DESTEK MASASI • YARDIM MERKEZİ
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#141615] dark:text-white">
+            Yardım & Destek Kayıtları
+          </h1>
+          <p className="text-xs sm:text-sm text-[#5C615E] dark:text-[#949B97]">
+            Vardiya, emanet ödeme ve hesap işlemleriniz için doğrudan destek hattı.
+          </p>
+        </div>
 
-      {/* İletişim Kartları */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
-        <ContactCard icon={Mail} label="E-posta" value="destek@gunubirlik.com" href="mailto:destek@gunubirlik.com" color="bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-300" />
-        <ContactCard icon={Phone} label="Telefon" value="0850 123 45 67" href="tel:08501234567" color="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300" />
-        <ContactCard icon={WhatsAppIcon} label="WhatsApp" value="Mesaj Gönder" href="https://wa.me/908501234567" color="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300" />
-        <ContactCard icon={Globe} label="Web Sitesi" value="gunubirlik.com" href="https://gunubirlik.com" color="bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-300" />
+        <button
+          type="button"
+          onClick={() => setTicketOpen(true)}
+          className="h-10 px-4 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold inline-flex items-center gap-2 self-start sm:self-auto transition-colors cursor-pointer"
+        >
+          <Send className="w-3.5 h-3.5" />
+          <span>Yeni Destek Kaydı Aç</span>
+        </button>
       </div>
 
-      {/* Destek Talebi Oluştur */}
-      <Card className="mb-4 dark:bg-slate-900/90 dark:border-white/10">
-        <CardContent className="p-3 sm:p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white">Destek Talebi Oluştur</h3>
-              <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Şikayet, öneri veya hata bildirin</p>
-            </div>
-            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 font-semibold" onClick={() => setTicketOpen(true)}>
-              <Send className="w-3.5 h-3.5 mr-1" /> Yeni Talep
-            </Button>
+      {/* İletişim Cetveli */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ContactCard
+          code="E-POSTA"
+          icon={Mail}
+          value="destek@gunubirlik.com"
+          href="mailto:destek@gunubirlik.com"
+        />
+        <ContactCard
+          code="TELEFON"
+          icon={Phone}
+          value="0850 123 45 67"
+          href="tel:08501234567"
+        />
+        <ContactCard
+          code="WHATSAPP"
+          icon={WhatsAppIcon}
+          value="Canlı Destek Hattı"
+          href="https://wa.me/908501234567"
+        />
+        <ContactCard
+          code="WEB"
+          icon={Globe}
+          value="gunubirlik.qrders.com.tr"
+          href="https://gunubirlik.qrders.com.tr"
+        />
+      </div>
+
+      {/* Destek Taleplerim */}
+      <section className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg overflow-hidden">
+        <div className="px-5 py-3.5 bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-between">
+          <h2 className="text-sm font-bold text-[#141615] dark:text-white">
+            Açtığım Destek Kayıtları
+          </h2>
+          <span className="font-mono text-[11px] text-[#5C615E] dark:text-[#949B97]">
+            {tickets.length} KAYIT
+          </span>
+        </div>
+
+        {loading ? (
+          <div className="p-6 text-center font-mono text-xs text-[#5C615E]">Yükleniyor...</div>
+        ) : tickets.length === 0 ? (
+          <div className="p-6 text-center text-xs sm:text-sm text-[#5C615E] dark:text-[#949B97]">
+            Henüz oluşturulmuş bir destek talebiniz bulunmuyor.
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Taleplerim */}
-      <Card className="mb-4 dark:bg-slate-900/90 dark:border-white/10">
-        <CardHeader className="pb-2 p-3 sm:p-4">
-          <CardTitle className="text-sm sm:text-base text-gray-900 dark:text-white">Taleplerim</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="p-4 text-center text-sm text-gray-400 dark:text-slate-500">Yükleniyor...</div>
-          ) : tickets.length === 0 ? (
-            <div className="p-4 text-center text-sm text-gray-400 dark:text-slate-500">Henüz talep yok</div>
-          ) : (
-            <div className="divide-y divide-gray-50 dark:divide-slate-800">
-              {tickets.map((t) => (
-                <div key={t.id} className="p-3 flex items-start gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{t.subject}</p>
-                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{t.category} · {new Date(t.createdAt).toLocaleDateString('tr-TR')}</p>
-                    {t.adminReply && (
-                      <div className="mt-1.5 p-2 bg-emerald-50 dark:bg-emerald-950/40 rounded text-xs text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
-                        <strong>Yanıt:</strong> {t.adminReply}
-                      </div>
-                    )}
+        ) : (
+          <div className="divide-y divide-[#ECEAE4] dark:divide-[#222624]">
+            {tickets.map((t) => (
+              <div key={t.id} className="p-4 sm:p-5 flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded-sm bg-[#F0EFEA] dark:bg-[#1E2421] text-[#454A47] dark:text-[#B8C0BC] border border-[#E2E0D8] dark:border-[#2C3330]">
+                      {t.category}
+                    </span>
+                    <span className="font-mono text-[11px] text-[#5C615E] dark:text-[#949B97]">
+                      {new Date(t.createdAt).toLocaleDateString('tr-TR')}
+                    </span>
                   </div>
-                  <Badge className={`text-[9px] flex-shrink-0 ${
-                    t.status === 'OPEN' ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300' :
-                    t.status === 'RESOLVED' ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300' :
-                    'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300'
-                  }`}>
-                    {t.status === 'OPEN' ? 'Açık' : t.status === 'RESOLVED' ? 'Çözüldü' : t.status}
-                  </Badge>
+                  <p className="text-sm font-bold text-[#141615] dark:text-white">{t.subject}</p>
+                  {t.adminReply && (
+                    <div className="mt-2 p-3 rounded-md bg-[#EAF3EE] dark:bg-[#162921] border border-[#C5DDD0] dark:border-[#244738] text-xs text-[#0D6847] dark:text-[#5CD6A5]">
+                      <strong className="font-semibold">Destek Yanıtı:</strong> {t.adminReply}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* SSS */}
-      <Card className="mb-4 dark:bg-slate-900/90 dark:border-white/10">
-        <CardHeader className="pb-2 p-3 sm:p-4">
-          <CardTitle className="text-sm sm:text-base text-gray-900 dark:text-white">Sık Sorulan Sorular</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="divide-y divide-gray-50 dark:divide-slate-800">
-            {FAQ.map((item, i) => (
-              <details key={i} className="p-3 group">
-                <summary className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer flex items-center gap-2">
-                  <HelpCircle className="w-4 h-4 text-indigo-500 shrink-0" />
-                  {item.q}
-                </summary>
-                <p className="text-xs text-gray-600 dark:text-slate-300 mt-2 ml-6 leading-relaxed">{item.a}</p>
-              </details>
+                <span
+                  className={`font-mono text-[10px] font-semibold px-2 py-0.5 rounded-sm border shrink-0 ${
+                    t.status === 'RESOLVED'
+                      ? 'bg-[#EAF3EE] text-[#0D6847] border-[#C5DDD0] dark:bg-[#162921] dark:text-[#5CD6A5] dark:border-[#244738]'
+                      : 'bg-[#F0EFEA] text-[#454A47] border-[#E2E0D8] dark:bg-[#1E2421] dark:text-[#B8C0BC] dark:border-[#2C3330]'
+                  }`}
+                >
+                  {t.status === 'OPEN' ? 'AÇIK' : t.status === 'RESOLVED' ? 'ÇÖZÜLDÜ' : t.status}
+                </span>
+              </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </section>
 
-      {/* Hesabı Sil */}
-      <Card className="border-red-200 dark:border-red-900/40 dark:bg-slate-900/90">
-        <CardContent className="p-3 sm:p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="font-semibold text-sm sm:text-base text-red-700 dark:text-red-400 flex items-center gap-1.5">
-                <Trash2 className="w-4 h-4" /> Hesabımı Sil
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Hesabınızı kalıcı olarak silmek için talep oluşturun</p>
-            </div>
-            <Button size="sm" variant="outline" className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/60 hover:bg-red-50 dark:hover:bg-red-950/40 shrink-0" onClick={() => setDeleteOpen(true)}>
-              Sil
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Sıkça Sorulan Sorular */}
+      <section className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg overflow-hidden">
+        <div className="px-5 py-3.5 bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-between">
+          <h2 className="text-sm font-bold text-[#141615] dark:text-white">
+            Sık Sorulan Sorular
+          </h2>
+          <span className="font-mono text-[11px] text-[#5C615E] dark:text-[#949B97]">
+            REHBER
+          </span>
+        </div>
+        <div className="divide-y divide-[#ECEAE4] dark:divide-[#222624]">
+          {FAQ.map((item) => (
+            <details key={item.code} className="p-4 sm:p-5 group">
+              <summary className="text-sm font-bold text-[#141615] dark:text-white flex items-center gap-2.5 list-none">
+                <span className="font-mono text-[11px] font-semibold text-[#0D6847] dark:text-[#5CD6A5]">
+                  {item.code} /
+                </span>
+                <span>{item.q}</span>
+              </summary>
+              <p className="text-xs sm:text-sm text-[#5C615E] dark:text-[#949B97] mt-2 pl-7 leading-relaxed">
+                {item.a}
+              </p>
+            </details>
+          ))}
+        </div>
+      </section>
 
-      {/* Ticket Dialog */}
+      {/* Hesap Kapatma */}
+      <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg p-4 sm:p-5 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h3 className="font-bold text-sm text-[#C84B31] dark:text-[#F28B73] flex items-center gap-1.5">
+            <Trash2 className="w-4 h-4" />
+            <span>Hesabımı Kalıcı Olarak Kapat</span>
+          </h3>
+          <p className="text-xs text-[#5C615E] dark:text-[#949B97] mt-0.5">
+            Kişisel verilerinizin ve hesap kaydınızın silinmesi için talep oluşturun.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setDeleteOpen(true)}
+          className="h-9 px-3.5 rounded-md border border-[#EFC7BD] dark:border-[#4A251D] bg-[#FBEEE9] dark:bg-[#2A1915] text-xs font-semibold text-[#B43B21] dark:text-[#F28B73] shrink-0 cursor-pointer"
+        >
+          Talep Oluştur
+        </button>
+      </div>
+
+      {/* Yeni Destek Talebi Dialog */}
       <Dialog open={ticketOpen} onOpenChange={setTicketOpen}>
-        <DialogContent className="max-w-md dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
+        <DialogContent className="max-w-md bg-white dark:bg-[#141716] border border-[#D8D5CC] dark:border-[#252B28] rounded-lg">
           <DialogHeader>
-            <DialogTitle className="text-gray-900 dark:text-white">Destek Talebi</DialogTitle>
-            <DialogDescription className="text-gray-500 dark:text-slate-400">Şikayet, öneri veya hata bildirin</DialogDescription>
+            <DialogTitle className="text-base font-bold text-[#141615] dark:text-white">
+              Yeni Destek Kaydı
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#5C615E] dark:text-[#949B97]">
+              Konuyu seçip yaşadığınız durumu kısaca açıklayın.
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-2">
+          <div className="space-y-3.5 py-2">
             <div>
-              <Label className="text-xs text-gray-700 dark:text-slate-300">Kategori</Label>
-              <div className="grid grid-cols-3 gap-1.5 mt-1">
+              <Label className="text-xs font-semibold text-[#141615] dark:text-[#F2F1ED]">
+                Kategori
+              </Label>
+              <div className="grid grid-cols-3 gap-1.5 mt-1.5">
                 {CATEGORIES.map((c) => (
-                  <button key={c.value} onClick={() => setCategory(c.value)}
-                    className={`p-2 rounded-lg text-[11px] font-medium border transition-all ${
-                      category === c.value ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300' : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300'
-                    }`}>
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setCategory(c.value)}
+                    className={`p-2 rounded-md text-xs font-semibold border transition-colors ${
+                      category === c.value
+                        ? 'bg-[#0D6847] text-white border-[#0D6847]'
+                        : 'bg-[#FBFBF9] dark:bg-[#181C1A] border-[#E2E0D8] dark:border-[#252B28] text-[#5C615E] dark:text-[#949B97]'
+                    }`}
+                  >
                     {c.label}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <Label className="text-xs text-gray-700 dark:text-slate-300">Konu</Label>
-              <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Kısa başlık" className="h-10 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100" />
+              <Label className="text-xs font-semibold text-[#141615] dark:text-[#F2F1ED]">
+                Konu Başlığı
+              </Label>
+              <Input
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Örn: Vardiya QR onayı hakkında"
+                className="h-10 mt-1"
+              />
             </div>
             <div>
-              <Label className="text-xs text-gray-700 dark:text-slate-300">Mesaj</Label>
-              <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} placeholder="Detaylı açıklama..." className="dark:bg-slate-950 dark:border-white/10 dark:text-slate-100" />
+              <Label className="text-xs font-semibold text-[#141615] dark:text-[#F2F1ED]">
+                Açıklama
+              </Label>
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={4}
+                placeholder="Detayları yazın..."
+                className="mt-1"
+              />
             </div>
-            <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold" onClick={handleSubmitTicket} disabled={submitting}>
-              {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
-              Gönder
-            </Button>
+            <button
+              type="button"
+              onClick={handleSubmitTicket}
+              disabled={submitting}
+              className="w-full h-10 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold inline-flex items-center justify-center gap-2"
+            >
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+              <span>Kaydı Gönder</span>
+            </button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Account Dialog */}
+      {/* Hesap Silme Dialog */}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="max-w-md dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
+        <DialogContent className="max-w-md bg-white dark:bg-[#141716] border border-[#D8D5CC] dark:border-[#252B28] rounded-lg">
           <DialogHeader>
-            <DialogTitle className="text-red-700 dark:text-red-400 flex items-center gap-2">
-              <Trash2 className="w-5 h-5" /> Hesabımı Sil
+            <DialogTitle className="text-base font-bold text-[#C84B31] dark:text-[#F28B73] flex items-center gap-2">
+              <Trash2 className="w-4 h-4" /> Hesabımı Kapat
             </DialogTitle>
-            <DialogDescription className="text-gray-600 dark:text-slate-400">
-              Bu işlem geri alınamaz. Talebiniz admin tarafından onaylandıktan sonra hesabınız ve tüm verileriniz silinir.
+            <DialogDescription className="text-xs text-[#5C615E] dark:text-[#949B97]">
+              Bu işlem onaylandığında hesabınız ve kişisel verileriniz kalıcı olarak kaldırılır.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div>
-              <Label className="text-xs text-gray-700 dark:text-slate-300">Silme Sebebi</Label>
-              <Textarea value={deleteReason} onChange={(e) => setDeleteReason(e.target.value)} rows={2} placeholder="Neden hesabınızı silmek istiyorsunuz?" className="dark:bg-slate-950 dark:border-white/10 dark:text-slate-100" />
+              <Label className="text-xs font-semibold">Kapatma Sebebi *</Label>
+              <Textarea
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+                rows={2}
+                placeholder="Hesabınızı kapatma nedeninizi belirtin..."
+                className="mt-1"
+              />
             </div>
             <div>
-              <Label className="text-xs text-gray-700 dark:text-slate-300">Geri Bildirim (opsiyonel)</Label>
-              <Textarea value={deleteFeedback} onChange={(e) => setDeleteFeedback(e.target.value)} rows={2} placeholder="Bizi geliştirmek için önerileriniz..." className="dark:bg-slate-950 dark:border-white/10 dark:text-slate-100" />
+              <Label className="text-xs font-semibold">Ek Not (İsteğe Bağlı)</Label>
+              <Textarea
+                value={deleteFeedback}
+                onChange={(e) => setDeleteFeedback(e.target.value)}
+                rows={2}
+                placeholder="Varsa görüş ve önerileriniz..."
+                className="mt-1"
+              />
             </div>
-            <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold" onClick={handleDeleteAccount} disabled={deleteLoading}>
-              {deleteLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
-              Silme Talebi Oluştur
-            </Button>
+            <button
+              type="button"
+              onClick={handleDeleteAccount}
+              disabled={deleteLoading}
+              className="w-full h-10 rounded-md bg-[#C84B31] hover:bg-[#B43B21] text-white text-xs font-semibold inline-flex items-center justify-center gap-2"
+            >
+              {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+              <span>Silme Talebini Gönder</span>
+            </button>
           </div>
         </DialogContent>
       </Dialog>
@@ -278,17 +436,31 @@ export default function HelpScreen() {
   )
 }
 
-function ContactCard({ icon: Icon, label, value, href, color }: { icon: any; label: string; value: string; href: string; color: string }) {
+function ContactCard({
+  code,
+  icon: Icon,
+  value,
+  href,
+}: {
+  code: string
+  icon: any
+  value: string
+  href: string
+}) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer"
-      className="flex flex-col items-center gap-1.5 p-2.5 sm:p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10 rounded-xl hover:border-indigo-300 dark:hover:border-indigo-700/60 hover:shadow-sm transition-all">
-      <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center ${color}`}>
-        <Icon className="w-4 h-4" />
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="p-3.5 bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] hover:border-[#0D6847] rounded-lg transition-colors flex flex-col justify-between gap-2"
+    >
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-[10px] font-semibold text-[#0D6847] dark:text-[#5CD6A5]">
+          {code}
+        </span>
+        <Icon className="w-3.5 h-3.5 text-[#5C615E] dark:text-[#949B97]" />
       </div>
-      <div className="text-center">
-        <p className="text-[10px] text-gray-500 dark:text-slate-400">{label}</p>
-        <p className="text-[11px] sm:text-xs font-medium text-gray-700 dark:text-slate-200 truncate max-w-full">{value}</p>
-      </div>
+      <div className="text-xs font-bold text-[#141615] dark:text-white truncate">{value}</div>
     </a>
   )
 }

@@ -329,107 +329,78 @@ export function ModernBankCard({
   const numericAmount = typeof amount === 'number' ? amount : parseFloat(amount) || 0
   const isDeposit = cardType === 'DEPOSIT'
 
-  // Banka seçildiyse onun gradient'ini, seçilmediyse tema gradient'ini kullan
-  const gradient = selectedBank
-    ? selectedBank.cardGradient
-    : isDeposit
-    ? 'from-emerald-600 via-teal-700 to-slate-950'
-    : 'from-blue-700 via-indigo-800 to-slate-950'
-
   const bankDisplayName =
     selectedBank?.id === 'other'
       ? customBankName || 'Diğer Banka'
       : selectedBank?.shortName || (isDeposit ? 'Günübirlik Bakiye' : 'Çekim Hesabı')
 
   return (
-    <div className="relative w-full aspect-[1.586/1] max-w-sm mx-auto rounded-2xl sm:rounded-3xl p-4 sm:p-5 text-white shadow-2xl overflow-hidden transition-all duration-300 hover:scale-[1.01] select-none bg-gradient-to-br border border-white/20">
-      {/* Arka plan akışkan degradeler */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} -z-10`} />
-
-      {/* Parlak cam yansıması (Glass Sheen Highlight) */}
-      <div className="pointer-events-none absolute -inset-full bg-gradient-to-tr from-transparent via-white/10 to-transparent rotate-12 -z-0" />
-      <div className="pointer-events-none absolute top-0 right-0 w-44 h-44 rounded-full bg-white/10 blur-3xl -z-0" />
-      <div className="pointer-events-none absolute bottom-0 left-0 w-36 h-36 rounded-full bg-black/20 blur-2xl -z-0" />
-
-      {/* Üst Kısım: Tür Etiketi + Banka Logosu + Temassız İkon */}
-      <div className="flex items-center justify-between gap-2 relative z-10">
-        <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-          <span className="text-[10px] font-semibold tracking-wider uppercase text-white/90">
-            {isDeposit ? 'Bakiye Yükleme' : 'Para Çekme'}
+    <div className="w-full rounded-md border border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#181C1A] overflow-hidden select-none">
+      {/* Üst Künye Şeridi */}
+      <div className="px-4 py-2.5 bg-white dark:bg-[#141716] border-b border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#27A878]" />
+          <span className="font-mono text-[10px] font-semibold tracking-wider uppercase text-[#0D6847] dark:text-[#27A878]">
+            {isDeposit ? '01 / BAKİYE YÜKLEME FİŞİ' : '01 / IBAN ÇEKİM TALİMATI'}
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          {selectedBank && (
-            <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20">
-              <div className="w-4 h-4 flex items-center justify-center scale-90">
-                {selectedBank.logo}
-              </div>
-              <span className="text-[11px] font-bold tracking-tight text-white truncate max-w-[110px]">
-                {bankDisplayName}
-              </span>
+        {selectedBank && (
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28]">
+            <div className="w-4 h-4 flex items-center justify-center scale-75">
+              {selectedBank.logo}
             </div>
-          )}
-          <Wifi className="w-4 h-4 text-white/70 rotate-90" />
-        </div>
+            <span className="font-mono text-[11px] font-semibold text-[#141716] dark:text-[#F0F2F1] truncate max-w-[120px]">
+              {bankDisplayName}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Orta Kısım: Gerçekçi EMV Altın Çip + Tutar */}
-      <div className="mt-3 sm:mt-4 flex items-center justify-between relative z-10">
-        {/* Altın Çip */}
-        <div className="w-10 h-7 sm:w-11 sm:h-8 rounded-md bg-gradient-to-br from-amber-300 via-yellow-200 to-amber-500 border border-amber-600/40 shadow-inner relative overflow-hidden flex items-center justify-center">
-          <div className="w-full h-px bg-amber-700/30 absolute" />
-          <div className="h-full w-px bg-amber-700/30 absolute" />
-          <div className="w-5 h-4 rounded-sm border border-amber-700/40" />
-        </div>
-
-        {/* Tutar Gösterimi */}
-        <div className="text-right">
-          <p className="text-[10px] uppercase tracking-wider text-white/70 font-medium">
-            {isDeposit ? 'Yüklenecek Tutar' : 'Çekilecek Tutar'}
-          </p>
-          <div className="text-xl sm:text-2xl font-black tracking-tight text-white drop-shadow-sm">
-            {numericAmount > 0
-              ? `${numericAmount.toLocaleString('tr-TR', { minimumFractionDigits: 0 })} ₺`
-              : '0 ₺'}
-          </div>
-        </div>
-      </div>
-
-      {/* Alt Kısım: TR Sabit Formatlı IBAN + İsim + TROY Logosu */}
-      <div className="mt-auto pt-3 sm:pt-4 relative z-10">
-        <div className="mb-2">
-          <div className="text-[9px] uppercase tracking-wider text-white/60 font-medium flex items-center justify-between">
-            <span>Hesap IBAN (TR Sabit)</span>
-            <span className="font-mono text-[9px] text-white/80">
-              {ibanDigits.length}/24 hane
-            </span>
-          </div>
-          <div className="font-mono text-xs sm:text-sm font-semibold tracking-wider text-white drop-shadow-xs flex items-center gap-1.5 mt-0.5">
-            <span className="text-emerald-300 font-bold bg-white/20 px-1 py-0.5 rounded text-[11px] sm:text-xs">
-              TR
-            </span>
-            <span className="truncate">
-              {ibanDigits.length > 0
-                ? getMaskedCardIban(ibanDigits)
-                : '•• •••• •••• •••• •••• •••• ••'}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-end justify-between pt-1 border-t border-white/15">
-          <div className="min-w-0 pr-2">
-            <p className="text-[8px] uppercase tracking-wider text-white/60">Hesap Sahibi</p>
-            <p className="text-xs font-bold text-white uppercase truncate tracking-wide">
+      {/* Orta Kısım: Tutar & Hesap Sahibi */}
+      <div className="p-4 space-y-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">
+              Hesap Sahibi
+            </p>
+            <p className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1] uppercase truncate mt-0.5">
               {name.trim() || 'AD SOYAD'}
             </p>
           </div>
 
-          {/* TROY Ulusal Ödeme Ağı Rozeti */}
-          <div className="flex items-center gap-1 bg-white/90 text-slate-900 px-2 py-0.5 rounded font-black text-[10px] tracking-tighter shadow-xs shrink-0">
-            <span className="text-red-600 text-xs">🇹🇷</span>
-            <span>TROY</span>
+          <div className="text-right">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">
+              {isDeposit ? 'Yüklenecek Tutar' : 'Çekilecek Tutar'}
+            </p>
+            <div className="font-mono text-xl sm:text-2xl font-bold tracking-tight text-[#0D6847] dark:text-[#27A878] mt-0.5">
+              {numericAmount > 0
+                ? `₺${numericAmount.toLocaleString('tr-TR', { minimumFractionDigits: 0 })}`
+                : '₺0'}
+            </div>
+          </div>
+        </div>
+
+        {/* Alt Kısım: TR Sabit Formatlı IBAN */}
+        <div className="pt-3 border-t border-[#E2E0D8] dark:border-[#252B28]">
+          <div className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0] flex items-center justify-between mb-1">
+            <span>Hesap IBAN (TR Sabit)</span>
+            <span>{ibanDigits.length}/24 HANE</span>
+          </div>
+          <div className="font-mono text-xs sm:text-sm font-semibold tracking-wider text-[#141716] dark:text-[#F0F2F1] flex items-center justify-between gap-2 bg-white dark:bg-[#141716] px-3 py-2 rounded border border-[#E2E0D8] dark:border-[#252B28]">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-[#0D6847] dark:text-[#27A878] font-bold bg-[#E6F2EC] dark:bg-[#0D6847]/20 px-1.5 py-0.5 rounded text-[11px]">
+                TR
+              </span>
+              <span className="truncate">
+                {ibanDigits.length > 0
+                  ? getMaskedCardIban(ibanDigits)
+                  : '•• •••• •••• •••• •••• •••• ••'}
+              </span>
+            </div>
+            <span className="font-mono text-[10px] font-bold text-[#535A56] dark:text-[#9DA6A0] shrink-0">
+              FAST / EFT
+            </span>
           </div>
         </div>
       </div>
@@ -457,14 +428,14 @@ export function BankSelector({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 flex items-center gap-1">
-          <Building2 className="w-3.5 h-3.5 text-gray-500 dark:text-slate-400" />
+        <label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1] flex items-center gap-1.5">
+          <Building2 className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#27A878]" />
           Banka Seçiniz *
         </label>
-        <span className="text-[11px] text-gray-400 dark:text-slate-400">Logoya tıklayıp seçin</span>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">Banka Seçin</span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1 border border-gray-200 dark:border-white/10 rounded-xl bg-gray-50/50 dark:bg-slate-800/60">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-48 overflow-y-auto p-1.5 border border-[#E2E0D8] dark:border-[#252B28] rounded-md bg-[#FBFBF9] dark:bg-[#181C1A]">
         {TURKISH_BANKS.map((b) => {
           const isSelected = selectedBankId === b.id
           return (
@@ -472,22 +443,21 @@ export function BankSelector({
               key={b.id}
               type="button"
               onClick={() => onSelectBank(b)}
-              className={`relative flex items-center gap-2 p-2 rounded-lg text-left transition-all duration-150 border text-xs font-medium ${
+              className={`relative flex items-center gap-2 p-2 rounded-md text-left transition-colors border text-xs font-medium ${
                 isSelected
-                  ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-950 dark:text-emerald-100 shadow-xs ring-2 ring-emerald-500/20 font-bold'
-                  : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-white/10 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 hover:border-gray-300 dark:hover:border-white/20'
+                  ? 'bg-[#E6F2EC] dark:bg-[#0D6847]/20 border-[#0D6847] text-[#0D6847] dark:text-[#27A878] font-semibold'
+                  : 'bg-white dark:bg-[#141716] border-[#E2E0D8] dark:border-[#252B28] text-[#141716] dark:text-[#F0F2F1] hover:border-[#0D6847]/50'
               }`}
             >
-              <div className="w-6 h-6 flex items-center justify-center shrink-0">
+              <div className="w-5 h-5 flex items-center justify-center shrink-0 scale-90">
                 {b.logo}
               </div>
               <span className="truncate flex-1 text-[11px] sm:text-xs">
                 {b.shortName}
               </span>
 
-              {/* Seçili Tik Simgesi */}
               {isSelected && (
-                <div className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <div className="w-4 h-4 rounded-sm bg-[#0D6847] text-white flex items-center justify-center shrink-0">
                   <Check className="w-2.5 h-2.5 stroke-[3]" />
                 </div>
               )}
@@ -504,7 +474,7 @@ export function BankSelector({
             placeholder="Lütfen bankanızın adını yazın..."
             value={customBankName}
             onChange={(e) => onCustomBankNameChange(e.target.value)}
-            className="w-full text-xs h-9 px-3 rounded-lg border border-gray-300 dark:border-white/10 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500"
+            className="w-full text-xs h-10 px-3 rounded-md border border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1] placeholder:text-[#535A56] dark:placeholder:text-[#9DA6A0] focus:outline-hidden focus:border-[#0D6847]"
           />
         </div>
       )}
@@ -548,26 +518,25 @@ export function FixedTrIbanInput({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">{label} *</label>
+        <label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">{label} *</label>
         <div className="text-[11px] font-mono">
           {isComplete ? (
-            <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+            <span className="text-[#0D6847] dark:text-[#27A878] font-semibold flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" />
-              24/24 Tamamlandı
+              24/24 TAMAMLANDI
             </span>
           ) : (
-            <span className="text-gray-400 dark:text-slate-400">
-              Kalan: <strong className="text-gray-700 dark:text-slate-200">{remaining}</strong> hane
+            <span className="text-[#535A56] dark:text-[#9DA6A0]">
+              Kalan: <strong className="text-[#141716] dark:text-[#F0F2F1]">{remaining}</strong> hane
             </span>
           )}
         </div>
       </div>
 
       {/* Sabit TR Prefix'li Input */}
-      <div className="relative flex rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-slate-800 overflow-hidden shadow-xs focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent transition">
+      <div className="relative flex rounded-md border border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] overflow-hidden focus-within:border-[#0D6847] transition">
         {/* Sabit TR Rozeti */}
-        <div className="flex items-center gap-1 px-3 bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-200 font-mono font-bold text-sm border-r border-gray-300 dark:border-white/10 select-none shrink-0">
-          <span className="text-xs">🇹🇷</span>
+        <div className="flex items-center gap-1 px-3 bg-[#EFECE6] dark:bg-[#181C1A] text-[#141716] dark:text-[#F0F2F1] font-mono font-bold text-xs border-r border-[#E2E0D8] dark:border-[#252B28] select-none shrink-0">
           <span>TR</span>
         </div>
 
@@ -580,19 +549,19 @@ export function FixedTrIbanInput({
           onChange={handleChange}
           onPaste={handlePaste}
           placeholder={placeholder}
-          className="flex-1 px-3 py-2 text-sm font-mono tracking-wider text-gray-900 dark:text-white bg-transparent focus:outline-hidden placeholder:text-gray-300 dark:placeholder:text-slate-500"
+          className="flex-1 px-3 py-2.5 text-sm font-mono tracking-wider text-[#141716] dark:text-[#F0F2F1] bg-transparent focus:outline-hidden placeholder:text-[#535A56]/50 dark:placeholder:text-[#9DA6A0]/40"
         />
 
         {isComplete && (
-          <div className="flex items-center pr-3 text-emerald-600 dark:text-emerald-400">
+          <div className="flex items-center pr-3 text-[#0D6847] dark:text-[#27A878]">
             <CheckCircle2 className="w-4 h-4" />
           </div>
         )}
       </div>
 
-      <p className="text-[11px] text-gray-500 dark:text-slate-400 flex items-center justify-between">
+      <p className="text-[11px] text-[#535A56] dark:text-[#9DA6A0] flex items-center justify-between">
         <span>Başında &apos;TR&apos; sabittir, yalnızca 24 haneli rakamları giriniz.</span>
-        <span className="text-[10px] text-gray-400 dark:text-slate-500">Toplam 26 karakter</span>
+        <span className="font-mono text-[10px]">26 KARAKTER</span>
       </p>
     </div>
   )

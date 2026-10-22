@@ -4,17 +4,14 @@ import { useState, useEffect, useRef } from 'react'
 import { conversationsApi } from '@/lib/api'
 import { useAuth } from '@/lib/auth-store'
 import { useApp } from '@/lib/app-store'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Send, MessageSquare, Circle, ArrowLeft, Phone, MapPin, Briefcase } from 'lucide-react'
+import { Send, MessageSquare, Circle, ArrowLeft, Briefcase } from 'lucide-react'
 import { formatRelative, formatTime, initials } from '@/lib/format'
 import { toast } from 'sonner'
-import { getSocket, connectSocket, on, off } from '@/lib/socket'
+import { getSocket, connectSocket, on } from '@/lib/socket'
 
 export default function MessagesScreen() {
   const { user } = useAuth()
@@ -30,7 +27,6 @@ export default function MessagesScreen() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<any>(null)
 
-  // Supabase Realtime bağla
   useEffect(() => {
     if (!user) return
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null
@@ -44,7 +40,6 @@ export default function MessagesScreen() {
         setMessages((prev) => [...prev, msg])
         scrollToBottom()
       } else {
-        // Konuşma listesinde unread count artır
         setConversations((prev) =>
           prev.map((c) =>
             c.id === msg.conversationId
@@ -67,9 +62,7 @@ export default function MessagesScreen() {
       }
     })
 
-    const unsubRead = on('message:read', () => {
-      // Okundu işaretlerini güncelle
-    })
+    const unsubRead = on('message:read', () => {})
 
     return () => {
       unsubNewMsg?.()
@@ -79,7 +72,6 @@ export default function MessagesScreen() {
     }
   }, [user, selectedId])
 
-  // Konuşma listesi
   const loadConversations = async () => {
     setLoading(true)
     try {
@@ -99,20 +91,16 @@ export default function MessagesScreen() {
     if (user) loadConversations()
   }, [user])
 
-  // Mesajlar
   const selectConversation = async (id: string) => {
     setSelectedId(id)
     setLoadingMessages(true)
     try {
       const result = await conversationsApi.messages(id)
       setMessages(result.items)
-      // Okundu işaretle
       await conversationsApi.markRead(id)
-      // Konuşma listesinde unread sıfırla
       setConversations((prev) =>
         prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c))
       )
-      // WS odasına katıl
       getSocket()?.emit('conversation:join', { conversationId: id })
       scrollToBottom()
     } catch (err: any) {
@@ -127,7 +115,6 @@ export default function MessagesScreen() {
     const content = newMessage.trim()
     setNewMessage('')
 
-    // Optimistic - hemen ekrana ekle
     const optimisticMsg = {
       id: `temp_${Date.now()}`,
       conversationId: selectedId,
@@ -141,7 +128,6 @@ export default function MessagesScreen() {
     setMessages((prev) => [...prev, optimisticMsg])
     scrollToBottom()
 
-    // WebSocket ile gönder (hızlı)
     const socket = getSocket()
     if (socket?.connected) {
       socket.emit('message:send', {
@@ -151,11 +137,9 @@ export default function MessagesScreen() {
       })
     }
 
-    // DB'ye de kaydet (arka planda)
     conversationsApi
       .sendMessage({ conversationId: selectedId, content })
       .then(() => {
-        // Optimistic mesajı gerçek ile değiştir
         setMessages((prev) =>
           prev.map((m) => (m.id === optimisticMsg.id ? { ...m, pending: false } : m))
         )
@@ -189,67 +173,89 @@ export default function MessagesScreen() {
   const selected = conversations.find((c) => c.id === selectedId)
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
-      <div className="mb-3 sm:mb-4 flex items-center justify-between gap-2">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">Mesajlar</h1>
-        <Badge variant={connected ? 'default' : 'secondary'} className={connected ? 'bg-green-500' : 'text-xs flex-shrink-0'}>
-          <Circle className={`w-2 h-2 mr-1 ${connected ? 'fill-white' : 'fill-gray-400'}`} />
-          <span className="hidden sm:inline">{connected ? 'Bağlı' : 'Bağlanıyor...'}</span>
-          <span className="sm:hidden">{connected ? 'Aktif' : '...'}</span>
-        </Badge>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
+      {/* Masthead */}
+      <div className="flex items-center justify-between gap-3 border-b border-[#D8D5CC] dark:border-[#262C29] pb-4">
+        <div>
+          <div className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#0D6847] dark:text-[#5CD6A5]">
+            SAHA İLETİŞİM HATTI • DOĞRUDAN MESAJLAŞMA
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#141615] dark:text-white">
+            Mesajlar
+          </h1>
+        </div>
+        <span
+          className={`font-mono text-[11px] font-semibold px-2.5 py-1 rounded-sm border inline-flex items-center gap-1.5 ${
+            connected
+              ? 'bg-[#EAF3EE] text-[#0D6847] border-[#C5DDD0] dark:bg-[#162921] dark:text-[#5CD6A5] dark:border-[#244738]'
+              : 'bg-[#F0EFEA] text-[#5C615E] border-[#E2E0D8] dark:bg-[#1E2421] dark:text-[#949B97] dark:border-[#2C3330]'
+          }`}
+        >
+          <Circle className={`w-2 h-2 ${connected ? 'fill-current' : ''}`} />
+          <span>{connected ? 'CANLI BAĞLANTI' : 'BAĞLANIYOR'}</span>
+        </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 h-[calc(100dvh-180px)] sm:h-[600px]">
-        {/* Konuşma listesi */}
-        <div className={`border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden bg-white dark:bg-slate-900/90 ${selectedId ? 'hidden md:block' : ''}`}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100dvh-210px)] sm:h-[600px]">
+        {/* Konuşma Listesi */}
+        <div
+          className={`border border-[#E2E0D8] dark:border-[#252B28] rounded-lg overflow-hidden bg-white dark:bg-[#141716] ${
+            selectedId ? 'hidden md:block' : ''
+          }`}
+        >
           <ScrollArea className="h-full custom-scrollbar">
             {loading ? (
               <div className="p-3 space-y-2">
-                {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-16" />)}
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-16 rounded-md bg-[#E9E7E0] dark:bg-[#181C1A]" />
+                ))}
               </div>
             ) : conversations.length === 0 ? (
-              <div className="p-6 text-center text-gray-500 dark:text-slate-400">
-                <MessageSquare className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-                <p className="text-sm">Henüz mesajlaşma yok</p>
+              <div className="p-8 text-center text-[#5C615E] dark:text-[#949B97] space-y-2">
+                <MessageSquare className="w-8 h-8 mx-auto opacity-50" />
+                <p className="text-xs sm:text-sm font-medium">Henüz aktif yazışmanız yok</p>
               </div>
             ) : (
               conversations.map((conv) => (
                 <button
                   key={conv.id}
+                  type="button"
                   onClick={() => selectConversation(conv.id)}
-                  className={`w-full text-left p-3 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-slate-800/80 transition flex items-start gap-3 ${
-                    selectedId === conv.id ? 'bg-emerald-50 dark:bg-emerald-950/40' : ''
+                  className={`w-full text-left p-3.5 border-b border-[#ECEAE4] dark:border-[#222624] transition-colors flex items-start gap-3 cursor-pointer ${
+                    selectedId === conv.id
+                      ? 'bg-[#EAF3EE]/60 dark:bg-[#162921]/40'
+                      : 'hover:bg-[#F9F8F6] dark:hover:bg-[#181C1A]'
                   }`}
                 >
-                  <Avatar className="w-10 h-10 flex-shrink-0">
-                    <AvatarFallback className="bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 text-xs">
+                  <Avatar className="w-9 h-9 rounded-md shrink-0 border border-[#E2E0D8] dark:border-[#252B28]">
+                    <AvatarFallback className="rounded-md bg-[#F0EFEA] dark:bg-[#1E2421] text-[#0D6847] dark:text-[#5CD6A5] font-mono text-xs font-bold">
                       {initials(conv.participant?.fullName || conv.participant?.companyName)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <h4 className="font-medium text-gray-900 dark:text-white text-sm truncate">
+                      <h4 className="font-bold text-[#141615] dark:text-white text-xs sm:text-sm truncate">
                         {conv.participant?.companyName || conv.participant?.fullName}
                       </h4>
                       {conv.lastMessage && (
-                        <span className="text-[10px] text-gray-400 dark:text-slate-500 flex-shrink-0">
+                        <span className="font-mono text-[10px] text-[#5C615E] dark:text-[#949B97] shrink-0">
                           {formatRelative(conv.lastMessage.createdAt)}
                         </span>
                       )}
                     </div>
                     {conv.job && (
-                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400 truncate">
-                        💼 {conv.job.title}
+                      <p className="font-mono text-[11px] font-semibold text-[#0D6847] dark:text-[#5CD6A5] truncate mt-0.5">
+                        {conv.job.title}
                       </p>
                     )}
-                    <p className="text-xs text-gray-500 dark:text-slate-400 truncate mt-0.5">
+                    <p className="text-xs text-[#5C615E] dark:text-[#949B97] truncate mt-0.5">
                       {conv.lastMessage?.content || 'Yeni konuşma'}
                     </p>
                   </div>
                   {conv.unreadCount > 0 && (
-                    <Badge className="bg-red-500 text-white text-[10px] flex-shrink-0">
+                    <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-sm bg-[#C84B31] text-white shrink-0">
                       {conv.unreadCount}
-                    </Badge>
+                    </span>
                   )}
                 </button>
               ))
@@ -257,56 +263,67 @@ export default function MessagesScreen() {
           </ScrollArea>
         </div>
 
-        {/* Mesaj içeriği */}
-        <div className={`md:col-span-2 border border-gray-200 dark:border-white/10 rounded-lg flex flex-col overflow-hidden bg-white dark:bg-slate-900/90 ${!selectedId ? 'hidden md:flex' : ''}`}>
+        {/* Mesaj İçeriği */}
+        <div
+          className={`md:col-span-2 border border-[#E2E0D8] dark:border-[#252B28] rounded-lg flex flex-col overflow-hidden bg-white dark:bg-[#141716] ${
+            !selectedId ? 'hidden md:flex' : ''
+          }`}
+        >
           {!selected ? (
-            <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-slate-400 p-4">
-              <div className="text-center">
-                <MessageSquare className="w-12 h-12 mx-auto mb-2 text-gray-300 dark:text-slate-600" />
-                <p className="text-sm">Bir konuşma seçin</p>
+            <div className="flex-1 flex items-center justify-center text-[#5C615E] dark:text-[#949B97] p-6">
+              <div className="text-center space-y-2">
+                <MessageSquare className="w-10 h-10 mx-auto opacity-40" />
+                <p className="text-xs sm:text-sm">Görüşmeyi görüntülemek için soldan bir kişi seçin.</p>
               </div>
             </div>
           ) : (
             <>
-              {/* Header */}
-              <div className="p-2 sm:p-3 border-b border-gray-200 dark:border-white/10 flex items-center gap-2 sm:gap-3 bg-white dark:bg-slate-900">
-                <Button variant="ghost" size="icon" className="md:hidden h-9 w-9 flex-shrink-0" onClick={() => setSelectedId(null)}>
+              {/* Konuşma Başlığı */}
+              <div className="px-4 py-3 border-b border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#181C1A] flex items-center gap-3">
+                <button
+                  type="button"
+                  className="md:hidden h-8 w-8 rounded border border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-center shrink-0"
+                  onClick={() => setSelectedId(null)}
+                >
                   <ArrowLeft className="w-4 h-4" />
-                </Button>
-                <Avatar className="w-9 h-9 flex-shrink-0">
-                  <AvatarFallback className="bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 text-xs">
+                </button>
+                <Avatar className="w-8 h-8 rounded-md shrink-0 border border-[#E2E0D8] dark:border-[#252B28]">
+                  <AvatarFallback className="rounded-md bg-[#F0EFEA] dark:bg-[#1E2421] text-[#0D6847] dark:text-[#5CD6A5] font-mono text-xs font-bold">
                     {initials(selected.participant?.fullName || selected.participant?.companyName)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate text-gray-900 dark:text-white">
+                  <div className="font-bold text-sm truncate text-[#141615] dark:text-white">
                     {selected.participant?.companyName || selected.participant?.fullName}
                   </div>
                   {selected.job && (
                     <button
-                      className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline truncate block max-w-full"
+                      type="button"
+                      className="text-xs font-medium text-[#0D6847] dark:text-[#5CD6A5] hover:underline truncate inline-flex items-center gap-1 max-w-full"
                       onClick={() => go('job-detail', { jobId: selected.job.id })}
                     >
-                      💼 <span className="truncate">{selected.job.title}</span>
+                      <Briefcase className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{selected.job.title}</span>
                     </button>
                   )}
                 </div>
                 {selected.participant?.isVerified && (
-                  <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700/60 text-[10px] flex-shrink-0">
-                    <span className="hidden sm:inline">Doğrulanmış</span>
-                    <span className="sm:hidden">✓</span>
-                  </Badge>
+                  <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-sm bg-[#EAF3EE] text-[#0D6847] border border-[#C5DDD0] dark:bg-[#162921] dark:text-[#5CD6A5] dark:border-[#244738] shrink-0">
+                    ONAYLI
+                  </span>
                 )}
               </div>
 
-              {/* Mesajlar */}
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-gray-50 dark:bg-slate-950/70 custom-scrollbar">
+              {/* Mesaj Akışı */}
+              <div className="flex-1 overflow-y-auto p-4 bg-[#F6F5F2] dark:bg-[#0C0E0D] custom-scrollbar">
                 {loadingMessages ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12" />)}
+                  <div className="space-y-2.5">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-12 rounded-md bg-[#E9E7E0] dark:bg-[#181C1A]" />
+                    ))}
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {messages.map((msg) => {
                       const isMe = msg.senderId === user?.id
                       return (
@@ -315,14 +332,20 @@ export default function MessagesScreen() {
                           className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                         >
                           <div
-                            className={`max-w-[80%] sm:max-w-[75%] rounded-2xl px-3 py-2 ${
+                            className={`max-w-[82%] sm:max-w-[72%] rounded-lg px-3.5 py-2.5 ${
                               isMe
-                                ? 'bg-emerald-600 text-white rounded-br-sm'
-                                : 'bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 border border-gray-200 dark:border-white/10 rounded-bl-sm shadow-xs'
+                                ? 'bg-[#0D6847] text-white'
+                                : 'bg-white dark:bg-[#141716] text-[#141615] dark:text-[#F2F1ED] border border-[#E2E0D8] dark:border-[#252B28]'
                             } ${msg.pending ? 'opacity-60' : ''}`}
                           >
-                            <p className="text-sm break-words">{msg.content}</p>
-                            <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${isMe ? 'text-emerald-100' : 'text-gray-400 dark:text-slate-400'}`}>
+                            <p className="text-xs sm:text-sm break-words leading-relaxed">
+                              {msg.content}
+                            </p>
+                            <div
+                              className={`font-mono text-[10px] mt-1 flex items-center gap-1 ${
+                                isMe ? 'text-white/75' : 'text-[#8A8F8C]'
+                              }`}
+                            >
                               {msg.pending && <Circle className="w-2 h-2 fill-current" />}
                               {formatTime(msg.createdAt)}
                             </div>
@@ -332,12 +355,8 @@ export default function MessagesScreen() {
                     })}
                     {isTyping && (
                       <div className="flex justify-start">
-                        <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-2xl rounded-bl-sm px-3 py-2">
-                          <div className="flex gap-1">
-                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                          </div>
+                        <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg px-3 py-2 font-mono text-[11px] text-[#5C615E]">
+                          Yazıyor...
                         </div>
                       </div>
                     )}
@@ -346,8 +365,8 @@ export default function MessagesScreen() {
                 )}
               </div>
 
-              {/* Mesaj input - Mobil klavye için sticky */}
-              <div className="p-2 sm:p-3 border-t border-gray-200 dark:border-white/10 bg-white dark:bg-slate-900 flex gap-2">
+              {/* Mesaj Gönderim Alanı */}
+              <div className="p-3 border-t border-[#E2E0D8] dark:border-[#252B28] bg-white dark:bg-[#141716] flex gap-2">
                 <Input
                   placeholder="Mesajınızı yazın..."
                   value={newMessage}
@@ -358,11 +377,16 @@ export default function MessagesScreen() {
                       handleSend()
                     }
                   }}
-                  className="flex-1 h-11 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                  className="flex-1 h-10 bg-[#FBFBF9] dark:bg-[#181C1A] border-[#D6D3C9] dark:border-[#2B322E]"
                 />
-                <Button onClick={handleSend} disabled={!newMessage.trim()} className="bg-emerald-600 hover:bg-emerald-700 h-11 w-11 p-0 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  disabled={!newMessage.trim()}
+                  className="h-10 w-10 rounded-md bg-[#0D6847] hover:bg-[#095237] disabled:opacity-40 text-white flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+                >
                   <Send className="w-4 h-4" />
-                </Button>
+                </button>
               </div>
             </>
           )}

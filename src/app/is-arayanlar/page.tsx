@@ -75,12 +75,12 @@ export default function IsArayanlarPage() {
       <main className="flex-1 pt-8 sm:pt-12 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
           {/* Masthead */}
-          <div className="border-b border-[#D8D5CC] dark:border-[#262C29] pb-8">
-            <div className="font-mono text-[11px] uppercase tracking-wider text-[#0D6847] dark:text-[#5CD6A5] font-semibold mb-2">
+          <div className="border-b border-[#D8D5CC] dark:border-[#262C29] pb-8 space-y-4">
+            <div className="font-mono text-[11px] uppercase tracking-wider text-[#0D6847] dark:text-[#5CD6A5] font-semibold">
               ÇALIŞAN & ÖĞRENCİ REHBERİ • GÜNLÜK VARDİYA SİSTEMİ
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
-              <div className="lg:col-span-8 space-y-3">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+              <div className="space-y-3 max-w-3xl">
                 <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-[#141615] dark:text-white leading-[1.15]">
                   Boş günlerinizde çalışın, mesai bitiminde yevmiyenizi net olarak alın.
                 </h1>
@@ -88,15 +88,13 @@ export default function IsArayanlarPage() {
                   Uzun özgeçmiş formları veya belirsiz mülakat süreçleri yok. Konumunuza yakın açık vardiyaları inceleyin, QR kod ile mesaiye başlayın.
                 </p>
               </div>
-              <div className="lg:col-span-4 flex lg:justify-end">
-                <Link
-                  href="/"
-                  className="px-4 py-2.5 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold inline-flex items-center gap-2 transition-colors"
-                >
-                  <span>Açık İlanları İncele</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+              <Link
+                href="/"
+                className="px-4 py-2.5 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold inline-flex items-center gap-2 shrink-0 self-start lg:self-auto transition-colors"
+              >
+                <span>Açık İlanları İncele</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           </div>
 

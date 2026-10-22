@@ -30,13 +30,13 @@ import {
 import { TURKISH_BANKS } from '@/components/shared/bank-card'
 
 const STATUS_INFO: Record<string, { label: string; color: string; bg: string }> = {
-  PENDING: { label: 'Beklemede', color: 'text-amber-300', bg: 'bg-amber-950/50 border-amber-800/50' },
-  APPROVED: { label: 'Onaylandı', color: 'text-emerald-300', bg: 'bg-emerald-950/50 border-emerald-800/50' },
-  REJECTED: { label: 'Reddedildi', color: 'text-red-300', bg: 'bg-red-950/50 border-red-800/50' },
-  PAID: { label: 'Ödendi', color: 'text-blue-300', bg: 'bg-blue-950/50 border-blue-800/50' },
-  RECEIVED: { label: 'Alındı', color: 'text-emerald-300', bg: 'bg-emerald-950/50 border-emerald-800/50' },
-  DISPUTED: { label: 'İtiraz Var', color: 'text-red-300', bg: 'bg-red-950/50 border-red-800/50' },
-  COMPLETED: { label: 'Tamamlandı', color: 'text-emerald-300', bg: 'bg-emerald-950/50 border-emerald-800/50' },
+  PENDING: { label: 'BEKLEMEDE', color: 'text-[#C84B31]', bg: 'bg-[#C84B31]/10 border-[#C84B31]/30' },
+  APPROVED: { label: 'ONAYLANDI', color: 'text-[#0D6847] dark:text-[#27AB78]', bg: 'bg-[#0D6847]/10 border-[#0D6847]/30' },
+  REJECTED: { label: 'REDDEDİLDİ', color: 'text-[#C84B31]', bg: 'bg-[#C84B31]/10 border-[#C84B31]/30' },
+  PAID: { label: 'ÖDENDİ', color: 'text-[#0D6847] dark:text-[#27AB78]', bg: 'bg-[#0D6847]/10 border-[#0D6847]/30' },
+  RECEIVED: { label: 'TESLİM ALINDI', color: 'text-[#0D6847] dark:text-[#27AB78]', bg: 'bg-[#0D6847]/10 border-[#0D6847]/30' },
+  DISPUTED: { label: 'İTİRAZ VAR', color: 'text-[#C84B31]', bg: 'bg-[#C84B31]/15 border-[#C84B31]/40' },
+  COMPLETED: { label: 'TAMAMLANDI', color: 'text-[#0D6847] dark:text-[#27AB78]', bg: 'bg-[#0D6847]/10 border-[#0D6847]/30' },
 }
 
 export default function AdminPaymentsPage() {
@@ -69,42 +69,42 @@ function PaymentsContent() {
 
   return (
     <div className="space-y-6">
-      {/* Üst Sekmeler */}
-      <div className="flex border-b border-slate-800 gap-2 overflow-x-auto no-scrollbar pb-1">
+      {/* Mimari Kayıt Defteri Sekmeleri */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 bg-[#EFECE6] dark:bg-[#1A1E1C] border border-[#E2E0D8] dark:border-[#252B28] rounded-md">
         <button
           onClick={() => handleTabChange('deposits')}
-          className={`flex items-center gap-2.5 px-4 py-3 font-semibold text-sm rounded-t-xl transition-all border-b-2 whitespace-nowrap ${
+          className={`flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2.5 font-semibold text-xs sm:text-sm rounded-md transition-all border ${
             activeTab === 'deposits'
-              ? 'text-emerald-400 border-emerald-500 bg-emerald-500/10'
-              : 'text-slate-400 border-transparent hover:text-white hover:bg-slate-900/40'
+              ? 'bg-[#0D6847] !text-white border-[#0D6847]'
+              : 'bg-white dark:bg-[#141716] text-[#5A605D] dark:text-[#8E9893] border-[#E2E0D8] dark:border-[#252B28] hover:border-[#0D6847]/40'
           }`}
         >
-          <ArrowDownCircle className="w-4 h-4" />
-          <span>Bakiye Yükleme Talepleri (Havale/EFT)</span>
+          <ArrowDownCircle className={`w-4 h-4 shrink-0 ${activeTab === 'deposits' ? '!text-white' : 'text-[#0D6847]'}`} />
+          <span className={`truncate ${activeTab === 'deposits' ? '!text-white' : ''}`}>01 / Bakiye Yükleme (Havale/EFT)</span>
         </button>
 
         <button
           onClick={() => handleTabChange('payments')}
-          className={`flex items-center gap-2.5 px-4 py-3 font-semibold text-sm rounded-t-xl transition-all border-b-2 whitespace-nowrap ${
+          className={`flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2.5 font-semibold text-xs sm:text-sm rounded-md transition-all border ${
             activeTab === 'payments'
-              ? 'text-indigo-400 border-indigo-500 bg-indigo-500/10'
-              : 'text-slate-400 border-transparent hover:text-white hover:bg-slate-900/40'
+              ? 'bg-[#0D6847] !text-white border-[#0D6847]'
+              : 'bg-white dark:bg-[#141716] text-[#5A605D] dark:text-[#8E9893] border-[#E2E0D8] dark:border-[#252B28] hover:border-[#0D6847]/40'
           }`}
         >
-          <CreditCard className="w-4 h-4" />
-          <span>İş & Hakediş Ödemeleri</span>
+          <CreditCard className={`w-4 h-4 shrink-0 ${activeTab === 'payments' ? '!text-white' : 'text-[#0D6847]'}`} />
+          <span className={`truncate ${activeTab === 'payments' ? '!text-white' : ''}`}>02 / İş & Hakediş Ödemeleri</span>
         </button>
 
         <button
           onClick={() => handleTabChange('withdrawals')}
-          className={`flex items-center gap-2.5 px-4 py-3 font-semibold text-sm rounded-t-xl transition-all border-b-2 whitespace-nowrap ${
+          className={`flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2.5 font-semibold text-xs sm:text-sm rounded-md transition-all border ${
             activeTab === 'withdrawals'
-              ? 'text-red-400 border-red-500 bg-red-500/10'
-              : 'text-slate-400 border-transparent hover:text-white hover:bg-slate-900/40'
+              ? 'bg-[#C84B31] !text-white border-[#C84B31]'
+              : 'bg-white dark:bg-[#141716] text-[#5A605D] dark:text-[#8E9893] border-[#E2E0D8] dark:border-[#252B28] hover:border-[#C84B31]/40'
           }`}
         >
-          <ArrowUpCircle className="w-4 h-4" />
-          <span>Para Çekme Talepleri (IBAN)</span>
+          <ArrowUpCircle className={`w-4 h-4 shrink-0 ${activeTab === 'withdrawals' ? '!text-white' : 'text-[#C84B31]'}`} />
+          <span className={`truncate ${activeTab === 'withdrawals' ? '!text-white' : ''}`}>03 / Para Çekme Talepleri (IBAN)</span>
         </button>
       </div>
 

@@ -103,6 +103,7 @@ export const metadata: Metadata = {
 };
 
 import { OrganizationSchema, WebSiteSchema } from "@/components/shared/seo-schema";
+import ScrollMotoClient from "@/components/landing/scroll-moto-client";
 
 export default function RootLayout({
   children,
@@ -133,6 +134,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <ScrollMotoClient />
           <SonnerToaster />
           <ErudaInit />
           <OneSignalInit />

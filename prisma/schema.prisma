@@ -973,3 +973,38 @@ model AccountDeletion {
   @@index([status])
   @@index([createdAt])
 }
+
+// ==================== SEO BLOG YAZILARI ====================
+model SeoBlogPost {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  title           String
+  excerpt         String
+  content         String
+  category        String   @default("Yevmiye Rehberi")
+  readingTime     String   @default("5 dk okuma")
+  coverImage      String?
+  authorName      String   @default("Günübirlik Saha Ekibi")
+  authorRole      String   @default("Piyasa Araştırmaları")
+  tagsJson        String   @default("[]")
+  metaTitle       String?
+  metaDescription String?
+  canonicalUrl    String?
+  schemaType      String   @default("Article")
+  isPublished     Boolean  @default(true)
+  isFeatured      Boolean  @default(false)
+  date            String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([isPublished])
+  @@index([isFeatured])
+  @@index([category])
+}
+
+// ==================== SEO YAPILANDIRMA AYARLARI ====================
+model SeoSetting {
+  id          String   @id @default("default")
+  payloadJson String
+  updatedAt   DateTime @updatedAt
+}

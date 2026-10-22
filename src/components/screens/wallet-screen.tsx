@@ -175,125 +175,154 @@ export default function WalletScreen() {
   }
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-4xl">
-      {/* Başlık */}
-      <div className="mb-5 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
-          <WalletIcon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-          Cüzdanım
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Bakiye, işlem geçmişi ve ödemeler</p>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      {/* Masthead */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#D8D5CC] dark:border-[#262C29] pb-5">
+        <div className="space-y-1">
+          <div className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#0D6847] dark:text-[#5CD6A5]">
+            FİNANSAL DEFTER • EMANET & BAKİYE KASASI
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#141615] dark:text-white">
+            Cüzdanım ve Hesap Hareketleri
+          </h1>
+          <p className="text-xs sm:text-sm text-[#5C615E] dark:text-[#949B97]">
+            Yevmiye ödemelerinizi, emanet havuz bakiyenizi ve IBAN transferlerinizi yönetin.
+          </p>
+        </div>
       </div>
 
-      {/* Bakiye Kartı - 3D Financial Vault Card */}
-      <div className="mb-6 card-3d-dark rounded-3xl p-6 sm:p-8 relative overflow-hidden text-white border border-emerald-500/30 shadow-[0_20px_50px_-15px_rgba(5,150,105,0.4)] preserve-3d">
-        <div className="absolute inset-0 bg-spatial-grid opacity-25 pointer-events-none" />
-        <div className="absolute -top-16 -right-16 w-52 h-52 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none" />
-        
-        <div className="relative z-10 flex items-start justify-between mb-4 preserve-3d">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full badge-3d-dark text-[11px] font-bold text-emerald-300 mb-2 translate-z-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>GÜVENLİ CÜZDAN & HAVUZ BAKİYESİ</span>
+      {/* Bakiye Panosu */}
+      <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg overflow-hidden">
+        <div className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold text-[#0D6847] dark:text-[#5CD6A5] bg-[#EAF3EE] dark:bg-[#162921] px-2 py-0.5 rounded-sm border border-[#C5DDD0] dark:border-[#244738]">
+              <CheckCircle2 className="w-3 h-3" />
+              <span>DOĞRULANMIŞ KULLANILABİLİR BAKİYE</span>
             </div>
-            <p className="text-emerald-100 text-xs sm:text-sm font-semibold tracking-wide">Kullanılabilir Bakiye</p>
-            <p className="text-3xl sm:text-5xl font-black tracking-tight mt-1 text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] translate-z-4">
-              {balance.toLocaleString('tr-TR')}₺
+            <div className="font-mono text-3xl sm:text-4xl font-bold tracking-tight text-[#141615] dark:text-white pt-1">
+              {balance.toLocaleString('tr-TR')} ₺
+            </div>
+            <p className="text-xs text-[#5C615E] dark:text-[#949B97]">
+              Emanet onayı tamamlanan net tutarlar doğrudan kullanılabilir bakiyenize yansır.
             </p>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-emerald-500/30 border border-emerald-400/50 flex items-center justify-center text-emerald-300 shadow-[0_4px_16px_rgba(16,185,129,0.3)] translate-z-4">
-            <WalletIcon className="w-7 h-7" />
-          </div>
-        </div>
 
-        {/* Butonlar — 3D Tactile Push Buttons */}
-        <div className="relative z-10 flex flex-wrap gap-3 mt-4 pt-2 border-t border-white/20 preserve-3d">
-          {(user?.role === 'EMPLOYER' || user?.role === 'ADMIN') && (
-            <button
-              type="button"
-              className="btn-3d-emerald btn-3d-pill px-5 py-2.5 text-xs sm:text-sm font-black flex items-center gap-2 translate-z-4"
-              onClick={() => setDepositOpen(true)}
-            >
-              <ArrowDownCircle className="w-4 h-4 text-emerald-100" />
-              <span>Para Yatır (Havuz Bakiye)</span>
-            </button>
-          )}
-          {(user?.role === 'WORKER' || user?.role === 'ADMIN') && (
-            <button
-              type="button"
-              className="btn-3d-white btn-3d-pill px-5 py-2.5 text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2 translate-z-4 shadow-md"
-              onClick={() => setWithdrawOpen(true)}
-            >
-              <ArrowUpCircle className="w-4 h-4 text-emerald-700" />
-              <span>Bakiye Çek (IBAN)</span>
-            </button>
-          )}
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+            {(user?.role === 'EMPLOYER' || user?.role === 'ADMIN') && (
+              <button
+                type="button"
+                className="h-10 px-4 rounded-md bg-[#0D6847] hover:bg-[#095237] text-white text-xs font-semibold inline-flex items-center justify-center gap-2 transition-colors cursor-pointer w-full sm:w-auto"
+                onClick={() => setDepositOpen(true)}
+              >
+                <ArrowDownCircle className="w-4 h-4 shrink-0" />
+                <span>Para Yatır (Havuz Bakiye)</span>
+              </button>
+            )}
+            {(user?.role === 'WORKER' || user?.role === 'ADMIN') && (
+              <button
+                type="button"
+                className="h-10 px-4 rounded-md bg-[#141615] hover:bg-[#272B29] dark:bg-[#F2F1ED] dark:hover:bg-white text-white dark:text-[#141615] text-xs font-semibold inline-flex items-center justify-center gap-2 transition-colors cursor-pointer w-full sm:w-auto"
+                onClick={() => setWithdrawOpen(true)}
+              >
+                <ArrowUpCircle className="w-4 h-4 shrink-0" />
+                <span>Bakiye Çek (IBAN)</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* İşlem Geçmişi - 3D Spatial */}
-      <div className="card-3d-spatial rounded-3xl border border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 shadow-sm overflow-hidden">
-        <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-white/10">
-          <div className="flex items-center justify-between flex-wrap gap-2.5">
-            <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100">İşlem Geçmişi</h2>
-            <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1">
-              {['ALL', 'DEPOSIT', 'WITHDRAW', 'JOB_PAYMENT', 'REFUND'].map((t) => {
-                const isActive = filterType === t
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setFilterType(t)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
-                      isActive
-                        ? 'btn-3d-emerald btn-3d-pill'
-                        : 'btn-3d-white btn-3d-pill text-slate-700 dark:text-slate-200'
-                    }`}
-                  >
-                    {t === 'ALL' ? 'Tümü' : typeLabels[t]?.label || t}
-                  </button>
-                )
-              })}
-            </div>
+      {/* İşlem Geçmişi Cetveli */}
+      <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg overflow-hidden">
+        <div className="px-4 sm:px-5 py-3.5 bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="text-sm sm:text-base font-bold text-[#141615] dark:text-white">
+            Hesap Hareketleri Cetveli
+          </h2>
+          <div className="flex flex-wrap gap-1.5">
+            {['ALL', 'DEPOSIT', 'WITHDRAW', 'JOB_PAYMENT', 'REFUND'].map((t) => {
+              const isActive = filterType === t
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setFilterType(t)}
+                  className={`h-8 px-3 rounded-md text-xs font-semibold border transition-colors cursor-pointer ${
+                    isActive
+                      ? 'bg-[#141615] text-white border-[#141615] dark:bg-[#F2F1ED] dark:text-[#141615] dark:border-[#F2F1ED]'
+                      : 'bg-white dark:bg-[#141716] text-[#5C615E] dark:text-[#949B97] border-[#E2E0D8] dark:border-[#252B28] hover:border-[#0D6847]'
+                  }`}
+                >
+                  {t === 'ALL' ? 'Tümü' : typeLabels[t]?.label || t}
+                </button>
+              )
+            })}
           </div>
         </div>
-        <div className="p-0">
+
+        <div>
           {transactions.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 dark:text-slate-400">
-              <WalletIcon className="w-12 h-12 mx-auto mb-2 opacity-30" />
-              <p className="font-medium">Henüz işlem yok</p>
-              <p className="text-xs mt-1">İşlemleriniz burada görünecek</p>
+            <div className="text-center py-12 text-[#5C615E] dark:text-[#949B97] space-y-1.5">
+              <WalletIcon className="w-8 h-8 mx-auto opacity-40" />
+              <p className="text-sm font-bold text-[#141615] dark:text-white">Henüz işlem kaydı yok</p>
+              <p className="text-xs">Yevmiye ve bakiye transferleriniz burada listelenir.</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100 dark:divide-white/10">
+            <div className="divide-y divide-[#ECEAE4] dark:divide-[#222624]">
               {transactions.map((tx) => {
-                const typeInfo = typeLabels[tx.type] || { label: tx.type, icon: WalletIcon, color: 'text-gray-600 dark:text-slate-400' }
+                const typeInfo = typeLabels[tx.type] || {
+                  label: tx.type,
+                  icon: WalletIcon,
+                  color: 'text-[#5C615E]',
+                }
                 const statusInfo2 = statusInfo[tx.status] || statusInfo.COMPLETED
                 const Icon = typeInfo.icon
                 const isPositive = tx.amount > 0
                 return (
-                  <div key={tx.id} className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 ${
-                      isPositive ? 'bg-emerald-50 dark:bg-emerald-950/60' : 'bg-red-50 dark:bg-red-950/60'
-                    }`}>
-                      <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${typeInfo.color}`} />
+                  <div
+                    key={tx.id}
+                    className="flex items-center gap-3 p-4 hover:bg-[#F9F8F6] dark:hover:bg-[#181C1A] transition-colors"
+                  >
+                    <div
+                      className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 border ${
+                        isPositive
+                          ? 'bg-[#EAF3EE] text-[#0D6847] border-[#C5DDD0] dark:bg-[#162921] dark:text-[#5CD6A5] dark:border-[#244738]'
+                          : 'bg-[#FBEEE9] text-[#B43B21] border-[#EFC7BD] dark:bg-[#2A1915] dark:text-[#F28B73] dark:border-[#4A251D]'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-slate-100 truncate">{tx.description}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <Badge variant="outline" className={`text-[9px] sm:text-[10px] ${statusInfo2.color}`}>
+                      <p className="text-xs sm:text-sm font-bold text-[#141615] dark:text-white truncate">
+                        {tx.description}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded-sm bg-[#F0EFEA] dark:bg-[#1E2421] text-[#454A47] dark:text-[#B8C0BC] border border-[#E2E0D8] dark:border-[#2C3330]">
                           {statusInfo2.label}
-                        </Badge>
-                        <span className="text-[10px] sm:text-xs text-gray-500">
-                          {new Date(tx.createdAt).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <span className="font-mono text-[11px] text-[#5C615E] dark:text-[#949B97]">
+                          {new Date(tx.createdAt).toLocaleDateString('tr-TR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
                         </span>
                       </div>
                     </div>
-                    <div className={`text-right shrink-0 ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
-                      <p className="text-sm sm:font-semibold font-bold">
-                        {isPositive ? '+' : ''}{tx.amount.toLocaleString('tr-TR')}₺
+                    <div className="text-right shrink-0">
+                      <p
+                        className={`font-mono text-sm font-bold ${
+                          isPositive
+                            ? 'text-[#0D6847] dark:text-[#5CD6A5]'
+                            : 'text-[#C84B31] dark:text-[#F28B73]'
+                        }`}
+                      >
+                        {isPositive ? '+' : ''}
+                        {tx.amount.toLocaleString('tr-TR')} ₺
                       </p>
-                      <p className="text-[10px] sm:text-xs text-gray-500">{tx.balanceAfter.toLocaleString('tr-TR')}₺</p>
+                      <p className="font-mono text-[11px] text-[#5C615E] dark:text-[#949B97]">
+                        Bakiye: {tx.balanceAfter.toLocaleString('tr-TR')} ₺
+                      </p>
                     </div>
                   </div>
                 )
@@ -303,22 +332,22 @@ export default function WalletScreen() {
         </div>
       </div>
 
-      {/* Para Yatırma Dialog — Ultra Modern Kart & Banka Seçimli */}
+      {/* Para Yatırma Dialog — Mimari Ledger Dekont & Banka Seçimli */}
       <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
-        <DialogContent className="max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6 dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-gray-900 dark:text-slate-100">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                <ArrowDownCircle className="w-5 h-5" />
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md sm:max-w-lg max-h-[88dvh] overflow-y-auto p-3.5 sm:p-6 rounded-md bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] text-[#141716] dark:text-[#F0F2F1]">
+          <DialogHeader className="text-left">
+            <DialogTitle className="flex items-center gap-2.5 text-base sm:text-lg font-semibold text-[#141716] dark:text-[#F0F2F1]">
+              <div className="w-8 h-8 rounded-md bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] flex items-center justify-center shrink-0">
+                <ArrowDownCircle className="w-4 h-4" />
               </div>
-              Hesabına Para Yatır
+              <span>Hesabına Para Yatır</span>
             </DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
+            <DialogDescription className="text-xs text-[#535A56] dark:text-[#9DA6A0]">
               Kendi banka hesabınızdan EFT/Havale ile para yatırın. Bilgilerinizi girip transferi yaptıktan sonra bakiyeniz hesabınıza yansıtılacaktır.
             </DialogDescription>
           </DialogHeader>
 
-          {/* Ultra Modern Kart Önizlemesi */}
+          {/* Dekont Önizlemesi */}
           <div className="py-1">
             <ModernBankCard
               cardType="DEPOSIT"
@@ -330,27 +359,30 @@ export default function WalletScreen() {
             />
           </div>
 
-          <div className="space-y-3.5 py-1">
-            <div>
-              <Label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Tutar (₺) — Min 50₺ *</Label>
-              <Input
-                type="number"
-                value={depositAmount}
-                onChange={(e) => setDepositAmount(e.target.value)}
-                placeholder="500"
-                min="50"
-                className="h-10 mt-1 text-sm font-semibold dark:bg-slate-800 dark:border-white/10 dark:text-white"
-              />
-            </div>
+          <div className="space-y-3 py-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Tutar (₺) — Min 50₺ *</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                  placeholder="500"
+                  min="50"
+                  className="h-10 mt-1 text-sm font-mono font-semibold rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
+                />
+              </div>
 
-            <div>
-              <Label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Ad Soyad (Gönderen) *</Label>
-              <Input
-                value={depositName}
-                onChange={(e) => setDepositName(e.target.value)}
-                placeholder="Ahmet Yılmaz"
-                className="h-10 mt-1 text-sm dark:bg-slate-800 dark:border-white/10 dark:text-white"
-              />
+              <div>
+                <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Ad Soyad (Gönderen) *</Label>
+                <Input
+                  value={depositName}
+                  onChange={(e) => setDepositName(e.target.value)}
+                  placeholder="Ahmet Yılmaz"
+                  className="h-10 mt-1 text-sm rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
+                />
+              </div>
             </div>
 
             {/* Banka Seçici (Logolu ve Tikli) */}
@@ -369,26 +401,25 @@ export default function WalletScreen() {
             />
 
             {/* Alıcı Şirket Hesap Bilgisi */}
-            <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200/80 dark:border-blue-800/50 rounded-xl text-xs text-blue-900 dark:text-blue-200 space-y-1.5 shadow-2xs">
-              <div className="font-semibold text-blue-950 dark:text-blue-300 flex items-center gap-1.5">
-                <span>📌</span>
-                <span>Havale Yapılacak Şirket Hesabı</span>
+            <div className="p-3 bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] rounded-md text-xs space-y-2">
+              <div className="font-mono text-[10px] uppercase tracking-wider font-semibold text-[#0D6847] dark:text-[#27A878]">
+                HAVALE YAPILACAK ŞİRKET HESABI
               </div>
-              <div className="bg-white/80 dark:bg-slate-850/90 p-2.5 rounded-lg border border-blue-100 dark:border-white/10 font-mono text-xs space-y-1">
-                <div className="text-gray-600 dark:text-slate-400 text-[11px] font-sans">
-                  Alıcı Ünvanı: <strong className="text-gray-900 dark:text-slate-100 font-semibold">Günübirlik İş Bul A.Ş.</strong>
+              <div className="bg-white dark:bg-[#141716] p-2.5 sm:p-3 rounded border border-[#E2E0D8] dark:border-[#252B28] space-y-1.5">
+                <div className="text-[#535A56] dark:text-[#9DA6A0] text-[11px]">
+                  Alıcı Ünvanı: <strong className="text-[#141716] dark:text-[#F0F2F1] font-semibold">Günübirlik İş Bul A.Ş.</strong>
                 </div>
-                <div className="text-gray-600 dark:text-slate-400 text-[11px] font-sans">
-                  IBAN: <strong className="text-blue-900 dark:text-blue-400 font-bold select-all tracking-wider">TR99 0001 2345 6789 0123 4567 89</strong>
+                <div className="text-[#535A56] dark:text-[#9DA6A0] text-[11px] break-all">
+                  IBAN: <strong className="font-mono text-[#0D6847] dark:text-[#27A878] font-bold select-all tracking-wider">TR99 0001 2345 6789 0123 4567 89</strong>
                 </div>
-                <div className="text-amber-800 dark:text-amber-400 text-[10px] font-sans">
-                  💡 Açıklama kısmına sistemde kayıtlı cep telefon numaranızı yazınız.
+                <div className="text-[#535A56] dark:text-[#9DA6A0] text-[11px] pt-1 border-t border-[#E2E0D8] dark:border-[#252B28]">
+                  Açıklama kısmına sistemde kayıtlı cep telefon numaranızı yazınız.
                 </div>
               </div>
             </div>
 
             <Button
-              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-sm transition"
+              className="w-full h-11 bg-[#0D6847] hover:bg-[#0A5238] text-white font-semibold text-sm rounded-md transition"
               onClick={handleDeposit}
               disabled={actionLoading}
             >
@@ -399,23 +430,25 @@ export default function WalletScreen() {
         </DialogContent>
       </Dialog>
 
-      {/* Para Çekme Dialog — Ultra Modern Kart & Banka Seçimli */}
+      {/* Para Çekme Dialog — Mimari Ledger Dekont & Banka Seçimli */}
       <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
-        <DialogContent className="max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6 dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-gray-900 dark:text-slate-100">
-              <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-                <ArrowUpCircle className="w-5 h-5" />
+        <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md sm:max-w-lg max-h-[88dvh] overflow-y-auto p-3.5 sm:p-6 rounded-md bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] text-[#141716] dark:text-[#F0F2F1]">
+          <DialogHeader className="text-left">
+            <DialogTitle className="flex items-center gap-2.5 text-base sm:text-lg font-semibold text-[#141716] dark:text-[#F0F2F1]">
+              <div className="w-8 h-8 rounded-md bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] flex items-center justify-center shrink-0">
+                <ArrowUpCircle className="w-4 h-4" />
               </div>
-              Para Çek (IBAN&apos;a)
+              <span>Para Çek (IBAN&apos;a)</span>
             </DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">
+            <DialogDescription className="text-xs text-[#535A56] dark:text-[#9DA6A0]">
               Cüzdan bakiyenizi kendi banka hesabınıza çekin. Talebiniz onaylandıktan sonra paranız hesabınıza aktarılır.
-              <br />Mevcut Bakiye: <strong className="text-emerald-700 dark:text-emerald-400 font-semibold">{balance.toLocaleString('tr-TR')}₺</strong>
+              <span className="block mt-1 font-mono text-[11px]">
+                Mevcut Bakiye: <strong className="text-[#0D6847] dark:text-[#27A878] font-bold">₺{balance.toLocaleString('tr-TR')}</strong>
+              </span>
             </DialogDescription>
           </DialogHeader>
 
-          {/* Ultra Modern Kart Önizlemesi */}
+          {/* Dekont Önizlemesi */}
           <div className="py-1">
             <ModernBankCard
               cardType="WITHDRAW"
@@ -427,28 +460,31 @@ export default function WalletScreen() {
             />
           </div>
 
-          <div className="space-y-3.5 py-1">
-            <div>
-              <Label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Tutar (₺) — Min 50₺ *</Label>
-              <Input
-                type="number"
-                value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value)}
-                placeholder="500"
-                min="50"
-                max={balance}
-                className="h-10 mt-1 text-sm font-semibold dark:bg-slate-800 dark:border-white/10 dark:text-white"
-              />
-            </div>
+          <div className="space-y-3 py-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Tutar (₺) — Min 50₺ *</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  placeholder="500"
+                  min="50"
+                  max={balance}
+                  className="h-10 mt-1 text-sm font-mono font-semibold rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
+                />
+              </div>
 
-            <div>
-              <Label className="text-xs font-semibold text-gray-700 dark:text-slate-300">Ad Soyad (Alıcı) *</Label>
-              <Input
-                value={withdrawName}
-                onChange={(e) => setWithdrawName(e.target.value)}
-                placeholder="Ahmet Yılmaz"
-                className="h-10 mt-1 text-sm dark:bg-slate-800 dark:border-white/10 dark:text-white"
-              />
+              <div>
+                <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Ad Soyad (Alıcı) *</Label>
+                <Input
+                  value={withdrawName}
+                  onChange={(e) => setWithdrawName(e.target.value)}
+                  placeholder="Ahmet Yılmaz"
+                  className="h-10 mt-1 text-sm rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
+                />
+              </div>
             </div>
 
             {/* Banka Seçici (Logolu ve Tikli) */}
@@ -466,18 +502,17 @@ export default function WalletScreen() {
               label="Alıcı IBAN (Paranın Yatacağı Hesap)"
             />
 
-            <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/50 rounded-xl text-xs text-amber-800 dark:text-amber-200 space-y-1 shadow-2xs">
-              <div className="font-semibold text-amber-950 dark:text-amber-300 flex items-center gap-1">
-                <span>⏳</span>
-                <span>İşlem Süreci</span>
+            <div className="p-3 bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] rounded-md text-xs space-y-1">
+              <div className="font-mono text-[10px] uppercase tracking-wider font-semibold text-[#0D6847] dark:text-[#27A878]">
+                İŞLEM SÜRECİ
               </div>
-              <p className="text-[11px] text-amber-900 dark:text-amber-200 leading-relaxed">
-                Talebiniz alındıktan sonra <strong>3-5 iş günü</strong> içinde incelenir ve IBAN hesabınıza gönderilir. Onay süreci tamamlanana kadar çekilen tutar bakiyenizden düşülür.
+              <p className="text-[11px] text-[#535A56] dark:text-[#9DA6A0] leading-relaxed">
+                Talebiniz alındıktan sonra <strong className="text-[#141716] dark:text-[#F0F2F1]">3-5 iş günü</strong> içinde incelenir ve IBAN hesabınıza gönderilir. Onay süreci tamamlanana kadar çekilen tutar bakiyenizden düşülür.
               </p>
             </div>
 
             <Button
-              className="w-full h-11 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl shadow-sm transition"
+              className="w-full h-11 bg-[#0D6847] hover:bg-[#0A5238] text-white font-semibold text-sm rounded-md transition"
               onClick={handleWithdraw}
               disabled={actionLoading}
             >

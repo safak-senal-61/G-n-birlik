@@ -6,6 +6,7 @@ export interface BlogPost {
   date: string
   readingTime: string
   category: string
+  coverImage?: string
   tags: string[]
   author: {
     name: string
@@ -23,6 +24,7 @@ export const BLOG_POSTS: BlogPost[] = [
     date: '2026-10-15',
     readingTime: '6 dk okuma',
     category: 'Yevmiye Rehberi',
+    coverImage: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80',
     tags: ['yevmiye', 'günlük iş', 'garson yevmiyesi', 'inşaat yevmiyesi', 'fiyatlar'],
     author: {
       name: 'Günübirlik Piyasa Araştırma Ekibi',
@@ -68,6 +70,7 @@ Aşağıdaki veriler, Günübirlik platformunda son 6 ayda yayınlanan 10.000'de
     date: '2026-10-18',
     readingTime: '5 dk okuma',
     category: 'Öğrenci Rehberi',
+    coverImage: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80',
     tags: ['öğrenci işleri', 'ek gelir', 'part-time', 'hafta sonu iş', 'üniversite'],
     author: {
       name: 'Merve Demir',
@@ -102,6 +105,7 @@ Yalnızca dersinizin olmadığı günlerde veya hafta sonları çalışarak, bur
     date: '2026-10-19',
     readingTime: '4 dk okuma',
     category: 'İşveren Rehberi',
+    coverImage: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
     tags: ['acil eleman', 'işveren', 'restoran personeli', 'günübirlik işçi', 'yevmiye'],
     author: {
       name: 'Kaan Tekin',
@@ -130,6 +134,7 @@ Geleneksel ilan sitelerinde eleman ilanı vermek ve başvuru beklemek günler s�
     date: '2026-10-20',
     readingTime: '5 dk okuma',
     category: 'Hukuk & Güvenlik',
+    coverImage: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80',
     tags: ['emanet kasa', 'yasal haklar', 'işçi hakları', 'güvenli ödeme', 'sigorta'],
     author: {
       name: 'Av. Zeynep Kaya',
@@ -160,6 +165,7 @@ Bu sistem hem çalışanın emeğini garanti altına alır hem de işverenin par
     date: '2026-10-21',
     readingTime: '4 dk okuma',
     category: 'Kariyer & Analiz',
+    coverImage: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=800&q=80',
     tags: ['part-time', 'yevmiye', 'karşılaştırma', 'ek kazanç', 'serbest çalışma'],
     author: {
       name: 'Günübirlik Analiz Masası',

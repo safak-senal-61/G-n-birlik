@@ -450,85 +450,118 @@ export default function ProfileScreen() {
   const displayName = isEmployer && user.companyName ? user.companyName : user.fullName
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-8 space-y-6 animate-in fade-in duration-300">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
       {/* ============================================================== */}
-      {/* 1. HERO BAŞLIK & PROFİL KARTI */}
+      {/* 1. MİMARİ PROFİL KÜNYE KARTI */}
       {/* ============================================================== */}
-      <div className="card-3d-spatial relative rounded-3xl overflow-hidden border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900/90 shadow-xl shadow-slate-200/40 dark:shadow-black/60 transition-all">
-        {/* Banner Arka Planı (Modern Mesh & Gradient Glow) */}
-        <div className="h-36 sm:h-48 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 relative overflow-hidden">
-          {/* Soyut Işık Halkaları */}
-          <div className="absolute -top-16 -right-16 w-64 h-64 bg-white/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 -left-12 w-48 h-48 bg-emerald-400/20 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-15" />
-
-          {/* Banner Üstü Hızlı Aksiyonlar */}
-          <div className="absolute top-3.5 sm:top-4 inset-x-3.5 sm:inset-x-6 flex items-center justify-between z-10">
-            <button
-              onClick={() => go('wallet')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/25 hover:bg-black/40 text-white text-xs font-medium backdrop-blur-md border border-white/20 transition-all hover:scale-105"
-            >
-              <Wallet className="w-3.5 h-3.5 text-emerald-300" />
-              <span>Cüzdanıma Git</span>
-            </button>
-
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 text-white text-xs font-semibold backdrop-blur-md border border-white/30 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
-              <span>{isWorker ? 'İş Arayan Profili' : isEmployer ? 'İşveren Profili' : 'Admin Profili'}</span>
-            </div>
+      <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg overflow-hidden">
+        {/* Üst Künye Şeridi */}
+        <div className="px-4 sm:px-6 py-3 bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#0D6847] dark:text-[#5CD6A5]">
+              {isWorker ? 'ÇALIŞAN SİCİL KARTI' : isEmployer ? 'İŞVEREN HESAP KÜNYESİ' : 'YÖNETİCİ KÜNYESİ'}
+            </span>
           </div>
+
+          <button
+            type="button"
+            onClick={() => go('wallet')}
+            className="h-8 px-3 rounded-md bg-white dark:bg-[#141716] border border-[#D6D3C9] dark:border-[#2B322E] hover:border-[#0D6847] text-xs font-semibold text-[#141615] dark:text-[#F2F1ED] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Wallet className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#5CD6A5]" />
+            <span>Cüzdanıma Git</span>
+          </button>
         </div>
 
         {/* Profil İçeriği & Avatar Alanı */}
-        <div className="px-4 sm:px-8 pb-6 sm:pb-8 pt-0">
-          <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4 -mt-16 sm:-mt-20">
-            {/* Avatar & Canlı Durum */}
-            <div className="relative group">
-              <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-3xl p-1 bg-white dark:bg-slate-900 shadow-2xl ring-4 ring-slate-100 dark:ring-slate-800">
-                <Avatar className="w-full h-full rounded-2xl overflow-hidden bg-gradient-to-tr from-emerald-500 to-teal-400">
-                  {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={displayName} className="w-full h-full object-cover" />
-                  ) : (
-                    <AvatarFallback className="bg-gradient-to-tr from-emerald-600 to-teal-500 text-white text-3xl sm:text-4xl font-black">
-                      {initials(displayName)}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
+        <div className="p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+              {/* Avatar */}
+              <div className="relative shrink-0">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg p-0.5 bg-[#F0EFEA] dark:bg-[#1E2421] border border-[#D8D5CC] dark:border-[#262C29]">
+                  <Avatar className="w-full h-full rounded-md overflow-hidden">
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                    ) : (
+                      <AvatarFallback className="rounded-md bg-[#0D6847] text-white font-mono text-2xl font-bold">
+                        {initials(displayName)}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
 
-                {/* Fotoğraf Değiştirme Butonu */}
-                <label className="absolute bottom-1 right-1 p-2 rounded-xl bg-slate-900/90 hover:bg-emerald-600 text-white shadow-lg cursor-pointer transition-all duration-200 transform hover:scale-110 border-2 border-white dark:border-slate-800">
-                  {avatarLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Camera className="w-4 h-4" />
-                  )}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
-                    disabled={avatarLoading}
-                  />
-                </label>
+                  <label className="absolute -bottom-1.5 -right-1.5 p-1.5 rounded-md bg-[#141615] hover:bg-[#0D6847] text-white cursor-pointer border border-white dark:border-[#252B28] transition-colors">
+                    {avatarLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Camera className="w-3.5 h-3.5" />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                      disabled={avatarLoading}
+                    />
+                  </label>
+                </div>
               </div>
 
-              {/* İş Arama / Canlı Durum Noktası */}
-              {isWorker && (
-                <div
-                  className={`absolute top-0 right-0 w-5 h-5 rounded-full border-2 border-white dark:border-slate-900 shadow-md flex items-center justify-center ${
-                    user.isAvailable ? 'bg-emerald-500' : 'bg-slate-400'
-                  }`}
-                  title={user.isAvailable ? 'İş tekliflerine açık' : 'Şu anda meşgul'}
-                >
-                  <span className={`w-2 h-2 rounded-full bg-white ${user.isAvailable ? 'animate-ping' : ''}`} />
+              {/* İsim & Özet */}
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <h1 className="text-xl sm:text-2xl font-bold text-[#141615] dark:text-white tracking-tight">
+                    {displayName}
+                  </h1>
+
+                  {user.isVerified && (
+                    <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold px-2 py-0.5 rounded-sm bg-[#EAF3EE] text-[#0D6847] border border-[#C5DDD0] dark:bg-[#162921] dark:text-[#5CD6A5] dark:border-[#244738]">
+                      <BadgeCheck className="w-3 h-3" />
+                      <span>ONAYLI</span>
+                    </span>
+                  )}
+
+                  {isWorker && user.isAvailable && (
+                    <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold px-2 py-0.5 rounded-sm bg-[#EAF3EE] text-[#0D6847] border border-[#C5DDD0] dark:bg-[#162921] dark:text-[#5CD6A5] dark:border-[#244738]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#0D6847] dark:bg-[#5CD6A5]" />
+                      <span>VARDİYAYA AÇIK</span>
+                    </span>
+                  )}
                 </div>
-              )}
+
+                {isEmployer && user.fullName && user.companyName && (
+                  <p className="text-xs text-[#5C615E] dark:text-[#949B97] flex items-center justify-center sm:justify-start gap-1">
+                    <Building2 className="w-3.5 h-3.5" />
+                    Yetkili: {user.fullName}
+                  </p>
+                )}
+
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-0.5 text-xs text-[#5C615E] dark:text-[#949B97]">
+                  <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold px-2 py-0.5 rounded-sm bg-[#F0EFEA] dark:bg-[#1E2421] text-[#141615] dark:text-[#F2F1ED] border border-[#E2E0D8] dark:border-[#2C3330]">
+                    <Star className="w-3 h-3 fill-[#B5830E] text-[#B5830E]" />
+                    <span>{user.ratingAvg ? Number(user.ratingAvg).toFixed(1) : '5.0'}</span>
+                    <span className="opacity-75">({user.ratingCount || 0})</span>
+                  </span>
+
+                  {(user.city || user.district) && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-[#F0EFEA] dark:bg-[#1E2421] border border-[#E2E0D8] dark:border-[#2C3330]">
+                      <MapPin className="w-3 h-3 text-[#0D6847] dark:text-[#5CD6A5]" />
+                      <span>{[user.district, user.city].filter(Boolean).join(', ')}</span>
+                    </span>
+                  )}
+
+                  <span className="inline-flex items-center gap-1 font-mono text-[11px]">
+                    <Calendar className="w-3 h-3" />
+                    <span>Kayıt: {formatDate(user.createdAt)}</span>
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* Sağ Buton Grubu */}
-            <div className="flex items-center gap-2.5 self-center sm:self-end w-full sm:w-auto">
-              <Button
-                variant={editing ? 'secondary' : 'default'}
+            {/* Düzenle Butonu */}
+            <div className="flex items-center justify-center sm:justify-end shrink-0">
+              <button
+                type="button"
                 onClick={() => {
                   if (editing) {
                     setEditing(false)
@@ -538,100 +571,49 @@ export default function ProfileScreen() {
                     setActiveTab('edit')
                   }
                 }}
-                className={`flex-1 sm:flex-initial h-10 px-5 rounded-xl font-medium text-sm transition-all shadow-sm ${
+                className={`h-10 px-4 rounded-md text-xs font-semibold inline-flex items-center gap-2 transition-colors cursor-pointer ${
                   editing
-                    ? 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200'
-                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25'
+                    ? 'bg-white dark:bg-[#141716] border border-[#D6D3C9] dark:border-[#2B322E] text-[#141615] dark:text-[#F2F1ED]'
+                    : 'bg-[#0D6847] hover:bg-[#095237] text-white'
                 }`}
               >
-                <Edit3 className="w-4 h-4 mr-2" />
-                {editing ? 'Önizlemeye Dön' : 'Profili Düzenle'}
-              </Button>
-            </div>
-          </div>
-
-          {/* İsim ve Özet Bilgiler */}
-          <div className="mt-4 sm:mt-5 text-center sm:text-left">
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-                {displayName}
-              </h1>
-
-              {user.isVerified && (
-                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 text-xs font-semibold shadow-xs">
-                  <BadgeCheck className="w-3.5 h-3.5 fill-blue-500 text-white" />
-                  <span>Onaylı Profil</span>
-                </div>
-              )}
-
-              {isWorker && user.isAvailable && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 text-xs font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  İş Tekliflerine Açık
-                </span>
-              )}
-            </div>
-
-            {isEmployer && user.fullName && user.companyName && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium flex items-center justify-center sm:justify-start gap-1">
-                <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                Yetkili: {user.fullName}
-              </p>
-            )}
-
-            {/* Rozet ve Sinyal Şeritleri */}
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-4 mt-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-              <div className="inline-flex items-center gap-1.5 bg-amber-50/80 dark:bg-amber-950/50 border border-amber-200/70 dark:border-amber-800/60 px-2.5 py-1 rounded-xl font-semibold text-amber-800 dark:text-amber-300">
-                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                <span>{user.ratingAvg ? Number(user.ratingAvg).toFixed(1) : '5.0'}</span>
-                <span className="text-amber-600 dark:text-amber-400 font-normal">({user.ratingCount || 0} değerlendirme)</span>
-              </div>
-
-              {(user.city || user.district) && (
-                <div className="inline-flex items-center gap-1 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-white/10 px-2.5 py-1 rounded-xl text-slate-700 dark:text-slate-300">
-                  <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>{[user.district, user.city].filter(Boolean).join(', ')}</span>
-                </div>
-              )}
-
-              <div className="inline-flex items-center gap-1 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-white/10 px-2.5 py-1 rounded-xl text-slate-500 dark:text-slate-400">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span>Katılım: {formatDate(user.createdAt)}</span>
-              </div>
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>{editing ? 'Önizlemeye Dön' : 'Profili Düzenle'}</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* ============================================================== */}
-      {/* 2. İSTATİSTİK KARTLARI (BENTO GRID) */}
+      {/* 2. İSTATİSTİK KARTLARI */}
       {/* ============================================================== */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {isWorker ? (
           <>
             <StatCard
               label="Toplam Başvuru"
               value={stats.total || 0}
               icon={Briefcase}
-              color="bg-blue-500/10 text-blue-600 border-blue-200/70"
+              color="text-[#0D6847] dark:text-[#5CD6A5]"
             />
             <StatCard
               label="Onaylanan İş"
               value={stats.accepted || 0}
               icon={Award}
-              color="bg-teal-500/10 text-teal-600 border-teal-200/70"
+              color="text-[#0D6847] dark:text-[#5CD6A5]"
             />
             <StatCard
               label="Tamamlanan"
               value={stats.completed || 0}
               icon={TrendingUp}
-              color="bg-emerald-500/10 text-emerald-600 border-emerald-200/70"
+              color="text-[#0D6847] dark:text-[#5CD6A5]"
             />
             <StatCard
-              label="Deneyim Yılı"
+              label="Deneyim Süresi"
               value={user.experienceYears ? `${user.experienceYears} Yıl` : '1 Yıl'}
               icon={Sparkles}
-              color="bg-purple-500/10 text-purple-600 border-purple-200/70"
+              color="text-[#0D6847] dark:text-[#5CD6A5]"
             />
           </>
         ) : (
@@ -640,32 +622,32 @@ export default function ProfileScreen() {
               label="Toplam İlan"
               value={stats.totalJobs || 0}
               icon={Briefcase}
-              color="bg-blue-500/10 text-blue-600 border-blue-200/70"
+              color="text-[#0D6847] dark:text-[#5CD6A5]"
             />
             <StatCard
               label="Aktif İlanlar"
               value={stats.activeJobs || 0}
               icon={Clock}
-              color="bg-emerald-500/10 text-emerald-600 border-emerald-200/70"
+              color="text-[#0D6847] dark:text-[#5CD6A5]"
             />
             <StatCard
               label="Gelen Başvurular"
               value={stats.totalApplications || 0}
               icon={Award}
-              color="bg-teal-500/10 text-teal-600 border-teal-200/70"
+              color="text-[#0D6847] dark:text-[#5CD6A5]"
             />
             <StatCard
               label="İşveren Puanı"
               value={user.ratingAvg ? `${Number(user.ratingAvg).toFixed(1)} ★` : '5.0 ★'}
               icon={Star}
-              color="bg-amber-500/10 text-amber-600 border-amber-200/70"
+              color="text-[#0D6847] dark:text-[#5CD6A5]"
             />
           </>
         )}
       </div>
 
       {/* ============================================================== */}
-      {/* 3. MODERN SEKMELER (TABS) */}
+      {/* 3. SEKMELER (TABS) */}
       {/* ============================================================== */}
       <Tabs
         value={editing ? 'edit' : activeTab}
@@ -679,29 +661,28 @@ export default function ProfileScreen() {
         }}
         className="w-full"
       >
-        {/* Modern Segmented Navigation Bar */}
-        <div className="bg-slate-100/90 dark:bg-slate-900/80 p-1.5 rounded-2xl border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-xs">
-          <TabsList className="w-full grid grid-cols-3 bg-transparent h-auto p-0 gap-1">
+        <div className="bg-white dark:bg-[#141716] p-1 rounded-md border border-[#E2E0D8] dark:border-[#252B28] overflow-hidden">
+          <TabsList className="!grid !w-full grid-cols-3 bg-transparent h-auto p-0 gap-1">
             <TabsTrigger
               value="info"
-              className="py-2.5 rounded-xl font-semibold text-xs sm:text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-emerald-700 dark:data-[state=active]:text-emerald-400 data-[state=active]:shadow-sm text-slate-600 dark:text-slate-300 transition-all"
+              className="min-w-0 w-full px-1.5 sm:px-3 py-2 rounded-sm font-semibold text-[11px] sm:text-sm data-[state=active]:bg-[#141615] data-[state=active]:text-white dark:data-[state=active]:bg-[#F2F1ED] dark:data-[state=active]:text-[#141615] text-[#5C615E] dark:text-[#949B97] transition-colors flex items-center justify-center gap-1 sm:gap-1.5"
             >
-              <User className="w-4 h-4 mr-2 text-slate-500 dark:text-slate-400" />
-              Genel Bakış
+              <User className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Genel Bakış</span>
             </TabsTrigger>
             <TabsTrigger
               value="edit"
-              className="py-2.5 rounded-xl font-semibold text-xs sm:text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-emerald-700 dark:data-[state=active]:text-emerald-400 data-[state=active]:shadow-sm text-slate-600 dark:text-slate-300 transition-all"
+              className="min-w-0 w-full px-1.5 sm:px-3 py-2 rounded-sm font-semibold text-[11px] sm:text-sm data-[state=active]:bg-[#141615] data-[state=active]:text-white dark:data-[state=active]:bg-[#F2F1ED] dark:data-[state=active]:text-[#141615] text-[#5C615E] dark:text-[#949B97] transition-colors flex items-center justify-center gap-1 sm:gap-1.5"
             >
-              <Edit3 className="w-4 h-4 mr-2 text-slate-500 dark:text-slate-400" />
-              Düzenle
+              <Edit3 className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Düzenle</span>
             </TabsTrigger>
             <TabsTrigger
               value="security"
-              className="py-2.5 rounded-xl font-semibold text-xs sm:text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-emerald-700 dark:data-[state=active]:text-emerald-400 data-[state=active]:shadow-sm text-slate-600 dark:text-slate-300 transition-all"
+              className="min-w-0 w-full px-1.5 sm:px-3 py-2 rounded-sm font-semibold text-[11px] sm:text-sm data-[state=active]:bg-[#141615] data-[state=active]:text-white dark:data-[state=active]:bg-[#F2F1ED] dark:data-[state=active]:text-[#141615] text-[#5C615E] dark:text-[#949B97] transition-colors flex items-center justify-center gap-1 sm:gap-1.5"
             >
-              <ShieldCheck className="w-4 h-4 mr-2 text-slate-500 dark:text-slate-400" />
-              Güvenlik & 2FA
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Güvenlik & 2FA</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -712,34 +693,37 @@ export default function ProfileScreen() {
         <TabsContent value="info" className="space-y-4 mt-5">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* İletişim Bilgileri Kartı (2 Kolon) */}
-            <Card className="md:col-span-2 rounded-2xl border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 shadow-sm overflow-hidden card-3d-spatial">
-              <CardHeader className="bg-slate-50/70 dark:bg-slate-900/60 border-b border-slate-100 dark:border-white/10 py-3.5 px-5">
-                <CardTitle className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  İletişim & Lokasyon Bilgileri
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-5 space-y-3.5">
+            <div className="md:col-span-2 rounded-md border border-[#E2E0D8] dark:border-[#252B28] bg-white dark:bg-[#141716] overflow-hidden">
+              <div className="bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] py-3.5 px-5 flex items-center justify-between">
+                <div className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1] flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
+                  <span>İletişim & Lokasyon Bilgileri</span>
+                </div>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">
+                  01 / İLETİŞİM
+                </span>
+              </div>
+              <div className="p-5 space-y-3">
                 {/* E-posta Satırı */}
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-100 dark:border-white/10">
+                <div className="flex items-center justify-between p-3.5 rounded-md bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28]">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-100/60 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-md bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] flex items-center justify-center flex-shrink-0">
                       <Mail className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">E-posta Adresi</div>
-                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{user.email}</div>
+                      <div className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">E-posta Adresi</div>
+                      <div className="text-sm font-mono font-semibold text-[#141716] dark:text-[#F0F2F1] truncate">{user.email}</div>
                     </div>
                   </div>
                   {user.emailVerified ? (
-                    <Badge className="bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60 text-[10px] font-semibold flex items-center gap-1">
+                    <span className="font-mono text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] border border-[#0D6847]/25 flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" /> Doğrulandı
-                    </Badge>
+                    </span>
                   ) : (
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-7 text-xs border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700/60 dark:text-amber-300 dark:hover:bg-amber-950/50"
+                      className="h-7 text-xs rounded-md border-[#C84B31]/40 text-[#C84B31] hover:bg-[#FDF3F0] dark:hover:bg-[#C84B31]/15"
                       onClick={() => { setVerifyDialog(true); setVerifySent(false); setVerifyCode('') }}
                     >
                       Doğrula
@@ -748,54 +732,57 @@ export default function ProfileScreen() {
                 </div>
 
                 {/* Telefon Satırı */}
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-100 dark:border-white/10">
+                <div className="flex items-center justify-between p-3.5 rounded-md bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28]">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-blue-100/60 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-md bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] flex items-center justify-center flex-shrink-0">
                       <Phone className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Telefon Numarası</div>
-                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                        {user.phone || <span className="text-slate-400 dark:text-slate-500 font-normal">Belirtilmedi</span>}
+                      <div className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">Telefon Numarası</div>
+                      <div className="text-sm font-mono font-semibold text-[#141716] dark:text-[#F0F2F1]">
+                        {user.phone || <span className="text-[#535A56] dark:text-[#9DA6A0] font-sans font-normal">Belirtilmedi</span>}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Adres Satırı */}
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-100 dark:border-white/10">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100/60 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="flex items-start gap-3 p-3.5 rounded-md bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28]">
+                  <div className="w-8 h-8 rounded-md bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] flex items-center justify-center flex-shrink-0 mt-0.5">
                     <MapPin className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Açık Adres / Bölge</div>
-                    <div className="text-sm font-medium text-slate-700 dark:text-slate-300 break-words">
+                    <div className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">Açık Adres / Bölge</div>
+                    <div className="text-sm font-medium text-[#141716] dark:text-[#F0F2F1] break-words">
                       {user.address || [user.district, user.city].filter(Boolean).join(', ') || (
-                        <span className="text-slate-400 dark:text-slate-500 font-normal">Adres tanımlanmadı</span>
+                        <span className="text-[#535A56] dark:text-[#9DA6A0] font-normal">Adres tanımlanmadı</span>
                       )}
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Hızlı Bilgi & Durum Kartı (1 Kolon) */}
-            <Card className="rounded-2xl border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 shadow-sm flex flex-col justify-between overflow-hidden card-3d-spatial">
-              <CardHeader className="bg-slate-50/70 dark:bg-slate-900/60 border-b border-slate-100 dark:border-white/10 py-3.5 px-5">
-                <CardTitle className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  Hesap Durumu
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-5 space-y-4 flex-1">
+            <div className="rounded-md border border-[#E2E0D8] dark:border-[#252B28] bg-white dark:bg-[#141716] flex flex-col justify-between overflow-hidden">
+              <div className="bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] py-3.5 px-5 flex items-center justify-between">
+                <div className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1] flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
+                  <span>Hesap Durumu</span>
+                </div>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">
+                  02 / DURUM
+                </span>
+              </div>
+              <div className="p-5 space-y-3.5 flex-1">
                 {isWorker && (
-                  <div className="p-3.5 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/40">
-                    <div className="text-xs text-emerald-800 dark:text-emerald-300 font-semibold mb-1">İş Arama Modu</div>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 mb-3">
+                  <div className="p-3.5 rounded-md bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28]">
+                    <div className="font-mono text-[10px] uppercase tracking-wider text-[#0D6847] dark:text-[#27A878] font-semibold mb-1">İş Arama Modu</div>
+                    <p className="text-xs text-[#535A56] dark:text-[#9DA6A0] mb-3 leading-relaxed">
                       İş arama modunu aktif tutarak işverenlerin size yeni iş teklifleri göndermesini sağlayabilirsiniz.
                     </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                    <div className="flex items-center justify-between pt-2 border-t border-[#E2E0D8] dark:border-[#252B28]">
+                      <span className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">
                         {form.isAvailable ? 'Tekliflere Açık' : 'Şu Anda Meşgul'}
                       </span>
                       <Switch
@@ -815,9 +802,9 @@ export default function ProfileScreen() {
 
                 {/* Ücret Beklentisi Özeti */}
                 {isWorker && (
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-white/10">
-                    <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Saatlik Ücret Beklentisi</div>
-                    <div className="text-base font-bold text-emerald-700 dark:text-emerald-400 mt-0.5">
+                  <div className="p-3.5 rounded-md bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28]">
+                    <div className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">Saatlik Ücret Beklentisi</div>
+                    <div className="text-base font-mono font-bold text-[#0D6847] dark:text-[#27A878] mt-0.5">
                       {user.hourlyWageMin || user.hourlyWageMax
                         ? `₺${user.hourlyWageMin || 0} - ₺${user.hourlyWageMax || 0} / saat`
                         : 'Belirtilmedi'}
@@ -826,34 +813,34 @@ export default function ProfileScreen() {
                 )}
 
                 {isEmployer && (
-                  <div className="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/30 text-xs text-blue-900 dark:text-blue-200">
-                    <strong className="block mb-1 font-semibold">İşveren Paneli Avantajı:</strong>
-                    İlanlarınızı yayınlayıp işçi başvurularını hemen kabul edebilir, iş başlangıcında QR kod üreterek mesaiyi yönetebilirsiniz.
+                  <div className="p-3.5 rounded-md bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] text-xs text-[#535A56] dark:text-[#9DA6A0]">
+                    <strong className="block mb-1 font-semibold text-[#141716] dark:text-[#F0F2F1]">İşveren Paneli Avantajı:</strong>
+                    İlanlarınızı yayınlayıp çalışan başvurularını hemen kabul edebilir, iş başlangıcında QR kod üreterek mesaiyi yönetebilirsiniz.
                   </div>
                 )}
 
                 {/* Tema ve Görünüm Tercihi */}
-                <div className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-950/60 border border-slate-100 dark:border-white/10">
-                  <div className="text-xs text-slate-800 dark:text-slate-200 font-bold mb-1 flex items-center gap-1.5">
-                    <Sun className="w-3.5 h-3.5 text-amber-500" />
+                <div className="p-3.5 rounded-md bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28]">
+                  <div className="text-xs text-[#141716] dark:text-[#F0F2F1] font-semibold mb-1 flex items-center gap-1.5">
+                    <Sun className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#27A878]" />
                     <span>Tema ve Görünüm</span>
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2.5">
-                    Göz yormayan karanlık mod ile aydınlık mod arasında tercih yapabilirsiniz.
+                  <p className="text-[11px] text-[#535A56] dark:text-[#9DA6A0] mb-2.5">
+                    Karanlık mod ile aydınlık mod arasında tercih yapabilirsiniz.
                   </p>
                   <ThemeToggle variant="segmented" className="w-full justify-between" />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
 
           {/* Hakkında / Biyografi Kartı */}
-          <Card className="rounded-2xl border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 shadow-sm overflow-hidden transition-all card-3d-spatial">
-            <CardHeader className="bg-slate-50/70 dark:bg-slate-900/60 border-b border-slate-100 dark:border-white/10 py-3.5 px-5 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                Hakkında & Deneyim Özeti
-              </CardTitle>
+          <div className="rounded-md border border-[#E2E0D8] dark:border-[#252B28] bg-white dark:bg-[#141716] overflow-hidden">
+            <div className="bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] py-3.5 px-5 flex flex-row items-center justify-between">
+              <div className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1] flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
+                <span>Hakkında & Deneyim Özeti</span>
+              </div>
               {!editingBio ? (
                 <Button
                   variant="outline"
@@ -862,9 +849,9 @@ export default function ProfileScreen() {
                     setBioDraft(user.bio || '')
                     setEditingBio(true)
                   }}
-                  className="h-8 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60 gap-1.5"
+                  className="h-8 text-xs font-semibold rounded-md border-[#E2E0D8] dark:border-[#252B28] text-[#141716] dark:text-[#F0F2F1] hover:border-[#0D6847] gap-1.5"
                 >
-                  <Edit3 className="w-3.5 h-3.5" />
+                  <Edit3 className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#27A878]" />
                   {user.bio ? 'Düzenle' : 'Biyografi Ekle'}
                 </Button>
               ) : (
@@ -876,7 +863,7 @@ export default function ProfileScreen() {
                       setBioDraft(user.bio || '')
                       setEditingBio(false)
                     }}
-                    className="h-8 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    className="h-8 text-xs text-[#535A56] dark:text-[#9DA6A0]"
                     disabled={savingBio}
                   >
                     Vazgeç
@@ -885,19 +872,19 @@ export default function ProfileScreen() {
                     size="sm"
                     onClick={handleSaveBio}
                     disabled={savingBio}
-                    className="h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-sm"
+                    className="h-8 text-xs font-semibold rounded-md bg-[#0D6847] hover:bg-[#0A5238] text-white gap-1.5"
                   >
                     {savingBio ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                     Kaydet
                   </Button>
                 </div>
               )}
-            </CardHeader>
-            <CardContent className="p-5">
+            </div>
+            <div className="p-5">
               {editingBio ? (
                 <div className="space-y-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">
                       Biyografi & Kendinizi Tanıtın
                     </Label>
                     <Textarea
@@ -905,37 +892,36 @@ export default function ProfileScreen() {
                       value={bioDraft}
                       onChange={(e) => setBioDraft(e.target.value)}
                       placeholder="Kendinizi, geçmiş iş deneyimlerinizi, yaptığınız işleri, güçlü yönlerinizi ve çalışma prensiplerinizi anlatın..."
-                      className="rounded-xl border-slate-200 dark:border-white/10 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 text-sm leading-relaxed"
+                      className="rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1] text-sm leading-relaxed"
                       autoFocus
                     />
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
-                      <span>Detaylı açıklama profilinizin güvenilirliğini ve tercih edilme oranını artırır.</span>
+                    <div className="flex items-center justify-between text-[11px] font-mono text-[#535A56] dark:text-[#9DA6A0] pt-0.5">
+                      <span>Detaylı açıklama profilinizin tercih edilme oranını artırır.</span>
                       <span>{bioDraft.length} karakter</span>
                     </div>
                   </div>
 
                   {/* Hızlı Şablonlar */}
-                  <div className="space-y-1.5 pt-1 border-t border-slate-100 dark:border-white/10">
-                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-amber-500" />
+                  <div className="space-y-1.5 pt-2 border-t border-[#E2E0D8] dark:border-[#252B28]">
+                    <div className="font-mono text-[10px] uppercase tracking-wider font-semibold text-[#535A56] dark:text-[#9DA6A0]">
                       Hazır Şablonlar (Tek Tıkla Ekle):
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {[
                         {
-                          label: '💼 Genel Deneyim',
+                          label: 'Genel Deneyim',
                           text: 'Disiplinli, dakik ve iş sorumluluğu yüksek bir çalışanım. Verilen görevleri titizlikle yerine getiririm. Ekip çalışmasına uyumluyum.',
                         },
                         {
-                          label: '🛠️ Usta & Teknik',
+                          label: 'Usta & Teknik',
                           text: 'Yılların getirdiği saha ve ustalık deneyimimle kaliteli ve güvenilir iş teslim ederim. Gerekli teknik ve el aletlerini profesyonelce kullanırım.',
                         },
                         {
-                          label: '🍽️ Hizmet & Restoran',
+                          label: 'Hizmet & Restoran',
                           text: 'Dinamik, hızlı ve güler yüzlüyüm. Kafe, restoran ve organizasyonlarda müşteri memnuniyetini ön planda tutarak hizmet veririm.',
                         },
                         {
-                          label: '📦 Depo & Taşıma',
+                          label: 'Depo & Taşıma',
                           text: 'Fiziksel dayanıklılığı yüksek, dikkatli ve seri bir çalışanım. Yükleme, boşaltma, koli taşıma ve depo düzenleme işlerinde deneyimliyim.',
                         },
                       ].map((tpl) => (
@@ -943,7 +929,7 @@ export default function ProfileScreen() {
                           key={tpl.label}
                           type="button"
                           onClick={() => setBioDraft(tpl.text)}
-                          className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 hover:dark:bg-emerald-950/40 hover:text-emerald-700 hover:dark:text-emerald-300 hover:border-emerald-200 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 transition-colors"
+                          className="text-[11px] px-2.5 py-1 rounded-md bg-[#FBFBF9] dark:bg-[#181C1A] hover:border-[#0D6847] border border-[#E2E0D8] dark:border-[#252B28] text-[#141716] dark:text-[#F0F2F1] transition-colors"
                         >
                           {tpl.label}
                         </button>
@@ -959,7 +945,7 @@ export default function ProfileScreen() {
                         setBioDraft(user.bio || '')
                         setEditingBio(false)
                       }}
-                      className="text-xs"
+                      className="text-xs rounded-md border-[#E2E0D8] dark:border-[#252B28]"
                       disabled={savingBio}
                     >
                       İptal
@@ -968,7 +954,7 @@ export default function ProfileScreen() {
                       size="sm"
                       onClick={handleSaveBio}
                       disabled={savingBio}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold gap-1.5 shadow-sm"
+                      className="bg-[#0D6847] hover:bg-[#0A5238] text-white text-xs font-semibold rounded-md gap-1.5"
                     >
                       {savingBio ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                       Biyografiyi Kaydet
@@ -977,7 +963,7 @@ export default function ProfileScreen() {
                 </div>
               ) : user.bio ? (
                 <div className="group relative">
-                  <p className="text-slate-700 dark:text-slate-200 text-sm leading-relaxed whitespace-pre-line">
+                  <p className="text-[#141716] dark:text-[#F0F2F1] text-sm leading-relaxed whitespace-pre-line">
                     {user.bio}
                   </p>
                   <button
@@ -985,46 +971,46 @@ export default function ProfileScreen() {
                       setBioDraft(user.bio || '')
                       setEditingBio(true)
                     }}
-                    className="mt-3 text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 hover:underline"
+                    className="mt-3 text-xs text-[#0D6847] dark:text-[#27A878] font-semibold flex items-center gap-1 hover:underline"
                   >
                     <Edit3 className="w-3 h-3" /> Metni Düzenle
                   </button>
                 </div>
               ) : (
-                <div className="text-center py-7 text-slate-400 text-sm space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
-                    <FileText className="w-6 h-6" />
+                <div className="text-center py-7 text-[#535A56] dark:text-[#9DA6A0] text-sm space-y-3">
+                  <div className="w-11 h-11 rounded-md bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] flex items-center justify-center mx-auto">
+                    <FileText className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-700">Henüz bir biyografi veya deneyim özeti eklemediniz.</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Kendinizden ve deneyimlerinizden bahsederek profilinizi öne çıkarın.</p>
+                    <p className="font-semibold text-[#141716] dark:text-[#F0F2F1]">Henüz bir biyografi veya deneyim özeti eklemediniz.</p>
+                    <p className="text-xs text-[#535A56] dark:text-[#9DA6A0] mt-0.5">Kendinizden ve deneyimlerinizden bahsederek profilinizi öne çıkarın.</p>
                   </div>
                   <Button
                     onClick={() => {
                       setBioDraft('')
                       setEditingBio(true)
                     }}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-4 rounded-xl gap-1.5 shadow-sm shadow-emerald-500/20"
+                    className="bg-[#0D6847] hover:bg-[#0A5238] text-white text-xs font-semibold h-9 px-4 rounded-md gap-1.5"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Biyografi Eklemek İçin Tıklayın
                   </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Uzmanlık & Yetenekler Kartı */}
-          <Card className="rounded-2xl border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 shadow-sm overflow-hidden transition-all card-3d-spatial">
-            <CardHeader className="bg-slate-50/70 dark:bg-slate-900/60 border-b border-slate-100 dark:border-white/10 py-3.5 px-5 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <Award className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                Uzmanlık & Yetenekler
-              </CardTitle>
+          <div className="rounded-md border border-[#E2E0D8] dark:border-[#252B28] bg-white dark:bg-[#141716] overflow-hidden">
+            <div className="bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] py-3.5 px-5 flex flex-row items-center justify-between flex-wrap gap-2">
+              <div className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1] flex items-center gap-2">
+                <Award className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
+                <span>Uzmanlık & Yetenekler</span>
+              </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60 font-bold">
-                  {(editingSkills ? skillsDraft.length : (user.skills?.length || 0))} Yetenek
-                </Badge>
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] border border-[#0D6847]/25">
+                  {(editingSkills ? skillsDraft.length : (user.skills?.length || 0))} YETENEK
+                </span>
                 {!editingSkills ? (
                   <Button
                     variant="outline"
@@ -1033,9 +1019,9 @@ export default function ProfileScreen() {
                       setSkillsDraft(user.skills || [])
                       setEditingSkills(true)
                     }}
-                    className="h-8 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60 gap-1.5"
+                    className="h-8 text-xs font-semibold rounded-md border-[#E2E0D8] dark:border-[#252B28] text-[#141716] dark:text-[#F0F2F1] hover:border-[#0D6847] gap-1.5"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#27A878]" />
                     {(user.skills?.length || 0) > 0 ? 'Yetenek Ekle / Düzenle' : 'Yetenek Ekle'}
                   </Button>
                 ) : (
@@ -1047,7 +1033,7 @@ export default function ProfileScreen() {
                         setSkillsDraft(user.skills || [])
                         setEditingSkills(false)
                       }}
-                      className="h-8 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                      className="h-8 text-xs text-[#535A56] dark:text-[#9DA6A0]"
                       disabled={savingSkills}
                     >
                       Vazgeç
@@ -1056,7 +1042,7 @@ export default function ProfileScreen() {
                       size="sm"
                       onClick={handleSaveSkills}
                       disabled={savingSkills}
-                      className="h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-sm"
+                      className="h-8 text-xs font-semibold rounded-md bg-[#0D6847] hover:bg-[#0A5238] text-white gap-1.5"
                     >
                       {savingSkills ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                       Kaydet
@@ -1064,9 +1050,9 @@ export default function ProfileScreen() {
                   </div>
                 )}
               </div>
-            </CardHeader>
+            </div>
 
-            <CardContent className="p-5 space-y-4">
+            <div className="p-5 space-y-4">
               {editingSkills ? (
                 <div className="space-y-4">
                   {/* Yetenek Giriş Kutusu */}
@@ -1081,12 +1067,12 @@ export default function ProfileScreen() {
                           handleAddSkill(skillInput)
                         }
                       }}
-                      className="h-10 text-xs sm:text-sm rounded-xl border-slate-200 dark:border-white/10 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500"
+                      className="h-10 text-xs sm:text-sm rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                     />
                     <Button
                       type="button"
                       onClick={() => handleAddSkill(skillInput)}
-                      className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl flex-shrink-0 gap-1.5"
+                      className="h-10 px-4 bg-[#0D6847] hover:bg-[#0A5238] text-white text-xs font-semibold rounded-md flex-shrink-0 gap-1.5"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Ekle
@@ -1095,23 +1081,23 @@ export default function ProfileScreen() {
 
                   {/* Seçili Yetenekler */}
                   <div>
-                    <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
+                    <div className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1] mb-2 flex items-center justify-between">
                       <span>Profilinizde Görünecek Yetenekler:</span>
-                      <span className="text-[11px] text-slate-400 font-normal">Silmek için ✕'e tıklayın</span>
+                      <span className="font-mono text-[10px] text-[#535A56] dark:text-[#9DA6A0] font-normal">Silmek için ✕&apos;e tıklayın</span>
                     </div>
                     {skillsDraft.length > 0 ? (
-                      <div className="flex flex-wrap gap-2 p-3 bg-slate-50/80 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-white/10 min-h-[48px] items-center">
+                      <div className="flex flex-wrap gap-2 p-3 bg-[#FBFBF9] dark:bg-[#181C1A] rounded-md border border-[#E2E0D8] dark:border-[#252B28] min-h-[48px] items-center">
                         {skillsDraft.map((skill) => (
                           <div
                             key={skill}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-100/80 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 text-xs font-semibold shadow-xs"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#E6F2EC] dark:bg-[#0D6847]/20 border border-[#0D6847]/30 text-[#0D6847] dark:text-[#27A878] text-xs font-semibold"
                           >
-                            <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                            <Check className="w-3 h-3" />
                             <span>{skill}</span>
                             <button
                               type="button"
                               onClick={() => handleRemoveSkill(skill)}
-                              className="ml-1 text-emerald-700 dark:text-emerald-400 hover:text-red-600 dark:hover:text-red-400 transition-colors p-0.5"
+                              className="ml-1 hover:text-[#C84B31] transition-colors p-0.5"
                               title="Sil"
                             >
                               <X className="w-3.5 h-3.5" />
@@ -1120,16 +1106,15 @@ export default function ProfileScreen() {
                         ))}
                       </div>
                     ) : (
-                      <div className="p-3 bg-amber-50/80 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs text-amber-800 dark:text-amber-300 text-center">
+                      <div className="p-3 bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] rounded-md text-xs text-[#535A56] dark:text-[#9DA6A0] text-center">
                         Henüz hiç yetenek eklemediniz. Aşağıdaki popüler listeden seçebilir veya yukarıya yazabilirsiniz.
                       </div>
                     )}
                   </div>
 
                   {/* Popüler Yetenek Önerileri */}
-                  <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/10">
-                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <div className="space-y-2 pt-2 border-t border-[#E2E0D8] dark:border-[#252B28]">
+                    <div className="font-mono text-[10px] uppercase tracking-wider font-semibold text-[#535A56] dark:text-[#9DA6A0]">
                       Popüler Yeteneklerden Hızlıca Seçin:
                     </div>
                     <div className="flex flex-wrap gap-1.5">
@@ -1140,13 +1125,13 @@ export default function ProfileScreen() {
                             key={s}
                             type="button"
                             onClick={() => handleToggleSkill(s)}
-                            className={`text-xs px-3 py-1.5 rounded-xl border font-medium transition-all flex items-center gap-1.5 ${
+                            className={`text-xs px-3 py-1.5 rounded-md border font-medium transition-all flex items-center gap-1.5 ${
                               isSelected
-                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                                : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10'
+                                ? 'bg-[#0D6847] text-white border-[#0D6847]'
+                                : 'bg-[#FBFBF9] dark:bg-[#181C1A] hover:border-[#0D6847] text-[#141716] dark:text-[#F0F2F1] border-[#E2E0D8] dark:border-[#252B28]'
                             }`}
                           >
-                            {isSelected ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3 text-slate-400" />}
+                            {isSelected ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3 text-[#535A56] dark:text-[#9DA6A0]" />}
                             {s}
                           </button>
                         )
@@ -1155,7 +1140,7 @@ export default function ProfileScreen() {
                   </div>
 
                   {/* Kaydet ve İptal Butonları */}
-                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E2E0D8] dark:border-[#252B28]">
                     <Button
                       variant="outline"
                       size="sm"
@@ -1163,7 +1148,7 @@ export default function ProfileScreen() {
                         setSkillsDraft(user.skills || [])
                         setEditingSkills(false)
                       }}
-                      className="text-xs"
+                      className="text-xs rounded-md border-[#E2E0D8] dark:border-[#252B28]"
                       disabled={savingSkills}
                     >
                       İptal
@@ -1172,7 +1157,7 @@ export default function ProfileScreen() {
                       size="sm"
                       onClick={handleSaveSkills}
                       disabled={savingSkills}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold gap-1.5 shadow-sm"
+                      className="bg-[#0D6847] hover:bg-[#0A5238] text-white text-xs font-semibold rounded-md gap-1.5"
                     >
                       {savingSkills ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                       Değişiklikleri Kaydet
@@ -1185,9 +1170,9 @@ export default function ProfileScreen() {
                     {user.skills?.map((skill: string) => (
                       <div
                         key={skill}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:border-emerald-300 hover:bg-emerald-50/40 hover:dark:bg-emerald-950/40 hover:dark:border-emerald-500/40 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] text-[#141716] dark:text-[#F0F2F1] text-xs font-medium"
                       >
-                        <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                        <Check className="w-3 h-3 text-[#0D6847] dark:text-[#27A878]" />
                         <span>{skill}</span>
                       </div>
                     ))}
@@ -1197,67 +1182,72 @@ export default function ProfileScreen() {
                       setSkillsDraft(user.skills || [])
                       setEditingSkills(true)
                     }}
-                    className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 hover:underline pt-1"
+                    className="text-xs text-[#0D6847] dark:text-[#27A878] font-semibold flex items-center gap-1 hover:underline pt-1"
                   >
                     <Plus className="w-3.5 h-3.5" /> Yetenek Ekle veya Çıkar
                   </button>
                 </div>
               ) : (
-                <div className="text-center py-7 text-slate-400 text-sm space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
-                    <Award className="w-6 h-6" />
+                <div className="text-center py-7 text-[#535A56] dark:text-[#9DA6A0] text-sm space-y-3">
+                  <div className="w-11 h-11 rounded-md bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] flex items-center justify-center mx-auto">
+                    <Award className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-700">Henüz uzmanlık alanı veya yetenek eklemediniz.</p>
-                    <p className="text-xs text-slate-400 mt-0.5">İşverenlerin sizi doğru işlerle eşleştirmesi için bildiğiniz işleri ekleyin.</p>
+                    <p className="font-semibold text-[#141716] dark:text-[#F0F2F1]">Henüz uzmanlık alanı veya yetenek eklemediniz.</p>
+                    <p className="text-xs text-[#535A56] dark:text-[#9DA6A0] mt-0.5">İşverenlerin sizi doğru işlerle eşleştirmesi için bildiğiniz işleri ekleyin.</p>
                   </div>
                   <Button
                     onClick={() => {
                       setSkillsDraft([])
                       setEditingSkills(true)
                     }}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-4 rounded-xl gap-1.5 shadow-sm shadow-emerald-500/20"
+                    className="bg-[#0D6847] hover:bg-[#0A5238] text-white text-xs font-semibold h-9 px-4 rounded-md gap-1.5"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Uzmanlık & Yetenek Ekle
                   </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* ------------------------------------------------------------ */}
         {/* SEKME 2: PROFİLİ DÜZENLE */}
         {/* ------------------------------------------------------------ */}
         <TabsContent value="edit" className="space-y-4 mt-5">
-          <Card className="rounded-2xl border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 shadow-sm overflow-hidden">
-            <CardHeader className="bg-slate-50/70 dark:bg-slate-900/60 border-b border-slate-100 dark:border-white/10 py-3.5 px-5">
-              <CardTitle className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <Edit3 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                Profil Bilgilerini Güncelle
-              </CardTitle>
-              <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
-                Profil bilgilerinizi güncelleyerek daha fazla iş veya güvenilir işçi bulabilirsiniz.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-5 sm:p-6 space-y-4">
+          <div className="rounded-md border border-[#E2E0D8] dark:border-[#252B28] bg-white dark:bg-[#141716] overflow-hidden">
+            <div className="bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] py-4 px-5 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm sm:text-base font-semibold text-[#141716] dark:text-[#F0F2F1] flex items-center gap-2">
+                  <Edit3 className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
+                  <span>Profil Bilgilerini Güncelle</span>
+                </h3>
+                <p className="text-xs text-[#535A56] dark:text-[#9DA6A0] mt-0.5">
+                  Profil bilgilerinizi güncelleyerek daha fazla iş veya güvenilir çalışan bulabilirsiniz.
+                </p>
+              </div>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0] hidden sm:inline">
+                SICIL KAYDI DÜZENLEME
+              </span>
+            </div>
+            <div className="p-5 sm:p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">
                     {isEmployer ? 'Şirket / İşletme Adı' : 'Ad Soyad'}
                   </Label>
                   <Input
-                    className="h-11 rounded-xl focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                    className="h-10 rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                     value={isEmployer ? (form.companyName || form.fullName) : form.fullName}
                     onChange={(e) => isEmployer ? setForm({ ...form, companyName: e.target.value }) : setForm({ ...form, fullName: e.target.value })}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Telefon Numarası</Label>
+                  <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Telefon Numarası</Label>
                   <Input
-                    className="h-11 rounded-xl focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                    className="h-10 rounded-md font-mono border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     placeholder="+90 5XX..."
@@ -1265,9 +1255,9 @@ export default function ProfileScreen() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Şehir</Label>
+                  <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Şehir</Label>
                   <Input
-                    className="h-11 rounded-xl focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                    className="h-10 rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                     value={form.city}
                     onChange={(e) => setForm({ ...form, city: e.target.value })}
                     placeholder="İstanbul, Ankara, vb."
@@ -1275,9 +1265,9 @@ export default function ProfileScreen() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">İlçe</Label>
+                  <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">İlçe</Label>
                   <Input
-                    className="h-11 rounded-xl focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                    className="h-10 rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                     value={form.district}
                     onChange={(e) => setForm({ ...form, district: e.target.value })}
                     placeholder="Kadıköy, Çankaya, vb."
@@ -1286,9 +1276,9 @@ export default function ProfileScreen() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Açık Adres</Label>
+                <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Açık Adres</Label>
                 <Input
-                  className="h-11 rounded-xl focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                  className="h-10 rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                   placeholder="Mahalle, cadde, sokak ve kapı no"
@@ -1296,23 +1286,23 @@ export default function ProfileScreen() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Hakkında / Açıklama</Label>
+                <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Hakkında / Açıklama</Label>
                 <Textarea
                   value={form.bio}
                   onChange={(e) => setForm({ ...form, bio: e.target.value })}
                   rows={3}
-                  className="rounded-xl focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                  className="rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                   placeholder="Kendinizden, çalışma prensiplerinizden veya tecrübelerinizden bahsedin..."
                 />
               </div>
 
               {/* İşçiye Özel Ek Alanlar */}
               {isWorker && (
-                <div className="pt-2 border-t border-slate-100 dark:border-white/10 space-y-4">
+                <div className="pt-3 border-t border-[#E2E0D8] dark:border-[#252B28] space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Yetenekler (virgülle ayırın)</Label>
+                    <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Yetenekler (virgülle ayırın)</Label>
                     <Input
-                      className="h-11 rounded-xl focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                      className="h-10 rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                       value={form.skills}
                       onChange={(e) => setForm({ ...form, skills: e.target.value })}
                       placeholder="Örn: İnşaat, Boyacı, Garson, Temizlik, Taşıma"
@@ -1321,38 +1311,38 @@ export default function ProfileScreen() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Tecrübe (Yıl)</Label>
+                      <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Tecrübe (Yıl)</Label>
                       <Input
                         type="number"
-                        className="h-11 rounded-xl dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                        className="h-10 rounded-md font-mono border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                         value={form.experienceYears}
                         onChange={(e) => setForm({ ...form, experienceYears: Number(e.target.value) })}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Min. Saatlik Ücret (₺)</Label>
+                      <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Min. Saatlik Ücret (₺)</Label>
                       <Input
                         type="number"
-                        className="h-11 rounded-xl dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                        className="h-10 rounded-md font-mono border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                         value={form.hourlyWageMin}
                         onChange={(e) => setForm({ ...form, hourlyWageMin: Number(e.target.value) })}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Max. Saatlik Ücret (₺)</Label>
+                      <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Max. Saatlik Ücret (₺)</Label>
                       <Input
                         type="number"
-                        className="h-11 rounded-xl dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                        className="h-10 rounded-md font-mono border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                         value={form.hourlyWageMax}
                         onChange={(e) => setForm({ ...form, hourlyWageMax: Number(e.target.value) })}
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-3.5 bg-emerald-50/60 dark:bg-emerald-950/40 rounded-xl border border-emerald-100 dark:border-emerald-800/40">
+                  <div className="flex items-center justify-between p-3.5 bg-[#FBFBF9] dark:bg-[#181C1A] rounded-md border border-[#E2E0D8] dark:border-[#252B28]">
                     <div>
-                      <Label className="font-semibold text-xs sm:text-sm text-emerald-950 dark:text-emerald-200">İş Tekliflerine Açığım</Label>
-                      <p className="text-[11px] text-emerald-800 dark:text-emerald-400">İşverenler profilinizi aktif iş arayan olarak görsün</p>
+                      <Label className="font-semibold text-xs sm:text-sm text-[#141716] dark:text-[#F0F2F1]">İş Tekliflerine Açığım</Label>
+                      <p className="text-[11px] text-[#535A56] dark:text-[#9DA6A0]">İşverenler profilinizi aktif iş arayan olarak görsün</p>
                     </div>
                     <Switch checked={form.isAvailable} onCheckedChange={(v) => setForm({ ...form, isAvailable: v })} />
                   </div>
@@ -1362,7 +1352,7 @@ export default function ProfileScreen() {
               <div className="pt-2 flex items-center gap-3">
                 <Button
                   onClick={handleSave}
-                  className="flex-1 h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-md shadow-emerald-600/20"
+                  className="flex-1 h-10 rounded-md bg-[#0D6847] hover:bg-[#0A5238] text-white font-semibold text-sm"
                   disabled={saving}
                 >
                   {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
@@ -1371,13 +1361,13 @@ export default function ProfileScreen() {
                 <Button
                   variant="outline"
                   onClick={() => { setEditing(false); setActiveTab('info') }}
-                  className="h-11 rounded-xl text-slate-600 dark:text-slate-300 dark:border-white/10 dark:hover:bg-slate-800"
+                  className="h-10 rounded-md text-[#535A56] dark:text-[#9DA6A0] border-[#E2E0D8] dark:border-[#252B28]"
                 >
                   Vazgeç
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* ------------------------------------------------------------ */}
@@ -1385,26 +1375,29 @@ export default function ProfileScreen() {
         {/* ------------------------------------------------------------ */}
         <TabsContent value="security" className="space-y-4 mt-5">
           {/* 1. Şifre Değiştirme */}
-          <Card className="rounded-2xl border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 shadow-sm overflow-hidden">
-            <CardHeader className="bg-slate-50/70 dark:bg-slate-900/60 border-b border-slate-100 dark:border-white/10 py-3.5 px-5">
-              <CardTitle className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <Key className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                Giriş Şifresi
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5 space-y-3.5">
+          <div className="rounded-md border border-[#E2E0D8] dark:border-[#252B28] bg-white dark:bg-[#141716] overflow-hidden">
+            <div className="bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] py-3.5 px-5 flex items-center justify-between">
+              <div className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1] flex items-center gap-2">
+                <Key className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
+                <span>Giriş Şifresi</span>
+              </div>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">
+                01 / PAROLA
+              </span>
+            </div>
+            <div className="p-5 space-y-3.5">
               {securityInfo?.hasPassword === false ? (
-                <div className="p-3.5 bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/70 dark:border-blue-800/40 rounded-xl text-xs sm:text-sm text-blue-800 dark:text-blue-300 flex items-start gap-2.5">
-                  <AlertCircle className="w-4 h-4 mt-0.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                <div className="p-3.5 bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] rounded-md text-xs sm:text-sm text-[#535A56] dark:text-[#9DA6A0] flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 mt-0.5 text-[#0D6847] dark:text-[#27A878] flex-shrink-0" />
                   <span>Google ile giriş yaptığınız için hesabınız doğrudan Google OAuth güvencesindedir. Şifre belirlemenize gerek yoktur.</span>
                 </div>
               ) : (
                 <>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Mevcut Şifre</Label>
+                    <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Mevcut Şifre</Label>
                     <Input
                       type="password"
-                      className="h-11 rounded-xl dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                      className="h-10 rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                       value={pwForm.current}
                       onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })}
                       placeholder="••••••••"
@@ -1412,20 +1405,20 @@ export default function ProfileScreen() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Yeni Şifre</Label>
+                      <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Yeni Şifre</Label>
                       <Input
                         type="password"
-                        className="h-11 rounded-xl dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                        className="h-10 rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                         value={pwForm.next}
                         onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })}
                         placeholder="En az 6 karakter"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Yeni Şifre (Tekrar)</Label>
+                      <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Yeni Şifre (Tekrar)</Label>
                       <Input
                         type="password"
-                        className="h-11 rounded-xl dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                        className="h-10 rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                         value={pwForm.confirm}
                         onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
                         placeholder="Tekrar girin"
@@ -1435,41 +1428,44 @@ export default function ProfileScreen() {
                   <Button
                     onClick={handleChangePassword}
                     disabled={pwLoading || !pwForm.current || !pwForm.next}
-                    className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-sm"
+                    className="w-full h-10 rounded-md bg-[#0D6847] hover:bg-[#0A5238] text-white font-semibold text-sm"
                   >
                     {pwLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Lock className="w-4 h-4 mr-2" />}
                     Şifreyi Güncelle
                   </Button>
                 </>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* 2. E-posta Değiştirme */}
-          <Card className="rounded-2xl border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 shadow-sm overflow-hidden">
-            <CardHeader className="bg-slate-50/70 dark:bg-slate-900/60 border-b border-slate-100 dark:border-white/10 py-3.5 px-5">
-              <CardTitle className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <Mail className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                E-posta Adresi Yönetimi
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5 space-y-3.5">
-              <div className="p-3.5 bg-slate-50/80 dark:bg-slate-950/60 rounded-xl border border-slate-100 dark:border-white/10 flex items-center justify-between">
+          <div className="rounded-md border border-[#E2E0D8] dark:border-[#252B28] bg-white dark:bg-[#141716] overflow-hidden">
+            <div className="bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] py-3.5 px-5 flex items-center justify-between">
+              <div className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1] flex items-center gap-2">
+                <Mail className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
+                <span>E-posta Adresi Yönetimi</span>
+              </div>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">
+                02 / E-POSTA
+              </span>
+            </div>
+            <div className="p-5 space-y-3.5">
+              <div className="p-3.5 bg-[#FBFBF9] dark:bg-[#181C1A] rounded-md border border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <Mail className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{user.email}</span>
+                  <Mail className="w-4 h-4 text-[#535A56] dark:text-[#9DA6A0] flex-shrink-0" />
+                  <span className="text-sm font-mono font-semibold text-[#141716] dark:text-[#F0F2F1] truncate">{user.email}</span>
                 </div>
                 {user.emailVerified ? (
-                  <Badge className="bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60 text-[10px] font-semibold flex items-center gap-1">
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] border border-[#0D6847]/25 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" /> Doğrulandı
-                  </Badge>
+                  </span>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60 text-[10px]">Doğrulanmamış</Badge>
+                    <span className="font-mono text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#FDF3F0] dark:bg-[#C84B31]/15 text-[#C84B31] border border-[#C84B31]/25">Doğrulanmamış</span>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-7 text-xs border-amber-300 dark:border-amber-700/60 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                      className="h-7 text-xs rounded-md border-[#C84B31]/40 text-[#C84B31]"
                       onClick={() => { setVerifyDialog(true); setVerifySent(false); setVerifyCode('') }}
                     >
                       Doğrula
@@ -1481,10 +1477,10 @@ export default function ProfileScreen() {
               {emailStep === 'request' ? (
                 <>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Yeni E-posta Adresi</Label>
+                    <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Yeni E-posta Adresi</Label>
                     <Input
                       type="email"
-                      className="h-11 rounded-xl dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                      className="h-10 rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                       value={emailForm.newEmail}
                       onChange={(e) => setEmailForm({ ...emailForm, newEmail: e.target.value })}
                       placeholder="yeni@email.com"
@@ -1494,7 +1490,7 @@ export default function ProfileScreen() {
                     onClick={handleEmailChangeRequest}
                     disabled={emailLoading || !emailForm.newEmail}
                     variant="outline"
-                    className="w-full h-11 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 dark:border-white/10"
+                    className="w-full h-10 rounded-md text-xs sm:text-sm font-semibold text-[#141716] dark:text-[#F0F2F1] border-[#E2E0D8] dark:border-[#252B28]"
                   >
                     {emailLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
                     Değişiklik Kodunu Gönder
@@ -1502,13 +1498,13 @@ export default function ProfileScreen() {
                 </>
               ) : (
                 <>
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 rounded-xl text-xs text-blue-800 dark:text-blue-300">
+                  <div className="p-3 bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] rounded-md text-xs text-[#535A56] dark:text-[#9DA6A0]">
                     Yeni e-posta adresinize gönderilen 6 haneli doğrulama kodunu girin.
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">6 Haneli Kod</Label>
+                    <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">6 Haneli Kod</Label>
                     <Input
-                      className="h-12 rounded-xl text-center text-xl tracking-[0.3em] font-mono font-bold dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                      className="h-11 rounded-md text-center text-xl tracking-[0.3em] font-mono font-bold border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                       value={emailForm.code}
                       onChange={(e) => setEmailForm({ ...emailForm, code: e.target.value })}
                       placeholder="000000"
@@ -1518,7 +1514,7 @@ export default function ProfileScreen() {
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
-                      className="flex-1 h-11 rounded-xl text-sm dark:border-white/10 dark:hover:bg-slate-800 dark:text-slate-300"
+                      className="flex-1 h-10 rounded-md text-sm border-[#E2E0D8] dark:border-[#252B28]"
                       onClick={() => setEmailStep('request')}
                     >
                       Geri
@@ -1526,7 +1522,7 @@ export default function ProfileScreen() {
                     <Button
                       onClick={handleEmailChangeConfirm}
                       disabled={emailLoading || !emailForm.code}
-                      className="flex-1 h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm"
+                      className="flex-1 h-10 rounded-md bg-[#0D6847] hover:bg-[#0A5238] text-white font-semibold text-sm"
                     >
                       {emailLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
                       Onayla ve Değiştir
@@ -1534,33 +1530,36 @@ export default function ProfileScreen() {
                   </div>
                 </>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* 3. İki Faktörlü Doğrulama (2FA) */}
-          <Card className="rounded-2xl border-slate-200/90 dark:border-white/10 dark:bg-slate-900/90 shadow-sm overflow-hidden">
-            <CardHeader className="bg-slate-50/70 dark:bg-slate-900/60 border-b border-slate-100 dark:border-white/10 py-3.5 px-5">
-              <CardTitle className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                İki Faktörlü Doğrulama (TOTP / 2FA)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5 space-y-4">
-              <div className={`p-4 rounded-2xl flex items-center gap-3.5 ${
+          <div className="rounded-md border border-[#E2E0D8] dark:border-[#252B28] bg-white dark:bg-[#141716] overflow-hidden">
+            <div className="bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] py-3.5 px-5 flex items-center justify-between">
+              <div className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1] flex items-center gap-2">
+                <Smartphone className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
+                <span>İki Faktörlü Doğrulama (TOTP / 2FA)</span>
+              </div>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">
+                03 / TOTP 2FA
+              </span>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className={`p-4 rounded-md flex items-center gap-3.5 border ${
                 securityInfo?.twoFactorEnabled
-                  ? 'bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/40'
-                  : 'bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-white/10'
+                  ? 'bg-[#E6F2EC]/50 dark:bg-[#0D6847]/15 border-[#0D6847]/30'
+                  : 'bg-[#FBFBF9] dark:bg-[#181C1A] border-[#E2E0D8] dark:border-[#252B28]'
               }`}>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  securityInfo?.twoFactorEnabled ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                <div className={`w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 ${
+                  securityInfo?.twoFactorEnabled ? 'bg-[#0D6847] text-white' : 'bg-[#EFECE6] dark:bg-[#252B28] text-[#535A56] dark:text-[#9DA6A0]'
                 }`}>
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  <div className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1]">
                     {securityInfo?.twoFactorEnabled ? '2FA Koruması Aktif' : '2FA Koruması Kapalı'}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <div className="text-xs text-[#535A56] dark:text-[#9DA6A0] mt-0.5">
                     {securityInfo?.twoFactorEnabled
                       ? 'Hesabınız Google Authenticator / TOTP kodu ile korunuyor.'
                       : 'Giriş yaparken ek güvenlik kodu isteyerek hesabınızı koruyun.'}
@@ -1571,7 +1570,7 @@ export default function ProfileScreen() {
               {securityInfo?.twoFactorEnabled ? (
                 <Button
                   variant="outline"
-                  className="w-full h-11 rounded-xl text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/40 text-sm font-semibold"
+                  className="w-full h-10 rounded-md text-[#C84B31] border-[#C84B31]/30 hover:bg-[#FDF3F0] dark:hover:bg-[#C84B31]/15 text-sm font-semibold"
                   onClick={() => setDisable2FADialog(true)}
                 >
                   <X className="w-4 h-4 mr-2" />
@@ -1579,7 +1578,7 @@ export default function ProfileScreen() {
                 </Button>
               ) : (
                 <Button
-                  className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm"
+                  className="w-full h-10 rounded-md bg-[#0D6847] hover:bg-[#0A5238] text-white text-sm font-semibold"
                   onClick={handleSetup2FA}
                   disabled={twoFALoading}
                 >
@@ -1588,21 +1587,21 @@ export default function ProfileScreen() {
                 </Button>
               )}
 
-              <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50/80 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-100 dark:border-white/10 flex items-start gap-2">
-                <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+              <div className="text-xs text-[#535A56] dark:text-[#9DA6A0] bg-[#FBFBF9] dark:bg-[#181C1A] p-3 rounded-md border border-[#E2E0D8] dark:border-[#252B28] flex items-start gap-2">
+                <Shield className="w-4 h-4 text-[#0D6847] dark:text-[#27A878] flex-shrink-0 mt-0.5" />
                 <p>
-                  <strong>Neden 2FA?</strong> Şifreniz başkalarının eline geçse bile authenticator uygulamanız olmadan hiç kimse hesabınıza giriş yapamaz.
+                  <strong className="text-[#141716] dark:text-[#F0F2F1]">Neden 2FA?</strong> Şifreniz başkalarının eline geçse bile authenticator uygulamanız olmadan hiç kimse hesabınıza giriş yapamaz.
                 </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* 4. Oturumu Kapat */}
           <div className="pt-2">
             <Button
               variant="outline"
               onClick={() => logout()}
-              className="w-full h-11 rounded-xl border-red-200 dark:border-red-900/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 text-sm font-semibold transition-colors"
+              className="w-full h-10 rounded-md border-[#C84B31]/30 text-[#C84B31] hover:bg-[#FDF3F0] dark:hover:bg-[#C84B31]/15 text-sm font-semibold transition-colors"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Oturumu Sonlandır (Çıkış Yap)
@@ -1615,13 +1614,13 @@ export default function ProfileScreen() {
       {/* DIALOG: 2FA KURULUM MODALI */}
       {/* ============================================================== */}
       <Dialog open={twoFADialog} onOpenChange={setTwoFADialog}>
-        <DialogContent className="w-[95vw] max-w-md rounded-2xl dark:bg-slate-900 dark:border-white/10">
+        <DialogContent className="w-[95vw] max-w-md rounded-md bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] text-[#141716] dark:text-[#F0F2F1]">
           <DialogHeader>
             <DialogTitle className="text-base sm:text-lg flex items-center gap-2">
-              <Smartphone className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              <Smartphone className="w-5 h-5 text-[#0D6847] dark:text-[#27A878]" />
               2FA Kurulum Sihirbazı
             </DialogTitle>
-            <DialogDescription className="text-xs">
+            <DialogDescription className="text-xs text-[#535A56] dark:text-[#9DA6A0]">
               {twoFAStep === 'setup' && 'QR kodunu Google Authenticator veya benzeri bir uygulama ile tarayın.'}
               {twoFAStep === 'backup' && 'Cihazınızı kaybederseniz hesabınıza erişmek için bu kodları saklayın.'}
               {twoFAStep === 'verify' && 'Uygulamanızın ürettiği 6 haneli geçici kodu girin.'}
@@ -1630,19 +1629,19 @@ export default function ProfileScreen() {
 
           {twoFAStep === 'setup' && (
             <div className="space-y-4 pt-2">
-              <div className="flex justify-center p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-white/10">
+              <div className="flex justify-center p-3 bg-[#FBFBF9] dark:bg-[#0C0E0D] rounded-md border border-[#E2E0D8] dark:border-[#252B28]">
                 {twoFAQrCode && (
-                  <img src={twoFAQrCode} alt="QR Kod" className="w-52 h-52 rounded-xl bg-white p-2" />
+                  <img src={twoFAQrCode} alt="QR Kod" className="w-52 h-52 rounded-md bg-white p-2" />
                 )}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400 text-center space-y-1">
+              <div className="text-xs text-[#535A56] dark:text-[#9DA6A0] text-center space-y-1">
                 <p>QR kodu tarayamıyorsanız gizli anahtarı manuel girin:</p>
-                <code className="block bg-slate-100 dark:bg-slate-800 p-2 rounded-lg font-mono text-[11px] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-white/10 break-all select-all">
+                <code className="block bg-[#FBFBF9] dark:bg-[#0C0E0D] p-2 rounded-md font-mono text-[11px] text-[#141716] dark:text-[#F0F2F1] border border-[#E2E0D8] dark:border-[#252B28] break-all select-all">
                   {twoFASecret}
                 </code>
               </div>
               <Button
-                className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold"
+                className="w-full h-10 rounded-md bg-[#0D6847] hover:bg-[#0A5238] text-white text-sm font-semibold"
                 onClick={() => setTwoFAStep('backup')}
               >
                 Yedek Kurtarma Kodlarını Göster
@@ -1653,27 +1652,27 @@ export default function ProfileScreen() {
 
           {twoFAStep === 'backup' && (
             <div className="space-y-4 pt-2">
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 rounded-xl text-xs text-amber-900 dark:text-amber-200">
-                <AlertCircle className="w-4 h-4 inline mr-1 text-amber-600 dark:text-amber-400" />
+              <div className="p-3 bg-[#FDF3F0] dark:bg-[#C84B31]/15 border border-[#C84B31]/30 rounded-md text-xs text-[#C84B31]">
+                <AlertCircle className="w-4 h-4 inline mr-1" />
                 Bu kodları güvenli bir yere kaydedin. Telefonunuzu kaybederseniz hesabınızı sadece bu kodlarla kurtarabilirsiniz.
               </div>
-              <div className="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-100 dark:border-white/10">
+              <div className="grid grid-cols-2 gap-2 bg-[#FBFBF9] dark:bg-[#0C0E0D] p-3 rounded-md border border-[#E2E0D8] dark:border-[#252B28]">
                 {twoFABackupCodes.map((code, i) => (
-                  <code key={i} className="bg-white dark:bg-slate-800 p-2 rounded-lg text-center font-mono text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10">
+                  <code key={i} className="bg-white dark:bg-[#141716] p-2 rounded text-center font-mono text-xs font-semibold text-[#141716] dark:text-[#F0F2F1] border border-[#E2E0D8] dark:border-[#252B28]">
                     {code}
                   </code>
                 ))}
               </div>
               <Button
                 variant="outline"
-                className="w-full h-11 rounded-xl text-sm font-semibold dark:border-white/10 dark:hover:bg-slate-800 dark:text-slate-200"
+                className="w-full h-10 rounded-md text-sm font-semibold border-[#E2E0D8] dark:border-[#252B28]"
                 onClick={copyBackupCodes}
               >
                 <Copy className="w-4 h-4 mr-2" />
                 Tüm Kodları Kopyala
               </Button>
               <Button
-                className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold"
+                className="w-full h-10 rounded-md bg-[#0D6847] hover:bg-[#0A5238] text-white text-sm font-semibold"
                 onClick={() => setTwoFAStep('verify')}
               >
                 Doğrulama Adımına Geç
@@ -1685,9 +1684,9 @@ export default function ProfileScreen() {
           {twoFAStep === 'verify' && (
             <div className="space-y-4 pt-2">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Authenticator Kodu</Label>
+                <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Authenticator Kodu</Label>
                 <Input
-                  className="h-12 rounded-xl text-center text-2xl tracking-[0.4em] font-mono font-bold dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                  className="h-11 rounded-md text-center text-2xl tracking-[0.4em] font-mono font-bold border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                   value={twoFACode}
                   onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, ''))}
                   placeholder="000000"
@@ -1695,12 +1694,12 @@ export default function ProfileScreen() {
                 />
               </div>
               <Button
-                className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold"
+                className="w-full h-10 rounded-md bg-[#0D6847] hover:bg-[#0A5238] text-white text-sm font-semibold"
                 onClick={handleVerify2FA}
                 disabled={twoFALoading || twoFACode.length !== 6}
               >
                 {twoFALoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                2FA'yı Aktif Et ve Tamamla
+                2FA&apos;yı Aktif Et ve Tamamla
               </Button>
             </div>
           )}
@@ -1711,18 +1710,18 @@ export default function ProfileScreen() {
       {/* DIALOG: 2FA DEVRE DIŞI BIRAKMA */}
       {/* ============================================================== */}
       <Dialog open={disable2FADialog} onOpenChange={setDisable2FADialog}>
-        <DialogContent className="w-[95vw] max-w-md rounded-2xl dark:bg-slate-900 dark:border-white/10">
+        <DialogContent className="w-[95vw] max-w-md rounded-md bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] text-[#141716] dark:text-[#F0F2F1]">
           <DialogHeader>
             <DialogTitle className="text-base sm:text-lg">2FA Korumasını Kapat</DialogTitle>
-            <DialogDescription className="text-xs">
+            <DialogDescription className="text-xs text-[#535A56] dark:text-[#9DA6A0]">
               Güvenliğiniz için lütfen authenticator uygulamanızdaki 6 haneli kodu girin.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Onay Kodu</Label>
+              <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">Onay Kodu</Label>
               <Input
-                className="h-12 rounded-xl text-center text-2xl tracking-[0.4em] font-mono font-bold dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                className="h-11 rounded-md text-center text-2xl tracking-[0.4em] font-mono font-bold border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                 value={disable2FACode}
                 onChange={(e) => setDisable2FACode(e.target.value.replace(/\D/g, ''))}
                 placeholder="000000"
@@ -1730,12 +1729,12 @@ export default function ProfileScreen() {
               />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1 h-11 rounded-xl text-sm dark:border-white/10 dark:hover:bg-slate-800 dark:text-slate-300" onClick={() => setDisable2FADialog(false)}>
+              <Button variant="outline" className="flex-1 h-10 rounded-md text-sm border-[#E2E0D8] dark:border-[#252B28]" onClick={() => setDisable2FADialog(false)}>
                 İptal
               </Button>
               <Button
                 variant="outline"
-                className="flex-1 h-11 rounded-xl text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/40 text-sm font-semibold"
+                className="flex-1 h-10 rounded-md text-[#C84B31] border-[#C84B31]/30 hover:bg-[#FDF3F0] dark:hover:bg-[#C84B31]/15 text-sm font-semibold"
                 onClick={handleDisable2FA}
                 disabled={twoFALoading || disable2FACode.length !== 6}
               >
@@ -1757,13 +1756,13 @@ export default function ProfileScreen() {
           if (!v) { setVerifyCode(''); setVerifySent(false) }
         }}
       >
-        <DialogContent className="w-[95vw] max-w-md rounded-2xl dark:bg-slate-900 dark:border-white/10">
+        <DialogContent className="w-[95vw] max-w-md rounded-md bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] text-[#141716] dark:text-[#F0F2F1]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <Mail className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              <Mail className="w-5 h-5 text-[#0D6847] dark:text-[#27A878]" />
               E-posta Doğrulama
             </DialogTitle>
-            <DialogDescription className="text-xs">
+            <DialogDescription className="text-xs text-[#535A56] dark:text-[#9DA6A0]">
               {verifySent
                 ? `${user?.email} adresine 6 haneli bir onay kodu gönderdik.`
                 : 'Hesabınızın güvenliğini artırmak için e-posta adresinizi doğrulayın.'}
@@ -1772,7 +1771,7 @@ export default function ProfileScreen() {
           <div className="space-y-4 py-2">
             {!verifySent ? (
               <Button
-                className="w-full h-11 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm"
+                className="w-full h-10 rounded-md bg-[#0D6847] hover:bg-[#0A5238] text-white font-semibold text-sm"
                 onClick={handleSendVerifyOtp}
                 disabled={verifyLoading}
               >
@@ -1782,7 +1781,7 @@ export default function ProfileScreen() {
             ) : (
               <>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">6 Haneli Doğrulama Kodu</Label>
+                  <Label className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">6 Haneli Doğrulama Kodu</Label>
                   <Input
                     type="text"
                     inputMode="numeric"
@@ -1790,11 +1789,11 @@ export default function ProfileScreen() {
                     value={verifyCode}
                     onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, ''))}
                     placeholder="000000"
-                    className="h-12 rounded-xl text-center text-2xl tracking-[0.4em] font-mono font-bold dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                    className="h-11 rounded-md text-center text-2xl tracking-[0.4em] font-mono font-bold border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D] text-[#141716] dark:text-[#F0F2F1]"
                   />
                 </div>
                 <Button
-                  className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm"
+                  className="w-full h-10 rounded-md bg-[#0D6847] hover:bg-[#0A5238] text-white font-semibold text-sm"
                   onClick={handleVerifyEmail}
                   disabled={verifyLoading || verifyCode.length !== 6}
                 >
@@ -1803,7 +1802,7 @@ export default function ProfileScreen() {
                 </Button>
                 <Button
                   variant="ghost"
-                  className="w-full text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  className="w-full text-xs text-[#535A56] dark:text-[#9DA6A0]"
                   onClick={handleSendVerifyOtp}
                   disabled={verifyLoading}
                 >
@@ -1830,14 +1829,14 @@ function StatCard({
   color: string
 }) {
   return (
-    <Card className="rounded-2xl border-slate-200/80 dark:border-white/10 dark:bg-slate-900/90 shadow-xs hover:shadow-md transition-all group overflow-hidden card-3d-spatial">
-      <CardContent className="p-3.5 sm:p-4">
-        <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center mb-2.5 border transition-transform group-hover:scale-105 ${color}`}>
-          <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
-        </div>
-        <div className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{value}</div>
-        <div className="text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">{label}</div>
-      </CardContent>
-    </Card>
+    <div className="p-4 rounded-lg bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] flex flex-col justify-between gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-[#5C615E] dark:text-[#949B97]">{label}</span>
+        <Icon className={`w-4 h-4 ${color}`} />
+      </div>
+      <div className="font-mono text-xl sm:text-2xl font-bold text-[#141615] dark:text-white tracking-tight">
+        {value}
+      </div>
+    </div>
   )
 }

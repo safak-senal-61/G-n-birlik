@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 import { db } from '@/lib/db'
-import { BLOG_POSTS } from '@/lib/blog-data'
+import { getAllSeoBlogPosts } from '@/server/services/seo-blog.service'
 
 export const revalidate = 3600 // Her saat otomatik yenilenir
 
@@ -114,8 +114,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('[Sitemap] Aktif ilanlar çekilemedi:', err)
   }
 
-  // 5. Blog Makaleleri (SEO & Discover)
-  const blogRoutes: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({
+  // 5. Blog Makaleleri (SEO & Discover - Veritabanı Destekli)
+  const posts = await getAllSeoBlogPosts(false)
+  const blogRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${baseUrl}/blog/${post.slug}`,
     lastModified: new Date(post.date),
     changeFrequency: 'weekly',

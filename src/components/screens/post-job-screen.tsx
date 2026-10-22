@@ -583,62 +583,44 @@ export default function PostJobScreen() {
   const xpPercent = Math.round((level / TOTAL_LEVELS) * 100)
 
   const LEVEL_NAMES = [
-    { num: 1, title: 'Görev Tanımı', icon: '🎯' },
-    { num: 2, title: 'Zaman Planı', icon: '⏰' },
-    { num: 3, title: 'Ücret & Emanet', icon: '💰' },
-    { num: 4, title: 'Konum', icon: '📍' },
-    { num: 5, title: 'Onay & Yayın', icon: '🚀' },
+    { num: 1, code: '01', title: 'Görev Tanımı' },
+    { num: 2, code: '02', title: 'Zaman Planı' },
+    { num: 3, code: '03', title: 'Ücret & Emanet' },
+    { num: 4, code: '04', title: 'Konum' },
+    { num: 5, code: '05', title: 'Önizleme & Yayın' },
   ]
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-3xl">
-      {/* Üst Başlık & XP Seviye Çubuğu */}
-      <div className="mb-6 space-y-3">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div>
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      {/* Üst Başlık & 5 Adımlı İlan Cetveli */}
+      <div className="space-y-4 border-b border-[#D8D5CC] dark:border-[#262C29] pb-5">
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs flex items-center gap-1">
-                <Trophy className="w-3.5 h-3.5" />
-                SEVİYE {level} / {TOTAL_LEVELS}
+              <span className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded-sm bg-[#EAF3EE] text-[#0D6847] border border-[#C5DDD0] dark:bg-[#162921] dark:text-[#5CD6A5] dark:border-[#244738]">
+                ADIM 0{level} / 0{TOTAL_LEVELS}
               </span>
-              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                %{xpPercent} XP Tamamlandı
+              <span className="font-mono text-[11px] text-[#5C615E] dark:text-[#949B97]">
+                • İŞVEREN İLAN FORMU
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight mt-1 flex items-center gap-2">
-              <span>{LEVEL_NAMES[level - 1].icon}</span>
-              <span>{LEVEL_NAMES[level - 1].title}</span>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#141615] dark:text-white tracking-tight">
+              {LEVEL_NAMES[level - 1].title}
             </h1>
           </div>
 
-          <div className="text-right">
-            <span className="text-xs text-gray-500 font-medium">Bakiye: </span>
-            <span className="text-sm font-bold text-emerald-700">
-              {loadingBalance ? '...' : `₺${(walletBalance ?? 0).toLocaleString('tr-TR')}`}
+          <div className="px-3 py-1.5 rounded-md bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] text-right">
+            <span className="font-mono text-[10px] text-[#5C615E] dark:text-[#949B97] block">
+              KULLANILABİLİR BAKİYE
+            </span>
+            <span className="font-mono text-sm font-bold text-[#0D6847] dark:text-[#5CD6A5]">
+              {loadingBalance ? '...' : `${(walletBalance ?? 0).toLocaleString('tr-TR')} ₺`}
             </span>
           </div>
         </div>
 
-        {/* Level Up Animasyon Bildirimi */}
-        {levelUpEffect && (
-          <div className="p-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl shadow-md flex items-center justify-center gap-2 text-xs font-bold animate-bounce">
-            <Sparkles className="w-4 h-4" />
-            <span>Tebrikler! Seviye Atlandı! Seviye {level}&apos;e ulaştınız ⚡</span>
-          </div>
-        )}
-
-        {/* Gamified XP Progress Bar */}
-        <div className="w-full bg-gray-200/80 rounded-full h-3 overflow-hidden p-0.5 shadow-inner">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-500 transition-all duration-500 ease-out shadow-xs relative"
-            style={{ width: `${xpPercent}%` }}
-          >
-            <div className="absolute inset-0 bg-white/20 animate-pulse" />
-          </div>
-        </div>
-
-        {/* Seviye Adımları Navigasyonu (3D Tactile Buttons) */}
-        <div className="grid grid-cols-5 gap-1.5 pt-1">
+        {/* 5 Adımlı Mimari Sekme Çubuğu */}
+        <div className="grid grid-cols-5 gap-1.5">
           {LEVEL_NAMES.map((lvl) => {
             const isCompleted = lvl.num < level
             const isCurrent = lvl.num === level
@@ -650,19 +632,19 @@ export default function PostJobScreen() {
                 type="button"
                 onClick={() => jumpToLevel(lvl.num)}
                 disabled={!isUnlocked}
-                className={`py-2 px-1 rounded-2xl text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
+                className={`py-2 px-2 rounded-md text-left border transition-colors flex flex-col justify-between gap-0.5 ${
                   isCurrent
-                    ? 'btn-3d-emerald rounded-2xl shadow-sm z-10 font-black'
+                    ? 'bg-[#141615] text-white border-[#141615] dark:bg-[#F2F1ED] dark:text-[#141615] dark:border-[#F2F1ED]'
                     : isCompleted
-                    ? 'btn-3d-white rounded-2xl text-emerald-800 font-extrabold'
-                    : 'bg-slate-50 border border-slate-200 text-slate-400 opacity-60 cursor-not-allowed'
+                    ? 'bg-white dark:bg-[#141716] text-[#0D6847] dark:text-[#5CD6A5] border-[#0D6847]/40'
+                    : 'bg-white/60 dark:bg-[#141716]/60 border-[#E2E0D8] dark:border-[#252B28] text-[#8A8F8C] opacity-60 cursor-not-allowed'
                 }`}
               >
-                <div className="flex items-center gap-1">
-                  <span className="text-xs">{lvl.icon}</span>
-                  {isCompleted && <Check className="w-3 h-3 text-emerald-600" />}
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-mono text-[10px] font-semibold">{lvl.code}</span>
+                  {isCompleted && <Check className="w-3 h-3" />}
                 </div>
-                <span className="text-[10px] font-bold truncate max-w-full leading-tight">
+                <span className="text-[11px] font-bold truncate w-full leading-tight">
                   {lvl.title.split(' ')[0]}
                 </span>
               </button>
@@ -675,16 +657,15 @@ export default function PostJobScreen() {
       {/* SEVİYE 1: GÖREV TANIMI & KATEGORİ                                   */}
       {/* ==================================================================== */}
       {level === 1 && (
-        <Card className="border-0 shadow-lg bg-white dark:bg-slate-900 rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10 dark:border dark:border-white/10 animate-in fade-in-50 duration-300">
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-4 text-white">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-lg">
-                🎯
-              </div>
-              <div>
-                <h2 className="font-bold text-base leading-tight">Seviye 1: Görevi Tanımla</h2>
-                <p className="text-xs text-emerald-100">İşçilerin ne yapacağını ve hangi kategoride olduğunu belirtin.</p>
-              </div>
+        <Card className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg shadow-none overflow-hidden">
+          <div className="px-4 sm:px-6 py-3.5 bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-between">
+            <div>
+              <span className="font-mono text-[10px] font-semibold text-[#0D6847] dark:text-[#5CD6A5] uppercase">
+                BÖLÜM 01 • İŞ TANIMI
+              </span>
+              <h2 className="font-bold text-sm sm:text-base text-[#141615] dark:text-white">
+                Kategori ve Görev Detaylarını Belirleyin
+              </h2>
             </div>
           </div>
 
@@ -692,15 +673,15 @@ export default function PostJobScreen() {
             {/* 1. Kategori Seçimi - Görsel Kartlar (İlk Adım) */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold text-gray-800 dark:text-slate-100">
+                <Label className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1]">
                   1. İş Kategorisi Seçin *
                 </Label>
-                <span className="text-xs text-emerald-800 dark:text-emerald-300 font-semibold bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-1">
+                <span className="font-mono text-xs text-[#0D6847] dark:text-[#27A878] font-semibold bg-[#E6F2EC] dark:bg-[#0D6847]/20 px-2.5 py-0.5 rounded border border-[#0D6847]/30 flex items-center gap-1">
                   <span>{currentCategory.icon}</span>
                   <span>{currentCategory.name}</span>
                 </span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {CATEGORY_ITEMS.map((cat) => {
                   const isSelected = form.category === cat.id
                   return (
@@ -708,25 +689,25 @@ export default function PostJobScreen() {
                       key={cat.id}
                       type="button"
                       onClick={() => update('category', cat.id)}
-                      className={`p-3 rounded-xl text-left transition-all border flex flex-col justify-between gap-1.5 ${
+                      className={`p-3 rounded-md text-left transition-colors border flex flex-col justify-between gap-1.5 ${
                         isSelected
-                          ? 'border-emerald-600 bg-emerald-50/80 dark:bg-emerald-950/60 dark:border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
-                          : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-800 bg-white dark:bg-slate-850'
+                          ? 'border-[#0D6847] bg-[#E6F2EC]/60 dark:bg-[#0D6847]/20'
+                          : 'border-[#E2E0D8] dark:border-[#252B28] hover:border-[#0D6847]/50 bg-[#FBFBF9] dark:bg-[#181C1A]'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-2xl">{cat.icon}</span>
+                        <span className="text-xl">{cat.icon}</span>
                         {isSelected && (
-                          <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center">
-                            <Check className="w-3 h-3 stroke-[3]" />
+                          <div className="w-4 h-4 rounded-sm bg-[#0D6847] text-white flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
                           </div>
                         )}
                       </div>
                       <div>
-                        <p className={`text-xs font-bold ${isSelected ? 'text-emerald-950 dark:text-emerald-300' : 'text-gray-900 dark:text-slate-100'}`}>
+                        <p className={`text-xs font-semibold ${isSelected ? 'text-[#0D6847] dark:text-[#27A878]' : 'text-[#141716] dark:text-[#F0F2F1]'}`}>
                           {cat.name}
                         </p>
-                        <p className="text-[10px] text-gray-500 dark:text-slate-400 line-clamp-1">{cat.desc}</p>
+                        <p className="text-[10px] text-[#535A56] dark:text-[#9DA6A0] line-clamp-1">{cat.desc}</p>
                       </div>
                     </button>
                   )
@@ -737,10 +718,10 @@ export default function PostJobScreen() {
             {/* 2. İlan Başlığı & Kategoriye Özel Hızlı Şablonlar */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="title" className="text-sm font-semibold text-gray-800 dark:text-slate-100">
+                <Label htmlFor="title" className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1]">
                   2. İlan Başlığı *
                 </Label>
-                <span className="text-xs text-gray-400">
+                <span className="font-mono text-[11px] text-[#535A56] dark:text-[#9DA6A0]">
                   {form.title.length} / min 5 karakter
                 </span>
               </div>
@@ -749,21 +730,18 @@ export default function PostJobScreen() {
                 placeholder={`Örn: ${currentCategory.templates[0]?.title || 'İlan başlığı yazın...'}`}
                 value={form.title}
                 onChange={(e) => update('title', e.target.value)}
-                className="h-11 text-sm font-medium"
+                className="h-11 text-sm font-medium rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D]"
                 autoFocus
               />
 
               {/* Seçilen Kategoriye Ait Hızlı Şablonlar */}
               <div className="space-y-1.5 pt-1">
                 <div className="flex items-center justify-between">
-                  <p className="text-[11px] font-semibold text-gray-600 dark:text-slate-300 flex items-center gap-1.5">
-                    <span>💡</span>
-                    <span>
-                      <strong className="text-emerald-700 dark:text-emerald-400">{currentCategory.name}</strong> İçin Hızlı Şablonlar:
-                    </span>
+                  <p className="font-mono text-[10px] uppercase tracking-wider font-semibold text-[#535A56] dark:text-[#9DA6A0]">
+                    <strong className="text-[#0D6847] dark:text-[#27A878]">{currentCategory.name}</strong> Hızlı Şablonlar:
                   </p>
-                  <span className="text-[10px] text-gray-400 hidden sm:inline">
-                    Tıklayarak başlık ve açıklamayı otomatik doldurun
+                  <span className="text-[10px] text-[#535A56] dark:text-[#9DA6A0] hidden sm:inline">
+                    Tıklayarak otomatik doldurun
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
@@ -774,10 +752,10 @@ export default function PostJobScreen() {
                         key={idx}
                         type="button"
                         onClick={() => applyTemplate(tpl)}
-                        className={`text-xs px-3 py-1.5 rounded-xl transition-all border text-left flex items-center gap-1.5 ${
+                        className={`text-xs px-3 py-1.5 rounded-md transition-colors border text-left flex items-center gap-1.5 ${
                           isSelected
-                            ? 'bg-emerald-600 text-white border-emerald-600 font-semibold shadow-xs'
-                            : 'bg-gray-50/80 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-300 hover:border-emerald-300 dark:hover:border-emerald-700 text-gray-700 dark:text-slate-200 border-gray-200 dark:border-white/10'
+                            ? 'bg-[#0D6847] text-white border-[#0D6847] font-semibold'
+                            : 'bg-[#FBFBF9] dark:bg-[#181C1A] hover:border-[#0D6847] text-[#141716] dark:text-[#F0F2F1] border-[#E2E0D8] dark:border-[#252B28]'
                         }`}
                       >
                         <span>{currentCategory.icon}</span>
@@ -792,7 +770,7 @@ export default function PostJobScreen() {
             {/* 3. İş Tanımı ve Beklentiler */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="description" className="text-sm font-semibold text-gray-800 dark:text-slate-100">
+                <Label htmlFor="description" className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1]">
                   3. İş Tanımı ve Beklentiler *
                 </Label>
                 <div className="flex items-center gap-2">
@@ -803,17 +781,17 @@ export default function PostJobScreen() {
                         const matched = currentCategory.templates.find((t) => t.title === form.title)
                         if (matched) {
                           update('description', matched.description)
-                          toast.success('Şablon açıklaması aktarıldı! 📋')
+                          toast.success('Şablon açıklaması aktarıldı!')
                         }
                       }}
-                      className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-1 transition-colors"
+                      className="text-[11px] font-medium text-[#0D6847] dark:text-[#27A878] bg-[#E6F2EC] dark:bg-[#0D6847]/20 px-2 py-0.5 rounded border border-[#0D6847]/30 flex items-center gap-1 transition-colors"
                     >
-                      <span>📋</span> Şablon Açıklamasını Yaz
+                      Şablon Açıklamasını Yaz
                     </button>
                   )}
                   <span
-                    className={`text-xs font-semibold ${
-                      form.description.length >= 20 ? 'text-emerald-600' : 'text-amber-600'
+                    className={`font-mono text-[11px] font-semibold ${
+                      form.description.length >= 20 ? 'text-[#0D6847] dark:text-[#27A878]' : 'text-[#C84B31]'
                     }`}
                   >
                     {form.description.length} / min 20 karakter
@@ -826,13 +804,13 @@ export default function PostJobScreen() {
                 value={form.description}
                 onChange={(e) => update('description', e.target.value)}
                 rows={4}
-                className="text-sm leading-relaxed"
+                className="text-sm leading-relaxed rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D]"
               />
             </div>
 
             {/* 4. Aciliyet Durumu */}
             <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-800 dark:text-slate-100">
+              <Label className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1]">
                 4. İlan Aciliyeti
               </Label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -843,17 +821,17 @@ export default function PostJobScreen() {
                       key={urg.id}
                       type="button"
                       onClick={() => update('urgency', urg.id)}
-                      className={`p-2.5 rounded-xl border text-left transition-all ${
+                      className={`p-2.5 rounded-md border text-left transition-colors ${
                         isSelected
-                          ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-950 dark:text-emerald-300 ring-1 ring-emerald-500'
-                          : 'border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200'
+                          ? 'border-[#0D6847] bg-[#E6F2EC]/60 dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878]'
+                          : 'border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#181C1A] text-[#141716] dark:text-[#F0F2F1]'
                       }`}
                     >
-                      <div className="flex items-center gap-1.5 text-xs font-bold">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold">
                         <span>{urg.icon}</span>
                         <span>{urg.label}</span>
                       </div>
-                      <p className="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5">{urg.desc}</p>
+                      <p className="text-[10px] text-[#535A56] dark:text-[#9DA6A0] mt-0.5">{urg.desc}</p>
                     </button>
                   )
                 })}
@@ -862,7 +840,7 @@ export default function PostJobScreen() {
 
             {/* 5. Aranan Beceriler (Opsiyonel) */}
             <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-800 dark:text-slate-100">
+              <Label className="text-sm font-semibold text-[#141716] dark:text-[#F0F2F1]">
                 5. Aranan Beceriler (Opsiyonel)
               </Label>
               <div className="flex gap-2">
@@ -876,9 +854,9 @@ export default function PostJobScreen() {
                       addSkill()
                     }
                   }}
-                  className="h-10 text-sm"
+                  className="h-10 text-sm rounded-md border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#0C0E0D]"
                 />
-                <Button type="button" variant="outline" onClick={() => addSkill()} className="h-10 px-3 dark:border-white/10 dark:hover:bg-slate-800">
+                <Button type="button" variant="outline" onClick={() => addSkill()} className="h-10 px-3 rounded-md border-[#E2E0D8] dark:border-[#252B28]">
                   <Plus className="w-4 h-4 mr-1" /> Ekle
                 </Button>
               </div>
@@ -887,23 +865,20 @@ export default function PostJobScreen() {
               {form.requiredSkills.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {form.requiredSkills.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="bg-emerald-100/80 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 gap-1 text-xs py-1">
+                    <span key={skill} className="inline-flex items-center bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] border border-[#0D6847]/30 gap-1 text-xs font-semibold px-2.5 py-1 rounded-md">
                       {skill}
                       <button type="button" onClick={() => removeSkill(skill)}>
-                        <X className="w-3 h-3 hover:text-red-600" />
+                        <X className="w-3 h-3 hover:text-[#C84B31]" />
                       </button>
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               )}
 
               {/* Seçilen Kategoriye Özel Önerilen Yetenekler */}
               <div className="space-y-1.5 pt-1">
-                <p className="text-[11px] font-semibold text-gray-600 dark:text-slate-300 flex items-center gap-1.5">
-                  <span>✨</span>
-                  <span>
-                    <strong className="text-emerald-700 dark:text-emerald-400">{currentCategory.name}</strong> İçin Önerilen Beceriler:
-                  </span>
+                <p className="font-mono text-[10px] uppercase tracking-wider font-semibold text-[#535A56] dark:text-[#9DA6A0]">
+                  <strong className="text-[#0D6847] dark:text-[#27A878]">{currentCategory.name}</strong> Önerilen Beceriler:
                 </p>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {currentCategory.skills.map((s) => {
@@ -914,10 +889,10 @@ export default function PostJobScreen() {
                         type="button"
                         onClick={() => addSkill(s)}
                         disabled={isAdded}
-                        className={`text-[11px] px-2.5 py-1 rounded-lg transition-all border font-medium ${
+                        className={`text-[11px] px-2.5 py-1 rounded-md transition-colors border font-medium ${
                           isAdded
-                            ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800/60 opacity-60 cursor-default'
-                            : 'bg-gray-50 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-800 dark:hover:text-emerald-300 hover:border-emerald-300 dark:hover:border-emerald-700 text-gray-700 dark:text-slate-200 border-gray-200 dark:border-white/10'
+                            ? 'bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] border-[#0D6847]/30 opacity-60 cursor-default'
+                            : 'bg-[#FBFBF9] dark:bg-[#181C1A] hover:border-[#0D6847] text-[#141716] dark:text-[#F0F2F1] border-[#E2E0D8] dark:border-[#252B28]'
                         }`}
                       >
                         {isAdded ? `✓ ${s}` : `+ ${s}`}
@@ -935,15 +910,15 @@ export default function PostJobScreen() {
       {/* SEVİYE 2: ZAMAN & ÇALIŞMA PLANI                                      */}
       {/* ==================================================================== */}
       {level === 2 && (
-        <Card className="border-0 shadow-lg bg-white dark:bg-slate-900 rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10 dark:border dark:border-white/10 animate-in fade-in-50 duration-300">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-lg">
-                ⏰
+        <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-md overflow-hidden animate-in fade-in-50 duration-300">
+          <div className="bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] p-4 sm:p-5">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-md bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] flex items-center justify-center font-mono text-xs font-semibold">
+                02
               </div>
               <div>
-                <h2 className="font-bold text-base leading-tight">Seviye 2: Zaman & Çalışma Planı</h2>
-                <p className="text-xs text-blue-100">İşçilerin ne zaman ve kaç saat çalışacağını belirleyin.</p>
+                <h2 className="font-semibold text-base text-[#141716] dark:text-[#F0F2F1] leading-tight">Adım 2: Zaman & Çalışma Planı</h2>
+                <p className="text-xs text-[#535A56] dark:text-[#9DA6A0] mt-0.5">Çalışanların ne zaman ve kaç saat çalışacağını belirleyin.</p>
               </div>
             </div>
           </div>
@@ -952,7 +927,7 @@ export default function PostJobScreen() {
             {/* İş Tarihi */}
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-gray-800 dark:text-slate-100 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <Calendar className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
                 İş Tarihi *
               </Label>
               <Input
@@ -960,7 +935,7 @@ export default function PostJobScreen() {
                 min={today}
                 value={form.workDate}
                 onChange={(e) => update('workDate', e.target.value)}
-                className="h-11 text-sm font-medium"
+                className="h-11 text-sm font-medium rounded-md border-[#E2E0D8] dark:border-[#252B28]"
               />
 
               {/* Hızlı Tarih Butonları */}
@@ -968,10 +943,10 @@ export default function PostJobScreen() {
                 <button
                   type="button"
                   onClick={() => update('workDate', today)}
-                  className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition ${
+                  className={`text-xs px-3 py-1.5 rounded-md border font-medium transition ${
                     form.workDate === today
-                      ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 font-bold'
-                      : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300'
+                      ? 'bg-[#E6F2EC] dark:bg-[#0D6847]/20 border-[#0D6847]/40 text-[#0D6847] dark:text-[#27A878] font-semibold'
+                      : 'bg-[#FBFBF9] dark:bg-[#181C1A] border-[#E2E0D8] dark:border-[#252B28] text-[#535A56] dark:text-[#9DA6A0]'
                   }`}
                 >
                   ⚡ Bugün ({new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })})
@@ -979,10 +954,10 @@ export default function PostJobScreen() {
                 <button
                   type="button"
                   onClick={() => update('workDate', tomorrow)}
-                  className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition ${
+                  className={`text-xs px-3 py-1.5 rounded-md border font-medium transition ${
                     form.workDate === tomorrow
-                      ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 font-bold'
-                      : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300'
+                      ? 'bg-[#E6F2EC] dark:bg-[#0D6847]/20 border-[#0D6847]/40 text-[#0D6847] dark:text-[#27A878] font-semibold'
+                      : 'bg-[#FBFBF9] dark:bg-[#181C1A] border-[#E2E0D8] dark:border-[#252B28] text-[#535A56] dark:text-[#9DA6A0]'
                   }`}
                 >
                   📅 Yarın
@@ -994,27 +969,27 @@ export default function PostJobScreen() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-gray-800 dark:text-slate-100 flex items-center gap-1">
-                  <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <Clock className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
                   Başlangıç Saati
                 </Label>
                 <Input
                   type="time"
                   value={form.startTime}
                   onChange={(e) => update('startTime', e.target.value)}
-                  className="h-11"
+                  className="h-11 rounded-md border-[#E2E0D8] dark:border-[#252B28]"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-gray-800 dark:text-slate-100 flex items-center gap-1">
-                  <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <Clock className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
                   Bitiş Saati
                 </Label>
                 <Input
                   type="time"
                   value={form.endTime}
                   onChange={(e) => update('endTime', e.target.value)}
-                  className="h-11"
+                  className="h-11 rounded-md border-[#E2E0D8] dark:border-[#252B28]"
                 />
               </div>
 
@@ -1029,37 +1004,37 @@ export default function PostJobScreen() {
                   max="24"
                   value={form.durationHours}
                   onChange={(e) => update('durationHours', e.target.value)}
-                  className="h-11 font-bold"
+                  className="h-11 font-mono font-bold rounded-md border-[#E2E0D8] dark:border-[#252B28]"
                 />
               </div>
             </div>
 
             {/* Bilgilendirici İpucu Kutusu */}
-            <div className="p-3.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 rounded-xl text-xs text-blue-900 dark:text-blue-300 space-y-1">
-              <p className="font-bold flex items-center gap-1.5">
-                <span>💡</span> Zamanlama İpucu
+            <div className="p-3.5 bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] rounded-md text-xs text-[#141716] dark:text-[#F0F2F1] space-y-1">
+              <p className="font-mono text-[10px] uppercase tracking-wider font-semibold text-[#0D6847] dark:text-[#27A878]">
+                OTOMATİK VARDİYA BİLDİRİMİ
               </p>
-              <p className="text-blue-800 dark:text-blue-300 leading-relaxed">
-                İş başlama saatinden 15 dakika önce işçiye otomatik bildirim iletilecektir. İş başlangıcında ve bitişinde tek tıkla QR kod okutarak iş güvenle tamamlanır.
+              <p className="text-[#535A56] dark:text-[#9DA6A0] leading-relaxed">
+                İş başlama saatinden 15 dakika önce işçiye otomatik bildirim iletilecektir. İş başlangıcında ve bitişinde tek tıkla QR kod okutarak vardiya güvenle tamamlanır.
               </p>
             </div>
           </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* ==================================================================== */}
       {/* SEVİYE 3: ÜCRET & GÜVENLİ EMANET HAVUZU                              */}
       {/* ==================================================================== */}
       {level === 3 && (
-        <Card className="border-0 shadow-lg bg-white dark:bg-slate-900 rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10 dark:border dark:border-white/10 animate-in fade-in-50 duration-300">
-          <div className="bg-gradient-to-r from-amber-600 to-emerald-700 p-4 text-white">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-lg">
-                💰
+        <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-md overflow-hidden animate-in fade-in-50 duration-300">
+          <div className="bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] p-4 sm:p-5">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-md bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] flex items-center justify-center font-mono text-xs font-semibold">
+                03
               </div>
               <div>
-                <h2 className="font-bold text-base leading-tight">Seviye 3: Hak Ediş & Emanet Havuzu</h2>
-                <p className="text-xs text-amber-100">İşçi ücretini ve kaç kişilik kadro aradığınızı belirleyin.</p>
+                <h2 className="font-semibold text-base text-[#141716] dark:text-[#F0F2F1] leading-tight">Adım 3: Hak Ediş & Emanet Havuzu</h2>
+                <p className="text-xs text-[#535A56] dark:text-[#9DA6A0] mt-0.5">Çalışan ücretini ve kaç kişilik kadro aradığınızı belirleyin.</p>
               </div>
             </div>
           </div>
@@ -1078,10 +1053,10 @@ export default function PostJobScreen() {
                     key={type.id}
                     type="button"
                     onClick={() => update('wageType', type.id)}
-                    className={`py-2.5 px-2 rounded-xl text-xs font-bold border transition ${
+                    className={`py-2.5 px-2 rounded-md text-xs font-semibold border transition ${
                       form.wageType === type.id
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                        : 'bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-white/10 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700'
+                        ? 'bg-[#0D6847] text-white border-[#0D6847]'
+                        : 'bg-[#FBFBF9] dark:bg-[#181C1A] border-[#E2E0D8] dark:border-[#252B28] text-[#535A56] dark:text-[#9DA6A0] hover:text-[#141716] dark:hover:text-[#F0F2F1]'
                     }`}
                   >
                     {type.label}
@@ -1093,7 +1068,7 @@ export default function PostJobScreen() {
             {/* Ücret Tutarı (₺) */}
             <div className="space-y-2">
               <Label htmlFor="wageAmount" className="text-sm font-semibold text-gray-800 dark:text-slate-100 flex items-center gap-1.5">
-                <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <Wallet className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
                 Kişi Başı Ücret (₺) *
               </Label>
               <div className="relative">
@@ -1103,9 +1078,9 @@ export default function PostJobScreen() {
                   placeholder="Örn: 2000"
                   value={form.wageAmount}
                   onChange={(e) => update('wageAmount', e.target.value)}
-                  className="h-12 text-lg font-black pl-8"
+                  className="h-12 text-lg font-mono font-bold pl-8 rounded-md border-[#E2E0D8] dark:border-[#252B28]"
                 />
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-slate-400 font-bold text-base">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#535A56] dark:text-[#9DA6A0] font-mono font-bold text-base">
                   ₺
                 </span>
               </div>
@@ -1117,7 +1092,7 @@ export default function PostJobScreen() {
                     key={amt}
                     type="button"
                     onClick={() => update('wageAmount', String(amt))}
-                    className="text-xs px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-300 text-gray-700 dark:text-slate-200 font-medium border border-gray-200 dark:border-white/10"
+                    className="text-xs font-mono px-2.5 py-1 rounded-md bg-[#FBFBF9] dark:bg-[#181C1A] hover:bg-[#E6F2EC] dark:hover:bg-[#0D6847]/20 hover:text-[#0D6847] dark:hover:text-[#27A878] text-[#141716] dark:text-[#F0F2F1] font-medium border border-[#E2E0D8] dark:border-[#252B28]"
                   >
                     {amt.toLocaleString('tr-TR')} ₺
                   </button>
@@ -1128,24 +1103,24 @@ export default function PostJobScreen() {
             {/* Açık Pozisyon Sayısı (Kişi Sayısı Stepper) */}
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-gray-800 dark:text-slate-100 flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <Users className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
                 Kaç Kişi Aranıyor? (Kontenjan) *
               </Label>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => update('openingsTotal', String(Math.max(1, Number(form.openingsTotal) - 1)))}
-                  className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center justify-center text-gray-700 dark:text-slate-200 font-bold transition"
+                  className="w-11 h-11 rounded-md border border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#181C1A] hover:bg-[#EFECE6] dark:hover:bg-[#252B28] flex items-center justify-center text-[#141716] dark:text-[#F0F2F1] font-bold transition"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <div className="flex-1 text-center bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-white/10 rounded-xl h-11 flex items-center justify-center font-black text-lg text-gray-900 dark:text-slate-100">
+                <div className="flex-1 text-center bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] rounded-md h-11 flex items-center justify-center font-mono font-bold text-lg text-[#141716] dark:text-[#F0F2F1]">
                   {form.openingsTotal} Kişi
                 </div>
                 <button
                   type="button"
                   onClick={() => update('openingsTotal', String(Number(form.openingsTotal) + 1))}
-                  className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center justify-center text-gray-700 dark:text-slate-200 font-bold transition"
+                  className="w-11 h-11 rounded-md border border-[#E2E0D8] dark:border-[#252B28] bg-[#FBFBF9] dark:bg-[#181C1A] hover:bg-[#EFECE6] dark:hover:bg-[#252B28] flex items-center justify-center text-[#141716] dark:text-[#F0F2F1] font-bold transition"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -1153,10 +1128,10 @@ export default function PostJobScreen() {
             </div>
 
             {/* Pazarlık Seçeneği */}
-            <div className="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-slate-800/60 rounded-xl border border-gray-200 dark:border-white/10 gap-3">
+            <div className="flex items-center justify-between p-3.5 bg-[#FBFBF9] dark:bg-[#181C1A] rounded-md border border-[#E2E0D8] dark:border-[#252B28] gap-3">
               <div>
-                <Label className="font-bold text-xs sm:text-sm text-gray-900 dark:text-slate-100">Ücret Pazarlığına Açık</Label>
-                <p className="text-[11px] text-gray-500 dark:text-slate-400">İşçiler başvuru yaparken karşı teklif sunabilir</p>
+                <Label className="font-semibold text-xs sm:text-sm text-[#141716] dark:text-[#F0F2F1]">Ücret Pazarlığına Açık</Label>
+                <p className="text-[11px] text-[#535A56] dark:text-[#9DA6A0]">Çalışanlar başvuru yaparken karşı teklif sunabilir</p>
               </div>
               <Switch
                 checked={form.isWageNegotiable}
@@ -1165,54 +1140,54 @@ export default function PostJobScreen() {
             </div>
 
             {/* GÜVENLİ EMANET HAVUZU (ESCROW) VE BAKİYE KONTROLÜ */}
-            <div className="rounded-xl border border-emerald-300 dark:border-emerald-800/60 bg-gradient-to-br from-emerald-50 via-teal-50/50 to-white dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-slate-900 p-4 space-y-3 shadow-xs">
+            <div className="rounded-md border border-[#0D6847]/30 bg-[#E6F2EC]/50 dark:bg-[#0D6847]/10 p-4 space-y-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2 text-emerald-950 dark:text-emerald-200 font-bold text-sm">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                <div className="flex items-center gap-2 text-[#141716] dark:text-[#F0F2F1] font-semibold text-sm">
+                  <div className="w-7 h-7 rounded-md bg-[#0D6847] text-white flex items-center justify-center">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <span>Güvenli Emanet Havuzu (Escrow)</span>
                 </div>
-                <Badge className="bg-emerald-600 text-white text-[10px]">
-                  %100 Garanti
-                </Badge>
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-[#0D6847] text-white">
+                  %100 GARANTİ
+                </span>
               </div>
 
-              <div className="bg-white dark:bg-slate-850 rounded-xl p-3 border border-emerald-100 dark:border-emerald-800/40 space-y-2 text-xs shadow-xs">
-                <div className="flex justify-between items-center text-gray-600 dark:text-slate-400">
+              <div className="bg-white dark:bg-[#141716] rounded-md p-3.5 border border-[#E2E0D8] dark:border-[#252B28] space-y-2 text-xs">
+                <div className="flex justify-between items-center text-[#535A56] dark:text-[#9DA6A0]">
                   <span>Mevcut Cüzdan Bakiyeniz:</span>
-                  <span className="font-bold text-gray-900 dark:text-slate-100 text-sm">
+                  <span className="font-mono font-bold text-[#141716] dark:text-[#F0F2F1] text-sm">
                     {loadingBalance ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin inline text-emerald-600" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin inline text-[#0D6847]" />
                     ) : (
                       `₺${(walletBalance ?? 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`
                     )}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center text-gray-600 dark:text-slate-400">
+                <div className="flex justify-between items-center text-[#535A56] dark:text-[#9DA6A0]">
                   <span>
-                    Gereken Emanet Tutarı ({openings} kişi x ₺{wage.toLocaleString('tr-TR')}):
+                    Gereken Emanet Tutarı ({openings} kişi × ₺{wage.toLocaleString('tr-TR')}):
                   </span>
-                  <span className="font-black text-emerald-700 dark:text-emerald-400 text-base">
+                  <span className="font-mono font-bold text-[#0D6847] dark:text-[#27A878] text-base">
                     ₺{totalEscrowRequired.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
 
                 {totalEscrowRequired > 0 && (
-                  <div className="pt-2 border-t border-gray-100 dark:border-white/10">
+                  <div className="pt-2 border-t border-[#E2E0D8] dark:border-[#252B28]">
                     {isBalanceSufficient ? (
-                      <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold py-1">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span>Bakiyeniz yeterli! İlan onaylandığında bu tutar emanet havuzuna ayrılır.</span>
+                      <div className="flex items-center gap-1.5 text-[#0D6847] dark:text-[#27A878] font-medium py-1">
+                        <CheckCircle2 className="w-4 h-4 shrink-0" />
+                        <span>Bakiyeniz yeterli. İlan onaylandığında bu tutar emanet havuzuna ayrılır.</span>
                       </div>
                     ) : (
                       <div className="space-y-2.5 pt-1">
-                        <div className="flex items-start gap-2 text-amber-800 dark:text-amber-300 font-medium bg-amber-50 dark:bg-amber-950/40 p-2.5 rounded-lg border border-amber-200 dark:border-amber-800/40">
-                          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                        <div className="flex items-start gap-2 text-[#C84B31] font-medium bg-[#FDF3F0] dark:bg-[#C84B31]/10 p-2.5 rounded-md border border-[#C84B31]/30">
+                          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                           <div className="text-xs leading-snug">
                             Cüzdan bakiyeniz yetersiz. İlanı yayına almak için{' '}
-                            <strong className="text-amber-950 dark:text-amber-200">
+                            <strong className="font-mono">
                               ₺{missingAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
                             </strong>{' '}
                             bakiye yüklemeniz gerekmektedir.
@@ -1223,11 +1198,11 @@ export default function PostJobScreen() {
                           variant="outline"
                           size="sm"
                           onClick={() => go('wallet')}
-                          className="w-full h-9 bg-white dark:bg-slate-800 border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 font-bold gap-2"
+                          className="w-full h-9 rounded-md border-[#E2E0D8] dark:border-[#252B28] text-[#141716] dark:text-[#F0F2F1] font-semibold gap-2"
                         >
-                          <Wallet className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                          <Wallet className="w-4 h-4 text-[#C84B31]" />
                           <span>Cüzdana Para Yükle</span>
-                          <ArrowRight className="w-3.5 h-3.5 ml-auto text-amber-600 dark:text-amber-400" />
+                          <ArrowRight className="w-3.5 h-3.5 ml-auto" />
                         </Button>
                       </div>
                     )}
@@ -1236,22 +1211,22 @@ export default function PostJobScreen() {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* ==================================================================== */}
       {/* SEVİYE 4: GÖREV LOKASYONU & KONUM                                    */}
       {/* ==================================================================== */}
       {level === 4 && (
-        <Card className="border-0 shadow-lg bg-white dark:bg-slate-900/90 dark:ring-white/10 dark:border-white/10 rounded-2xl overflow-hidden ring-1 ring-black/5 animate-in fade-in-50 duration-300">
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-700 p-4 text-white">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-lg">
-                📍
+        <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-md overflow-hidden animate-in fade-in-50 duration-300">
+          <div className="bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] p-4 sm:p-5">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-md bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] flex items-center justify-center font-mono text-xs font-semibold">
+                04
               </div>
               <div>
-                <h2 className="font-bold text-base leading-tight">Seviye 4: Görev Lokasyonu</h2>
-                <p className="text-xs text-purple-100">İşçilerin adresi kolay bulması için konum detaylarını girin.</p>
+                <h2 className="font-semibold text-base text-[#141716] dark:text-[#F0F2F1] leading-tight">Adım 4: Görev Lokasyonu</h2>
+                <p className="text-xs text-[#535A56] dark:text-[#9DA6A0] mt-0.5">Çalışanların adresi kolay bulması için konum detaylarını girin.</p>
               </div>
             </div>
           </div>
@@ -1262,10 +1237,10 @@ export default function PostJobScreen() {
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-gray-800 dark:text-slate-200">Şehir *</Label>
                 <Select value={form.city} onValueChange={(v) => update('city', v)}>
-                  <SelectTrigger className="h-11 dark:bg-slate-950 dark:border-white/10 dark:text-slate-100">
+                  <SelectTrigger className="h-11 rounded-md border-[#E2E0D8] dark:border-[#252B28]">
                     <SelectValue placeholder="Şehir seçin" />
                   </SelectTrigger>
-                  <SelectContent className="max-h-60 dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
+                  <SelectContent className="max-h-60">
                     {Array.from(new Set([form.city, ...TURKEY_CITIES].filter(Boolean))).map((c) => (
                       <SelectItem key={c} value={c}>{c}</SelectItem>
                     ))}
@@ -1278,14 +1253,14 @@ export default function PostJobScreen() {
                   <Label htmlFor="district" className="text-sm font-semibold text-gray-800 dark:text-slate-200">
                     İlçe *
                   </Label>
-                  <span className="text-[10px] text-gray-400 dark:text-slate-400">Konumla otomatik dolar</span>
+                  <span className="text-[10px] font-mono text-[#535A56] dark:text-[#9DA6A0]">GPS İLE OTOMATİK</span>
                 </div>
                 <Input
                   id="district"
                   placeholder="Örn: Ortahisar, Kadıköy, Çankaya..."
                   value={form.district}
                   onChange={(e) => update('district', e.target.value)}
-                  className="h-11 text-sm font-medium dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                  className="h-11 text-sm font-medium rounded-md border-[#E2E0D8] dark:border-[#252B28]"
                 />
               </div>
             </div>
@@ -1294,11 +1269,11 @@ export default function PostJobScreen() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="address" className="text-sm font-semibold text-gray-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  <MapPin className="w-4 h-4 text-[#0D6847] dark:text-[#27A878]" />
                   Açık Adres (Opsiyonel)
                 </Label>
                 {form.address && (
-                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                  <span className="text-[11px] text-[#0D6847] dark:text-[#27A878] font-semibold flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Adres Tanımlı
                   </span>
                 )}
@@ -1308,7 +1283,7 @@ export default function PostJobScreen() {
                 placeholder="Mahalle, cadde, sokak, bina no..."
                 value={form.address}
                 onChange={(e) => update('address', e.target.value)}
-                className="h-11 text-sm font-medium dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                className="h-11 text-sm font-medium rounded-md border-[#E2E0D8] dark:border-[#252B28]"
               />
             </div>
 
@@ -1322,33 +1297,28 @@ export default function PostJobScreen() {
                 placeholder="Örn: Metrobüs durağına 3 dk yürüme mesafesinde"
                 value={form.locationNote}
                 onChange={(e) => update('locationNote', e.target.value)}
-                className="h-11 text-sm dark:bg-slate-950 dark:border-white/10 dark:text-slate-100"
+                className="h-11 text-sm rounded-md border-[#E2E0D8] dark:border-[#252B28]"
               />
             </div>
 
             {/* GPS Otomatik Konum Belirleme */}
-            <div className="p-3.5 bg-gradient-to-r from-purple-50 to-indigo-50/50 dark:from-purple-950/40 dark:to-indigo-950/40 border border-purple-200 dark:border-purple-800/40 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="p-3.5 bg-[#FBFBF9] dark:bg-[#181C1A] border border-[#E2E0D8] dark:border-[#252B28] rounded-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <div className="w-9 h-9 rounded-md bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] flex items-center justify-center shrink-0">
                   <Navigation className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="text-xs font-bold text-purple-950 dark:text-purple-200">GPS ile Tam Konum</p>
+                    <p className="text-xs font-semibold text-[#141716] dark:text-[#F0F2F1]">GPS ile Tam Konum</p>
                     {form.address && (
-                      <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.2 rounded-md font-semibold">
-                        Adres Aktarıldı ✓
+                      <span className="text-[10px] font-mono bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] px-1.5 py-0.5 rounded font-semibold">
+                        AKTARILDI ✓
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-purple-700 dark:text-purple-300 font-mono">
-                    Enlem: {form.latitude.toFixed(4)}, Boylam: {form.longitude.toFixed(4)}
+                  <p className="text-[11px] text-[#535A56] dark:text-[#9DA6A0] font-mono">
+                    {form.latitude.toFixed(4)}, {form.longitude.toFixed(4)}
                   </p>
-                  {form.address && (
-                    <p className="text-[10px] text-gray-500 dark:text-slate-400 line-clamp-1">
-                      📍 {form.address}
-                    </p>
-                  )}
                 </div>
               </div>
               <Button
@@ -1357,14 +1327,14 @@ export default function PostJobScreen() {
                 size="sm"
                 onClick={getLocation}
                 disabled={gettingLocation}
-                className="h-9 bg-white dark:bg-slate-800 border-purple-300 dark:border-purple-700/60 text-purple-900 dark:text-purple-200 hover:bg-purple-100 dark:hover:bg-slate-700 font-semibold"
+                className="h-9 rounded-md border-[#E2E0D8] dark:border-[#252B28] font-semibold"
               >
-                {gettingLocation ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin text-purple-600 dark:text-purple-400" /> : null}
+                {gettingLocation ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin text-[#0D6847]" /> : null}
                 {gettingLocation ? 'Konum Alınıyor...' : 'Konumumu Al'}
               </Button>
             </div>
           </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* ==================================================================== */}
@@ -1372,23 +1342,18 @@ export default function PostJobScreen() {
       {/* ==================================================================== */}
       {level === 5 && (
         <div className="space-y-5 animate-in fade-in-50 duration-300">
-          <Card className="border-0 shadow-lg bg-white dark:bg-slate-900/90 dark:ring-white/10 dark:border-white/10 rounded-2xl overflow-hidden ring-1 ring-black/5">
-            <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 p-5 text-white">
+          <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-md overflow-hidden">
+            <div className="bg-[#FBFBF9] dark:bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28] p-4 sm:p-5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl shadow-xs">
-                  🚀
+                <div className="w-9 h-9 rounded-md bg-[#E6F2EC] dark:bg-[#0D6847]/20 text-[#0D6847] dark:text-[#27A878] flex items-center justify-center font-mono text-xs font-semibold">
+                  05
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black uppercase bg-white/20 px-2 py-0.5 rounded-full">
-                      Boss Seviyesi • 100% Hazır
-                    </span>
-                  </div>
-                  <h2 className="font-black text-lg sm:text-xl tracking-tight mt-0.5">
-                    İlan Önizlemesi & Son Onay
+                  <h2 className="font-semibold text-base text-[#141716] dark:text-[#F0F2F1] leading-tight">
+                    Adım 5: İlan Önizlemesi & Son Onay
                   </h2>
-                  <p className="text-xs text-emerald-100">
-                    İşçiler ilanınızı aşağıdaki şekilde görecektir. Lütfen son kontrollerinizi yapın.
+                  <p className="text-xs text-[#535A56] dark:text-[#9DA6A0] mt-0.5">
+                    Çalışanlar ilanınızı aşağıdaki şekilde görecektir. Lütfen son kontrollerinizi yapın.
                   </p>
                 </div>
               </div>
@@ -1396,58 +1361,55 @@ export default function PostJobScreen() {
 
             <CardContent className="p-4 sm:p-6 space-y-5">
               {/* Önizleme Kartı (İşçi Gözünden) */}
-              <div className="p-4 sm:p-5 bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-2xl shadow-xl space-y-4 border border-slate-800">
+              <div className="p-4 sm:p-5 bg-[#FBFBF9] dark:bg-[#181C1A] rounded-md space-y-4 border border-[#E2E0D8] dark:border-[#252B28]">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{categoryIcon(form.category)}</span>
-                    <div>
-                      <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
-                        {categoryLabel(form.category)}
-                      </span>
-                      <h3 className="font-bold text-base sm:text-lg text-white leading-tight">
-                        {form.title}
-                      </h3>
-                    </div>
+                  <div>
+                    <span className="font-mono text-[10px] font-semibold text-[#0D6847] dark:text-[#27A878] uppercase tracking-wider">
+                      {categoryIcon(form.category)} {categoryLabel(form.category)}
+                    </span>
+                    <h3 className="font-semibold text-base sm:text-lg text-[#141716] dark:text-[#F0F2F1] leading-tight mt-0.5">
+                      {form.title}
+                    </h3>
                   </div>
-                  <span className="px-2 py-1 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    {form.urgency === 'URGENT' ? '🔴 Acil' : form.urgency === 'HIGH' ? '🟡 Yüksek Öncelik' : '🟢 Normal'}
+                  <span className="font-mono px-2 py-0.5 rounded text-[10px] font-semibold bg-[#FDF3F0] dark:bg-[#C84B31]/15 text-[#C84B31] border border-[#C84B31]/25">
+                    {form.urgency === 'URGENT' ? 'ACİL' : form.urgency === 'HIGH' ? 'YÜKSEK ÖNCELİK' : 'STANDART'}
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed bg-slate-800/40 p-3 rounded-xl border border-slate-800">
+                <p className="text-xs text-[#535A56] dark:text-[#9DA6A0] leading-relaxed bg-white dark:bg-[#141716] p-3.5 rounded-md border border-[#E2E0D8] dark:border-[#252B28]">
                   {form.description}
                 </p>
 
                 {/* Önemli Detay Rozetleri */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
-                  <div className="p-2.5 bg-slate-800/60 rounded-xl border border-slate-700/60">
-                    <span className="text-[10px] text-slate-400 block">Tarih</span>
-                    <span className="font-bold text-white flex items-center gap-1 mt-0.5">
-                      <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                  <div className="p-2.5 bg-white dark:bg-[#141716] rounded-md border border-[#E2E0D8] dark:border-[#252B28]">
+                    <span className="font-mono text-[10px] text-[#535A56] dark:text-[#9DA6A0] uppercase block">Tarih</span>
+                    <span className="font-semibold text-[#141716] dark:text-[#F0F2F1] flex items-center gap-1 mt-0.5">
+                      <Calendar className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#27A878]" />
                       {form.workDate ? new Date(form.workDate).toLocaleDateString('tr-TR') : '-'}
                     </span>
                   </div>
 
-                  <div className="p-2.5 bg-slate-800/60 rounded-xl border border-slate-700/60">
-                    <span className="text-[10px] text-slate-400 block">Saat & Süre</span>
-                    <span className="font-bold text-white flex items-center gap-1 mt-0.5">
-                      <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                  <div className="p-2.5 bg-white dark:bg-[#141716] rounded-md border border-[#E2E0D8] dark:border-[#252B28]">
+                    <span className="font-mono text-[10px] text-[#535A56] dark:text-[#9DA6A0] uppercase block">Saat & Süre</span>
+                    <span className="font-semibold text-[#141716] dark:text-[#F0F2F1] flex items-center gap-1 mt-0.5">
+                      <Clock className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#27A878]" />
                       {form.startTime} - {form.endTime} ({form.durationHours}s)
                     </span>
                   </div>
 
-                  <div className="p-2.5 bg-slate-800/60 rounded-xl border border-slate-700/60">
-                    <span className="text-[10px] text-slate-400 block">Konum</span>
-                    <span className="font-bold text-white flex items-center gap-1 mt-0.5">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                  <div className="p-2.5 bg-white dark:bg-[#141716] rounded-md border border-[#E2E0D8] dark:border-[#252B28]">
+                    <span className="font-mono text-[10px] text-[#535A56] dark:text-[#9DA6A0] uppercase block">Konum</span>
+                    <span className="font-semibold text-[#141716] dark:text-[#F0F2F1] flex items-center gap-1 mt-0.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#27A878]" />
                       {form.district}, {form.city}
                     </span>
                   </div>
 
-                  <div className="p-2.5 bg-slate-800/60 rounded-xl border border-slate-700/60">
-                    <span className="text-[10px] text-slate-400 block">Kontenjan</span>
-                    <span className="font-bold text-white flex items-center gap-1 mt-0.5">
-                      <Users className="w-3.5 h-3.5 text-emerald-400" />
+                  <div className="p-2.5 bg-white dark:bg-[#141716] rounded-md border border-[#E2E0D8] dark:border-[#252B28]">
+                    <span className="font-mono text-[10px] text-[#535A56] dark:text-[#9DA6A0] uppercase block">Kontenjan</span>
+                    <span className="font-semibold text-[#141716] dark:text-[#F0F2F1] flex items-center gap-1 mt-0.5">
+                      <Users className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#27A878]" />
                       {openings} Kişi
                     </span>
                   </div>
@@ -1457,7 +1419,7 @@ export default function PostJobScreen() {
                 {form.requiredSkills.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {form.requiredSkills.map((sk) => (
-                      <span key={sk} className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
+                      <span key={sk} className="font-mono text-[10px] px-2 py-0.5 rounded bg-white dark:bg-[#141716] text-[#535A56] dark:text-[#9DA6A0] border border-[#E2E0D8] dark:border-[#252B28]">
                         #{sk}
                       </span>
                     ))}
@@ -1465,16 +1427,16 @@ export default function PostJobScreen() {
                 )}
 
                 {/* Ücret ve Toplam Emanet */}
-                <div className="pt-3 border-t border-slate-800 flex items-center justify-between flex-wrap gap-2">
+                <div className="pt-3 border-t border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-between flex-wrap gap-2">
                   <div>
-                    <span className="text-[11px] text-slate-400">Kişi Başı Ücret:</span>
-                    <p className="text-xl font-black text-emerald-400">
-                      {wage.toLocaleString('tr-TR')} ₺ <span className="text-xs text-slate-400 font-normal">/ {form.wageType === 'DAILY' ? 'gün' : form.wageType === 'HOURLY' ? 'saat' : 'net'}</span>
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">Kişi Başı Ücret</span>
+                    <p className="text-xl font-mono font-bold text-[#0D6847] dark:text-[#27A878]">
+                      ₺{wage.toLocaleString('tr-TR')} <span className="text-xs text-[#535A56] dark:text-[#9DA6A0] font-normal">/ {form.wageType === 'DAILY' ? 'gün' : form.wageType === 'HOURLY' ? 'saat' : 'net'}</span>
                     </p>
                   </div>
                   <div className="text-right">
-                    <span className="text-[11px] text-slate-400">Emanete Alınacak Tutar:</span>
-                    <p className="text-xl font-black text-amber-400">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-[#535A56] dark:text-[#9DA6A0]">Emanet Blokesi</span>
+                    <p className="text-xl font-mono font-bold text-[#141716] dark:text-[#F0F2F1]">
                       ₺{totalEscrowRequired.toLocaleString('tr-TR')}
                     </p>
                   </div>
@@ -1483,55 +1445,55 @@ export default function PostJobScreen() {
 
               {/* Hızlı Düzenle Butonları */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => setLevel(1)} className="text-xs gap-1 dark:bg-slate-800 dark:border-white/10 dark:text-slate-200 dark:hover:bg-slate-700">
-                  <Edit3 className="w-3 h-3" /> 1. Görevi Düzenle
+                <Button type="button" variant="outline" size="sm" onClick={() => setLevel(1)} className="text-xs gap-1 rounded-md border-[#E2E0D8] dark:border-[#252B28]">
+                  <Edit3 className="w-3 h-3" /> 1. Görev
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => setLevel(2)} className="text-xs gap-1 dark:bg-slate-800 dark:border-white/10 dark:text-slate-200 dark:hover:bg-slate-700">
-                  <Edit3 className="w-3 h-3" /> 2. Zamanı Düzenle
+                <Button type="button" variant="outline" size="sm" onClick={() => setLevel(2)} className="text-xs gap-1 rounded-md border-[#E2E0D8] dark:border-[#252B28]">
+                  <Edit3 className="w-3 h-3" /> 2. Zaman
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => setLevel(3)} className="text-xs gap-1 dark:bg-slate-800 dark:border-white/10 dark:text-slate-200 dark:hover:bg-slate-700">
-                  <Edit3 className="w-3 h-3" /> 3. Ücreti Düzenle
+                <Button type="button" variant="outline" size="sm" onClick={() => setLevel(3)} className="text-xs gap-1 rounded-md border-[#E2E0D8] dark:border-[#252B28]">
+                  <Edit3 className="w-3 h-3" /> 3. Ücret
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => setLevel(4)} className="text-xs gap-1 dark:bg-slate-800 dark:border-white/10 dark:text-slate-200 dark:hover:bg-slate-700">
-                  <Edit3 className="w-3 h-3" /> 4. Konumu Düzenle
+                <Button type="button" variant="outline" size="sm" onClick={() => setLevel(4)} className="text-xs gap-1 rounded-md border-[#E2E0D8] dark:border-[#252B28]">
+                  <Edit3 className="w-3 h-3" /> 4. Konum
                 </Button>
               </div>
 
               {/* Bakiye Yetersizlik Uyarısı (Seviye 5'te) */}
               {!isBalanceSufficient && (
-                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl flex items-center justify-between flex-wrap gap-2 text-xs text-amber-900 dark:text-amber-200">
+                <div className="p-3.5 bg-[#FDF3F0] dark:bg-[#C84B31]/10 border border-[#C84B31]/30 rounded-md flex items-center justify-between flex-wrap gap-2 text-xs text-[#C84B31]">
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>
-                      Cüzdanınızda <strong>₺{missingAmount.toLocaleString('tr-TR')}</strong> eksik bakiye bulunmaktadır.
+                      Cüzdanınızda <strong className="font-mono">₺{missingAmount.toLocaleString('tr-TR')}</strong> eksik bakiye bulunmaktadır.
                     </span>
                   </div>
                   <Button
                     type="button"
                     size="sm"
                     onClick={() => go('wallet')}
-                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold h-8 text-xs"
+                    className="bg-[#C84B31] hover:bg-[#b03e26] text-white font-semibold h-8 text-xs rounded-md"
                   >
                     Bakiye Yükle
                   </Button>
                 </div>
               )}
             </CardContent>
-          </Card>
+          </div>
         </div>
       )}
 
       {/* ==================================================================== */}
       {/* ALT SEVİYE NAVİGASYON ÇUBUĞU (PREV / NEXT / SUBMIT)                  */}
       {/* ==================================================================== */}
-      <div className="mt-6 flex items-center justify-between gap-3 sticky bottom-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-gray-200 dark:border-white/10">
+      <div className="mt-6 flex items-center justify-between gap-3 sticky bottom-4 bg-white/95 dark:bg-[#141716]/95 backdrop-blur-md p-3.5 rounded-md border border-[#E2E0D8] dark:border-[#252B28]">
         <div>
           {level > 1 ? (
             <Button
               type="button"
               variant="outline"
               onClick={handlePrevLevel}
-              className="h-11 px-4 text-xs sm:text-sm font-semibold gap-1.5 dark:bg-slate-800 dark:border-white/10 dark:text-slate-200 dark:hover:bg-slate-700"
+              className="h-10 px-4 text-xs sm:text-sm font-semibold gap-1.5 rounded-md border-[#E2E0D8] dark:border-[#252B28]"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Geri</span>
@@ -1541,7 +1503,7 @@ export default function PostJobScreen() {
               type="button"
               variant="ghost"
               onClick={back}
-              className="h-11 px-3 text-xs text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
+              className="h-10 px-3 text-xs text-[#535A56] hover:text-[#141716] dark:text-[#9DA6A0] dark:hover:text-[#F0F2F1]"
             >
               Vazgeç
             </Button>
@@ -1553,9 +1515,9 @@ export default function PostJobScreen() {
             <Button
               type="button"
               onClick={handleNextLevel}
-              className="h-11 px-6 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md gap-2"
+              className="h-10 px-5 bg-[#0D6847] hover:bg-[#0A5238] text-white text-xs sm:text-sm font-semibold rounded-md gap-2"
             >
-              <span>Sonraki Seviye</span>
+              <span>Sonraki Adım</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           ) : (
@@ -1563,14 +1525,14 @@ export default function PostJobScreen() {
               type="button"
               onClick={() => handleSubmit()}
               disabled={loading}
-              className="h-11 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs sm:text-sm font-black rounded-xl shadow-lg shadow-emerald-500/20 gap-2"
+              className="h-10 px-6 bg-[#0D6847] hover:bg-[#0A5238] text-white text-xs sm:text-sm font-semibold rounded-md gap-2"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <Sparkles className="w-4 h-4" />
+                <CheckCircle2 className="w-4 h-4" />
               )}
-              <span>İlanı Onayla ve Yayına Al 🚀</span>
+              <span>İlanı Onayla ve Yayına Al</span>
             </Button>
           )}
         </div>
@@ -1578,34 +1540,34 @@ export default function PostJobScreen() {
 
       {/* Yetersiz Bakiye Modal */}
       <Dialog open={insufficientModalOpen} onOpenChange={setInsufficientModalOpen}>
-        <DialogContent className="sm:max-w-md dark:bg-slate-900 dark:border-white/10 dark:text-slate-100">
+        <DialogContent className="sm:max-w-md rounded-md bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] text-[#141716] dark:text-[#F0F2F1]">
           <DialogHeader>
-            <div className="mx-auto w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/70 flex items-center justify-center mb-2">
-              <Wallet className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+            <div className="mx-auto w-11 h-11 rounded-md bg-[#FDF3F0] dark:bg-[#C84B31]/15 border border-[#C84B31]/30 flex items-center justify-center mb-2">
+              <Wallet className="w-5 h-5 text-[#C84B31]" />
             </div>
-            <DialogTitle className="text-center text-lg font-bold text-gray-900 dark:text-white">
+            <DialogTitle className="text-center text-lg font-semibold text-[#141716] dark:text-[#F0F2F1]">
               Yetersiz Cüzdan Bakiyesi
             </DialogTitle>
-            <DialogDescription className="text-center text-sm text-gray-600 dark:text-slate-400 pt-1">
+            <DialogDescription className="text-center text-xs text-[#535A56] dark:text-[#9DA6A0] pt-1">
               İlanı yayınlayabilmek için toplam iş ücretinin emanet havuzuna aktarılması gerekmektedir.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="bg-gray-50 dark:bg-slate-950/70 rounded-xl p-4 my-2 space-y-2.5 text-sm border border-gray-100 dark:border-white/10">
-            <div className="flex justify-between items-center text-gray-600 dark:text-slate-400">
+          <div className="bg-[#FBFBF9] dark:bg-[#181C1A] rounded-md p-4 my-2 space-y-2.5 text-xs border border-[#E2E0D8] dark:border-[#252B28]">
+            <div className="flex justify-between items-center text-[#535A56] dark:text-[#9DA6A0]">
               <span>Gerekli Emanet Tutarı ({openings} kişi):</span>
-              <span className="font-semibold text-gray-900 dark:text-white">
+              <span className="font-mono font-bold text-[#141716] dark:text-[#F0F2F1]">
                 ₺{totalEscrowRequired.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
               </span>
             </div>
-            <div className="flex justify-between items-center text-gray-600 dark:text-slate-400">
+            <div className="flex justify-between items-center text-[#535A56] dark:text-[#9DA6A0]">
               <span>Mevcut Cüzdan Bakiyeniz:</span>
-              <span className="font-semibold text-gray-900 dark:text-white">
+              <span className="font-mono font-bold text-[#141716] dark:text-[#F0F2F1]">
                 ₺{(walletBalance ?? 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
               </span>
             </div>
-            <div className="h-px bg-gray-200 dark:bg-slate-800 my-1" />
-            <div className="flex justify-between items-center font-bold text-red-600 dark:text-rose-400">
+            <div className="h-px bg-[#E2E0D8] dark:bg-[#252B28] my-1" />
+            <div className="flex justify-between items-center font-mono font-bold text-[#C84B31]">
               <span>Eksik Tutar:</span>
               <span>
                 ₺{missingAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
@@ -1613,7 +1575,7 @@ export default function PostJobScreen() {
             </div>
           </div>
 
-          <p className="text-xs text-gray-500 dark:text-slate-400 text-center px-2">
+          <p className="text-xs text-[#535A56] dark:text-[#9DA6A0] text-center px-2">
             Cüzdanınıza para yatırdıktan sonra ilanı anında yayınlayabilirsiniz. Çalışanlar işe gelip işi tamamlayana kadar paranız güvende kalır.
           </p>
 
@@ -1622,7 +1584,7 @@ export default function PostJobScreen() {
               type="button"
               variant="outline"
               onClick={() => setInsufficientModalOpen(false)}
-              className="w-full sm:w-auto dark:bg-slate-800 dark:border-white/10 dark:text-slate-200 dark:hover:bg-slate-700"
+              className="w-full sm:w-auto h-10 rounded-md border-[#E2E0D8] dark:border-[#252B28]"
             >
               Vazgeç
             </Button>
@@ -1632,7 +1594,7 @@ export default function PostJobScreen() {
                 setInsufficientModalOpen(false)
                 go('wallet')
               }}
-              className="w-full sm:w-auto flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5"
+              className="w-full sm:w-auto flex-1 h-10 rounded-md bg-[#0D6847] hover:bg-[#0A5238] text-white font-semibold gap-1.5"
             >
               Cüzdana Git & Para Yatır
               <ArrowRight className="w-4 h-4" />

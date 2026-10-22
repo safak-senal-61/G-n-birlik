@@ -4,24 +4,20 @@ import { notFound } from 'next/navigation'
 import Header from '@/components/shared/header'
 import Logo from '@/components/shared/logo'
 import { BreadcrumbSchema, ArticleSchema } from '@/components/shared/seo-schema'
-import { BLOG_POSTS } from '@/lib/blog-data'
+import { getAllSeoBlogPosts, getSeoBlogPostBySlug } from '@/server/services/seo-blog.service'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.qrders.com.tr'
+
+export const dynamic = 'force-dynamic'
 
 interface PageProps {
   params: Promise<{ slug: string }>
 }
 
-export async function generateStaticParams() {
-  return BLOG_POSTS.map((post) => ({
-    slug: post.slug,
-  }))
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const post = BLOG_POSTS.find((p) => p.slug === slug)
+  const post = await getSeoBlogPostBySlug(slug)
 
   if (!post) {
     return {
@@ -31,30 +27,34 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return {
-    title: `${post.title} | Günübirlik Yevmiye Rehberi`,
-    description: post.excerpt,
+    title: post.metaTitle || `${post.title} | Günübirlik Yevmiye Rehberi`,
+    description: post.metaDescription || post.excerpt,
+    keywords: post.tags,
     alternates: {
-      canonical: `${BASE_URL}/blog/${post.slug}`,
+      canonical: post.canonicalUrl || `${BASE_URL}/blog/${post.slug}`,
     },
     openGraph: {
-      title: post.title,
-      description: post.excerpt,
-      url: `${BASE_URL}/blog/${post.slug}`,
+      title: post.metaTitle || post.title,
+      description: post.metaDescription || post.excerpt,
+      url: post.canonicalUrl || `${BASE_URL}/blog/${post.slug}`,
       type: 'article',
       publishedTime: post.date,
-      authors: [post.author.name],
+      authors: [post.authorName],
     },
     twitter: {
       card: 'summary_large_image',
-      title: post.title,
-      description: post.excerpt,
+      title: post.metaTitle || post.title,
+      description: post.metaDescription || post.excerpt,
     },
   }
 }
 
 export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params
-  const post = BLOG_POSTS.find((p) => p.slug === slug)
+  const [post, allPosts] = await Promise.all([
+    getSeoBlogPostBySlug(slug),
+    getAllSeoBlogPosts(false),
+  ])
 
   if (!post) {
     notFound()
@@ -66,7 +66,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     { name: post.title, url: `${BASE_URL}/blog/${post.slug}` },
   ]
 
-  const otherPosts = BLOG_POSTS.filter((p) => p.slug !== post.slug).slice(0, 2)
+  const otherPosts = allPosts.filter((p) => p.slug !== post.slug).slice(0, 2)
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F6F5F2] dark:bg-[#0C0E0D] text-[#141615] dark:text-[#F2F1ED]">
@@ -76,7 +76,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         description={post.excerpt}
         url={`${BASE_URL}/blog/${post.slug}`}
         datePublished={post.date}
-        author={post.author.name}
+        author={post.authorName}
       />
       <Header />
 
@@ -112,25 +112,36 @@ export default async function BlogPostPage({ params }: PageProps) {
             </p>
 
             <div className="pt-2 text-xs text-[#5C615E] dark:text-[#949B97]">
-              Yazar: <strong className="text-[#141615] dark:text-white">{post.author.name}</strong> ({post.author.role})
+              Yazar: <strong className="text-[#141615] dark:text-white">{post.authorName}</strong> ({post.authorRole})
             </div>
           </header>
 
           {/* Makale Gövdesi */}
-          <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg p-6 sm:p-8">
-            <div className="whitespace-pre-line text-[15px] sm:text-base leading-relaxed text-[#252927] dark:text-[#DCE0DD]">
-              {post.content}
-            </div>
+          <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg overflow-hidden">
+            {post.coverImage && (
+              <div className="h-56 sm:h-72 w-full overflow-hidden bg-[#181C1A] border-b border-[#E2E0D8] dark:border-[#252B28]">
+                <img
+                  src={post.coverImage}
+                  alt={post.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <div className="p-6 sm:p-8">
+              <div className="whitespace-pre-line text-[15px] sm:text-base leading-relaxed text-[#252927] dark:text-[#DCE0DD]">
+                {post.content}
+              </div>
 
-            <div className="mt-8 pt-4 border-t border-[#E2E0D8] dark:border-[#252B28] flex flex-wrap items-center gap-1.5">
-              {post.tags.map((t) => (
-                <span
-                  key={t}
-                  className="px-2 py-0.5 rounded bg-[#F0EFEA] dark:bg-[#1E2421] font-mono text-[11px] text-[#5C615E] dark:text-[#949B97]"
-                >
-                  #{t}
-                </span>
-              ))}
+              <div className="mt-8 pt-4 border-t border-[#E2E0D8] dark:border-[#252B28] flex flex-wrap items-center gap-1.5">
+                {post.tags.map((t) => (
+                  <span
+                    key={t}
+                    className="px-2 py-0.5 rounded bg-[#F0EFEA] dark:bg-[#1E2421] font-mono text-[11px] text-[#5C615E] dark:text-[#949B97]"
+                  >
+                    #{t}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
 

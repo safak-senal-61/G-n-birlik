@@ -94,20 +94,46 @@ export default function NasilCalisirPage() {
       <main className="flex-1 pt-8 sm:pt-12 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
           {/* Üst Başlık / Masthead */}
-          <div className="border-b border-[#D8D5CC] dark:border-[#262C29] pb-8">
-            <div className="font-mono text-[11px] uppercase tracking-wider text-[#0D6847] dark:text-[#5CD6A5] font-semibold mb-2">
+          <div className="border-b border-[#D8D5CC] dark:border-[#262C29] pb-8 space-y-5">
+            <div className="font-mono text-[11px] uppercase tracking-wider text-[#0D6847] dark:text-[#5CD6A5] font-semibold">
               SİSTEM İŞLEYİŞ KILAVUZU • EMANET & QR PROTOKOLÜ
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
-              <div className="lg:col-span-8">
-                <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-[#141615] dark:text-white leading-[1.15]">
-                  Emeği ve ödemeyi güvenceye alan iki taraflı çalışma düzeni.
-                </h1>
+            <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-[#141615] dark:text-white max-w-3xl leading-[1.15]">
+              Emeği ve ödemeyi güvenceye alan iki taraflı çalışma düzeni.
+            </h1>
+            <p className="text-sm sm:text-base text-[#5C615E] dark:text-[#9AA19D] max-w-2xl leading-relaxed">
+              Günübirlik, sözlü anlaşmazlıkları ortadan kaldırmak için ön provizyonlu emanet kasa ve QR vardiya doğrulamasıyla çalışır.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div className="relative h-28 rounded-md overflow-hidden border border-[#E2E0D8] dark:border-[#252B28]">
+                <img
+                  src="https://images.unsplash.com/photo-1556740758-90de374c12ad?auto=format&fit=crop&w=500&q=80"
+                  alt="QR Vardiya Kontrolü"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#141615]/80 to-transparent flex items-end p-2.5">
+                  <span className="font-mono text-[10px] font-semibold text-white">01 / QR VARDİYA TEYİDİ</span>
+                </div>
               </div>
-              <div className="lg:col-span-4">
-                <p className="text-sm text-[#5C615E] dark:text-[#9AA19D] leading-relaxed">
-                  Günübirlik, sözlü anlaşmazlıkları ortadan kaldırmak için ön provizyonlu emanet kasa ve QR vardiya doğrulamasıyla çalışır.
-                </p>
+              <div className="relative h-28 rounded-md overflow-hidden border border-[#E2E0D8] dark:border-[#252B28]">
+                <img
+                  src="https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=500&q=80"
+                  alt="Doğrulanmış Eşleşme"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#141615]/80 to-transparent flex items-end p-2.5">
+                  <span className="font-mono text-[10px] font-semibold text-white">02 / DOĞRULANMIŞ SAHA GÜVENİ</span>
+                </div>
+              </div>
+              <div className="relative h-28 rounded-md overflow-hidden border border-[#E2E0D8] dark:border-[#252B28]">
+                <img
+                  src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=500&q=80"
+                  alt="Aynı Gün Net Ödeme"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#141615]/80 to-transparent flex items-end p-2.5">
+                  <span className="font-mono text-[10px] font-semibold text-white">03 / AYNI GÜN NET YEVMİYE</span>
+                </div>
               </div>
             </div>
           </div>

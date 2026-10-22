@@ -3,7 +3,19 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAdminAuth, adminFetch } from '@/lib/admin-store'
-import { ShieldCheck, Eye, EyeOff, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react'
+import Logo from '@/components/shared/logo'
+import {
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  ArrowRight,
+  AlertCircle,
+  Terminal,
+  CheckCircle2,
+  Globe,
+} from 'lucide-react'
 
 export default function AdminLogin() {
   const router = useRouter()
@@ -42,106 +54,157 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-indigo-600/20 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-purple-600/20 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-blue-600/5 blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-[#F6F5F2] dark:bg-[#0C0E0D] text-[#111312] dark:text-[#F3F4F3] flex flex-col justify-between p-4 sm:p-6 relative overflow-hidden">
+      {/* Subtle architectural grid background */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.35] dark:opacity-[0.15]"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, #E2E0D8 1px, transparent 1px), linear-gradient(to bottom, #E2E0D8 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+        }}
+      />
 
-      <div className="relative w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 mb-4">
-            <ShieldCheck className="w-8 h-8 text-white" strokeWidth={2.5} />
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
-            Yönetim Paneli
-          </h1>
-          <p className="text-slate-400 text-sm">
-            Günübirlik İş Bul — Moderasyon & Kontrol Merkezi
-          </p>
-        </div>
-
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl">
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Yönetici E-postası
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-slate-950/60 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                  placeholder="admin@example.com"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Şifre
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3 bg-slate-950/60 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((s) => !s)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <div className="flex items-start gap-2 p-3 bg-red-950/40 border border-red-800/50 rounded-lg text-red-200 text-sm">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 group"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Giriş yapılıyor...
-                </>
-              ) : (
-                <>
-                  Panele Giriş
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-6 pt-6 border-t border-slate-800">
-            <p className="text-xs text-slate-500 text-center">
-              Yönetici hesabınızla giriş yapın
+      {/* Top System Strip */}
+      <header className="relative z-10 max-w-5xl w-full mx-auto flex items-center justify-between py-2 border-b border-[#E2E0D8] dark:border-[#252B28]">
+        <div className="flex items-center gap-2.5">
+          <Logo size="sm" variant="icon" showText={false} />
+          <div>
+            <p className="text-xs font-extrabold tracking-tight text-[#111312] dark:text-[#F3F4F3]">
+              GÜNÜBİRLİK İŞ BUL
+            </p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-[#5A605D] dark:text-[#8E9893]">
+              SYS-ADMIN // KONTROL MERKEZİ
             </p>
           </div>
         </div>
+        <a
+          href="/"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] text-[11px] font-mono font-bold text-[#5A605D] dark:text-[#8E9893] hover:text-[#0D6847] hover:border-[#0D6847]/40 transition-colors"
+        >
+          <Globe className="w-3.5 h-3.5 text-[#0D6847]" />
+          ANA SİTEYE DÖN
+        </a>
+      </header>
 
-        <p className="text-center text-xs text-slate-600 mt-6">
-          © 2024 Günübirlik İş Bul — Tüm hakları saklıdır.
-        </p>
+      {/* Main Ledger Login Card */}
+      <div className="relative z-10 w-full max-w-md mx-auto my-8">
+        <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-md overflow-hidden shadow-sm">
+          {/* Card Top Ledger Bar */}
+          <div className="px-5 sm:px-6 py-3.5 bg-[#EFECE6] dark:bg-[#1A1E1C] border-b border-[#E2E0D8] dark:border-[#252B28] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-[#0D6847]" />
+              <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#0D6847] dark:text-[#27AB78]">
+                01 / YÖNETİCİ KİMLİK DOĞRULAMA
+              </span>
+            </div>
+            <span className="text-[10px] font-mono text-[#5A605D] dark:text-[#8E9893]">
+              AUTH-V2
+            </span>
+          </div>
+
+          <div className="p-5 sm:p-7">
+            <div className="flex items-start gap-3.5 mb-6 pb-5 border-b border-[#E2E0D8] dark:border-[#252B28]">
+              <div className="w-11 h-11 rounded-md bg-[#0D6847] text-white flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-[#111312] dark:text-[#F3F4F3]">
+                  Yönetim & Moderasyon Paneli
+                </h1>
+                <p className="text-xs text-[#5A605D] dark:text-[#8E9893] mt-0.5 leading-relaxed">
+                  İlan onayları, cüzdan mutabakatı, SEO & Blog yönetimi ve sistem denetim kayıtları.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#5A605D] dark:text-[#8E9893] mb-1.5">
+                  YÖNETİCİ E-POSTA ADRESİ
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A605D]" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full h-11 pl-10 pr-3.5 bg-[#F6F5F2] dark:bg-[#0C0E0D] border border-[#E2E0D8] dark:border-[#252B28] rounded-md text-sm text-[#111312] dark:text-[#F3F4F3] placeholder-[#5A605D]/60 focus:outline-none focus:border-[#0D6847]"
+                    placeholder="admin@gunubirlik.com"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-[#5A605D] dark:text-[#8E9893] mb-1.5">
+                  GÜVENLİK ANAHTARI / ŞİFRE
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#5A605D]" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full h-11 pl-10 pr-11 bg-[#F6F5F2] dark:bg-[#0C0E0D] border border-[#E2E0D8] dark:border-[#252B28] rounded-md text-sm text-[#111312] dark:text-[#F3F4F3] placeholder-[#5A605D]/60 focus:outline-none focus:border-[#0D6847]"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#5A605D] hover:text-[#111312] dark:hover:text-[#F3F4F3] transition-colors p-1"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="flex items-start gap-2.5 p-3 bg-[#C84B31]/10 border border-[#C84B31]/30 rounded-md text-[#C84B31] text-xs font-medium">
+                  <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 bg-[#0D6847] hover:bg-[#094D34] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-md transition-colors flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    DOĞRULANIYOR...
+                  </>
+                ) : (
+                  <>
+                    YÖNETİM PANELİNE GİRİŞ YAP
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-5 pt-4 border-t border-[#E2E0D8] dark:border-[#252B28] grid grid-cols-2 gap-2 text-[10px] font-mono text-[#5A605D] dark:text-[#8E9893]">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#0D6847]" />
+                <span>JWT + RBAC KORUMALI</span>
+              </div>
+              <div className="flex items-center gap-1.5 justify-end">
+                <Terminal className="w-3.5 h-3.5 text-[#C84B31]" />
+                <span>DENETİM KAYDI AKTİF</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Footer Strip */}
+      <footer className="relative z-10 max-w-5xl w-full mx-auto py-2 border-t border-[#E2E0D8] dark:border-[#252B28] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] font-mono text-[#5A605D] dark:text-[#8E9893]">
+        <span>© {new Date().getFullYear()} GÜNÜBİRLİK İŞ BUL — MİMARİ KAYIT DEFTERİ SİSTEMİ</span>
+        <span>TR-81 // TÜM İŞLEMLER LOGLANMAKTADIR</span>
+      </footer>
     </div>
   )
 }

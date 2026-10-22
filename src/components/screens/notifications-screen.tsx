@@ -3,14 +3,19 @@
 import { useState, useEffect } from 'react'
 import { notificationsApi } from '@/lib/api'
 import { useApp } from '@/lib/app-store'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
-  Bell, BellRing, CheckCheck, Trash2, Settings,
-  Briefcase, CheckCircle2, XCircle, MessageSquare, Clock, MapPin, AlertCircle
+  Bell,
+  CheckCheck,
+  Trash2,
+  Settings,
+  Briefcase,
+  CheckCircle2,
+  XCircle,
+  MessageSquare,
+  Clock,
+  MapPin,
+  AlertCircle,
 } from 'lucide-react'
 import { formatRelative } from '@/lib/format'
 import { toast } from 'sonner'
@@ -25,14 +30,14 @@ const ICON_MAP: Record<string, any> = {
   JOB_NEARBY: MapPin,
 }
 
-const COLOR_MAP: Record<string, string> = {
-  JOB_APPLIED: 'bg-blue-100 text-blue-700',
-  APPLICATION_ACCEPTED: 'bg-green-100 text-green-700',
-  APPLICATION_REJECTED: 'bg-red-100 text-red-700',
-  APPLICATION_WITHDRAWN: 'bg-gray-100 text-gray-700',
-  NEW_MESSAGE: 'bg-emerald-100 text-emerald-700',
-  JOB_REMINDER: 'bg-yellow-100 text-yellow-700',
-  JOB_NEARBY: 'bg-purple-100 text-purple-700',
+const CODE_MAP: Record<string, string> = {
+  JOB_APPLIED: 'BAŞVURU',
+  APPLICATION_ACCEPTED: 'ONAY',
+  APPLICATION_REJECTED: 'RET',
+  APPLICATION_WITHDRAWN: 'İPTAL',
+  NEW_MESSAGE: 'MESAJ',
+  JOB_REMINDER: 'VARDİYA',
+  JOB_NEARBY: 'KONUM',
 }
 
 export default function NotificationsScreen() {
@@ -45,12 +50,9 @@ export default function NotificationsScreen() {
     setLoading(true)
     try {
       const result = await notificationsApi.list(unreadOnly)
-
-      // Bildirimler ekranı açıldığında okunmamış bildirimler doğrudan görüldü olarak işaretlenir:
-      // 1. Üstteki '2' rozeti ve sayaç anında silinir
-      // 2. Backend'de tümü okundu olarak kaydedilir
-      // 3. Ekranda '• Yeni' durumu doğrudan 'Okundu'ya çevrilir
-      const hasUnread = (result.unreadCount && result.unreadCount > 0) || result.items.some((n: any) => !n.isRead)
+      const hasUnread =
+        (result.unreadCount && result.unreadCount > 0) ||
+        result.items.some((n: any) => !n.isRead)
 
       if (hasUnread) {
         if (typeof window !== 'undefined') {
@@ -69,7 +71,6 @@ export default function NotificationsScreen() {
   }
 
   useEffect(() => {
-    // Sayfa görüntülendiği anda rozeti hemen sıfırla
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('notifications-read'))
     }
@@ -79,7 +80,7 @@ export default function NotificationsScreen() {
   const handleMarkAll = async () => {
     try {
       await notificationsApi.markAllRead()
-      toast.success('Tüm bildirimler okundu.')
+      toast.success('Tüm bildirimler okundu olarak işaretlendi.')
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('notifications-read'))
       }
@@ -90,7 +91,6 @@ export default function NotificationsScreen() {
   }
 
   const handleClick = async (notif: any) => {
-    // Okundu işaretle
     if (!notif.isRead) {
       try {
         await notificationsApi.markRead(notif.id)
@@ -100,7 +100,6 @@ export default function NotificationsScreen() {
       } catch {}
     }
 
-    // Yönlendir
     if (notif.data) {
       try {
         const data = typeof notif.data === 'string' ? JSON.parse(notif.data) : notif.data
@@ -127,108 +126,123 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-6 max-w-3xl">
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Bildirimler</h1>
-          <p className="text-gray-600 dark:text-slate-400 mt-1 text-sm truncate">Başvuru güncellemeleri, mesajlar ve daha fazlası</p>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      {/* Üst Başlık / Masthead */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#D8D5CC] dark:border-[#262C29] pb-5">
+        <div className="space-y-1">
+          <div className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#0D6847] dark:text-[#5CD6A5]">
+            SİSTEM KAYITLARI • BİLDİRİM MERKEZİ
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#141615] dark:text-white">
+            Bildirimler
+          </h1>
+          <p className="text-xs sm:text-sm text-[#5C615E] dark:text-[#949B97]">
+            Başvuru onayları, vardiya hatırlatmaları ve mesaj güncellemeleri.
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={unreadOnly ? 'default' : 'outline'}
-            size="sm"
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
             onClick={() => setUnreadOnly(!unreadOnly)}
-            className={`h-9 text-xs sm:text-sm ${unreadOnly ? 'bg-emerald-600' : 'dark:bg-slate-800 dark:border-white/10 dark:text-slate-200 dark:hover:bg-slate-700'}`}
+            className={`h-9 px-3 rounded-md text-xs font-semibold border transition-colors cursor-pointer ${
+              unreadOnly
+                ? 'bg-[#0D6847] text-white border-[#0D6847]'
+                : 'bg-white dark:bg-[#141716] text-[#141615] dark:text-[#F2F1ED] border-[#D6D3C9] dark:border-[#2B322E] hover:bg-[#F0EFEA] dark:hover:bg-[#1D2220]'
+            }`}
           >
-            <BellRing className="w-4 h-4 mr-2" />
-            Okunmamış
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleMarkAll} className="h-9 text-xs sm:text-sm dark:bg-slate-800 dark:border-white/10 dark:text-slate-200 dark:hover:bg-slate-700">
-            <CheckCheck className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Tümünü Okundu İşaretle</span>
-            <span className="sm:hidden">Tümünü Okundu</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
+            Sadece Okunmamış
+          </button>
+
+          <button
+            type="button"
+            onClick={handleMarkAll}
+            className="h-9 px-3 rounded-md text-xs font-semibold bg-white dark:bg-[#141716] text-[#141615] dark:text-[#F2F1ED] border border-[#D6D3C9] dark:border-[#2B322E] hover:bg-[#F0EFEA] dark:hover:bg-[#1D2220] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <CheckCheck className="w-3.5 h-3.5 text-[#0D6847] dark:text-[#5CD6A5]" />
+            <span>Tümünü Okundu İşaretle</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => go('notification-settings')}
-            className="h-9 text-xs sm:text-sm dark:bg-slate-800 dark:border-white/10 dark:text-slate-200 dark:hover:bg-slate-700"
+            className="h-9 w-9 rounded-md bg-white dark:bg-[#141716] text-[#141615] dark:text-[#F2F1ED] border border-[#D6D3C9] dark:border-[#2B322E] hover:bg-[#F0EFEA] dark:hover:bg-[#1D2220] inline-flex items-center justify-center transition-colors cursor-pointer"
             title="Bildirim Ayarları"
           >
             <Settings className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="space-y-2">
-          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20" />)}
+        <div className="space-y-2.5">
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-20 rounded-lg bg-[#E9E7E0] dark:bg-[#181C1A]" />
+          ))}
         </div>
       ) : notifications.length === 0 ? (
-        <Card className="border-dashed dark:bg-slate-900/90 dark:border-slate-800">
-          <CardContent className="p-4 sm:p-12 text-center">
-            <Bell className="w-12 h-12 text-gray-400 dark:text-slate-500 mx-auto mb-3" />
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm sm:text-base">
-              {unreadOnly ? 'Okunmamış bildirim yok' : 'Bildirim yok'}
-            </h3>
-            <p className="text-gray-600 dark:text-slate-400 text-sm">
-              {unreadOnly
-                ? 'Tüm bildirimleri görmek için filtreyi kaldırın.'
-                : 'Henüz hiç bildiriminiz yok. İş ilanlarına başvurdukça bildirimler burada görünecek.'}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg p-8 sm:p-12 text-center space-y-3">
+          <div className="w-10 h-10 rounded-md bg-[#F0EFEA] dark:bg-[#1E2421] border border-[#E2E0D8] dark:border-[#2C3330] flex items-center justify-center mx-auto text-[#5C615E] dark:text-[#949B97]">
+            <Bell className="w-5 h-5" />
+          </div>
+          <h3 className="font-bold text-base text-[#141615] dark:text-white">
+            {unreadOnly ? 'Okunmamış bildiriminiz bulunmuyor' : 'Henüz bildiriminiz yok'}
+          </h3>
+          <p className="text-xs sm:text-sm text-[#5C615E] dark:text-[#949B97] max-w-sm mx-auto">
+            {unreadOnly
+              ? 'Tüm bildirim geçmişini görüntülemek için filtreyi kapatabilirsiniz.'
+              : 'İlanlara başvurduğunuzda veya vardiya durumu değiştiğinde burada listelenir.'}
+          </p>
+        </div>
       ) : (
-        <div className="space-y-2">
+        <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg divide-y divide-[#E2E0D8] dark:divide-[#252B28] overflow-hidden">
           {notifications.map((notif) => {
             const Icon = ICON_MAP[notif.type] || Bell
-            const colorClass = COLOR_MAP[notif.type] || 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300'
+            const code = CODE_MAP[notif.type] || 'BİLDİRİM'
 
             return (
-              <Card
+              <div
                 key={notif.id}
-                className={`cursor-pointer transition hover:shadow-md dark:border-white/10 ${
-                  !notif.isRead ? 'border-emerald-200 dark:border-emerald-800/60 bg-emerald-50/30 dark:bg-emerald-950/40' : 'bg-white dark:bg-slate-900/90'
-                }`}
                 onClick={() => handleClick(notif)}
+                className={`p-4 sm:p-5 flex items-start gap-3.5 transition-colors cursor-pointer ${
+                  !notif.isRead
+                    ? 'bg-[#EAF3EE]/40 dark:bg-[#162921]/30 hover:bg-[#EAF3EE]/70 dark:hover:bg-[#162921]/50'
+                    : 'hover:bg-[#F9F8F6] dark:hover:bg-[#181C1A]'
+                }`}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClass}`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
+                <div className="w-9 h-9 rounded-md bg-[#F0EFEA] dark:bg-[#1E2421] border border-[#E2E0D8] dark:border-[#2C3330] text-[#0D6847] dark:text-[#5CD6A5] flex items-center justify-center shrink-0 mt-0.5">
+                  <Icon className="w-4 h-4" />
+                </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="font-semibold text-gray-900 dark:text-white text-sm truncate">{notif.title}</h4>
-                        <span className="text-xs text-gray-400 dark:text-slate-400 flex-shrink-0">
-                          {formatRelative(notif.createdAt)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-slate-300 mt-0.5 line-clamp-2">{notif.body}</p>
-
-                      <div className="flex items-center justify-between mt-2">
-                        {!notif.isRead ? (
-                          <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800/60 text-[10px] sm:text-xs">
-                            <span className="w-1.5 h-1.5 bg-emerald-600 rounded-full mr-1" />
-                            Yeni
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-gray-400 dark:text-slate-500">Okundu</span>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-gray-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-rose-400 h-9 w-9"
-                          onClick={(e) => handleDelete(e, notif.id)}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-mono text-[10px] font-semibold px-1.5 py-0.5 rounded-sm bg-[#F0EFEA] dark:bg-[#1E2421] text-[#454A47] dark:text-[#B8C0BC] border border-[#E2E0D8] dark:border-[#2C3330] shrink-0">
+                        {code}
+                      </span>
+                      <h4 className="font-bold text-sm text-[#141615] dark:text-white truncate">
+                        {notif.title}
+                      </h4>
                     </div>
+                    <span className="font-mono text-[11px] text-[#5C615E] dark:text-[#949B97] shrink-0">
+                      {formatRelative(notif.createdAt)}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
+
+                  <p className="text-xs sm:text-sm text-[#5C615E] dark:text-[#949B97] leading-relaxed">
+                    {notif.body}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => handleDelete(e, notif.id)}
+                  className="h-8 w-8 rounded border border-transparent hover:border-[#E2E0D8] dark:hover:border-[#252B28] text-[#8A8F8C] hover:text-[#C84B31] flex items-center justify-center shrink-0 transition-colors"
+                  title="Sil"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             )
           })}
         </div>
