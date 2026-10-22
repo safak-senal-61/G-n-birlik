@@ -58,7 +58,7 @@ export const DEFAULT_SEO_SETTINGS: SeoSettingsRecord = {
   canonicalBaseUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.qrders.com.tr',
   googleVerificationCode: '',
   bingVerificationCode: '',
-  yandexVerificationCode: '3338b2789de88da8',
+  yandexVerificationCode: '9572ea10eccf1027',
   googleAnalyticsId: 'G-HFXVQCRP6M',
   indexNowKey: 'c19a4d80a4244f77b7c25c689b9e28f3',
   robotsAllowAll: true,

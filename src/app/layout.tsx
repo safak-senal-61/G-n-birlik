@@ -125,6 +125,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=5" />
 
         {/* Yandex Webmaster Verification */}
+        <meta name="yandex-verification" content="9572ea10eccf1027" />
         <meta name="yandex-verification" content="3338b2789de88da8" />
 
         {/* Global SEO Structured Data */}
