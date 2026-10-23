@@ -127,7 +127,7 @@ export function connectSocket(token?: string): RealtimeSocket {
         return
       }
 
-      // 2. Mesaj gönderme
+      // 2. Mesaj gönderme - Anlık direkt iletim (0ms gecikme ile karşı tarafa ulaştırır)
       if (event === 'message:send' && data.conversationId) {
         const convChannel = joinConversationChannel(data.conversationId)
         convChannel.send({
@@ -135,8 +135,11 @@ export function connectSocket(token?: string): RealtimeSocket {
           event: 'message:new',
           payload: {
             ...data,
-            senderId: userId || currentUserId,
-            createdAt: new Date().toISOString(),
+            id: data.tempId || data.id,
+            tempId: data.tempId || data.id,
+            senderId: data.senderId || userId || currentUserId,
+            sender: data.sender,
+            createdAt: data.createdAt || new Date().toISOString(),
           },
         })
         return
@@ -150,7 +153,8 @@ export function connectSocket(token?: string): RealtimeSocket {
           event,
           payload: {
             conversationId: data.conversationId,
-            userId: userId || currentUserId,
+            userId: data.userId || userId || currentUserId,
+            userName: data.userName || null,
           },
         })
         return
@@ -226,7 +230,7 @@ export function joinConversationChannel(conversationId: string): RealtimeChannel
   }
 
   const channel = supabase.channel(`conversation:${conversationId}`, {
-    config: { broadcast: { self: true } },
+    config: { broadcast: { self: false } },
   })
 
   channel.on('broadcast', { event: '*' }, ({ event, payload }) => {

@@ -419,6 +419,7 @@ export const conversationsApi = {
     content: string
     type?: string
     metadata?: any
+    tempId?: string
   }) => api.post<any>('/conversations', data),
 
   messages: (conversationId: string, page = 1, pageSize = 50) =>

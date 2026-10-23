@@ -69,7 +69,13 @@ export async function broadcastToConversation(conversationId: string, event: str
       payload,
     })
 
-    await supabase.removeChannel(channel)
+    // Give a brief buffer before unregistering channel so socket frame is sent reliably
+    setTimeout(() => {
+      try {
+        supabase.removeChannel(channel)
+      } catch {}
+    }, 1000)
+
     console.log(`[Supabase Realtime Server] Broadcast gönderildi → conversation:${conversationId} (${event})`)
     return true
   } catch (err: any) {

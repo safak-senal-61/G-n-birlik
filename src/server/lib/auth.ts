@@ -444,6 +444,7 @@ async function sendOneSignalPushSafe(params: {
         data: params.data || {},
         web_url: webPath,
         app_url: buildDeepLink(params.data, params.type || 'notifications'),
+        buttons: params.type === 'NEW_MESSAGE' ? [{ id: 'reply', text: 'Yanıtla' }] : undefined,
       }),
     })
 
@@ -470,6 +471,7 @@ async function sendOneSignalPushSafe(params: {
         contents: { en: params.message, tr: params.message },
         url: webPath,
         data: params.data || {},
+        buttons: params.type === 'NEW_MESSAGE' ? [{ id: 'reply', text: 'Yanıtla' }] : undefined,
       }),
     })
 

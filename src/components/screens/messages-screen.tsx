@@ -23,9 +23,11 @@ export default function MessagesScreen() {
   const [loading, setLoading] = useState(true)
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
+  const [typingUser, setTypingUser] = useState<string | null>(null)
   const [connected, setConnected] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<any>(null)
+  const remoteTypingTimeoutRef = useRef<any>(null)
 
   useEffect(() => {
     if (!user) return
@@ -36,8 +38,46 @@ export default function MessagesScreen() {
     if (socket.connected) setConnected(true)
 
     const unsubNewMsg = on('message:new', (msg: any) => {
+      if (!msg || !msg.conversationId) return
+
       if (msg.conversationId === selectedId) {
-        setMessages((prev) => [...prev, msg])
+        setMessages((prev) => {
+          // 1. Zaten listede bu ID varsa tekrar ekleme (çift gösterimi önler)
+          if (msg.id && prev.some((m) => m.id === msg.id)) {
+            return prev
+          }
+          // 2. tempId eşleşmesi varsa (sunucudan gelen resmi onay veya soket tempId)
+          if (msg.tempId) {
+            const matchIdx = prev.findIndex(
+              (m) => m.id === msg.tempId || m.tempId === msg.tempId
+            )
+            if (matchIdx !== -1) {
+              const updated = [...prev]
+              updated[matchIdx] = { ...updated[matchIdx], ...msg, id: msg.id || updated[matchIdx].id, pending: false }
+              return updated
+            }
+          }
+          // 3. Eğer gönderen mevcut kullanıcı ise ve temp/pending mesaj varsa onunla eşle
+          if (msg.senderId === user.id) {
+            const tempIdx = prev.findIndex(
+              (m) => m.pending || (typeof m.id === 'string' && m.id.startsWith('temp_'))
+            )
+            if (tempIdx !== -1) {
+              const updated = [...prev]
+              updated[tempIdx] = { ...updated[tempIdx], ...msg, id: msg.id || updated[tempIdx].id, pending: false }
+              return updated
+            }
+          }
+          return [...prev, msg]
+        })
+
+        // Karşı taraf mesajı gönderdiğinde yazıyor efektini sonlandır
+        if (msg.senderId !== user.id) {
+          setIsTyping(false)
+          setTypingUser(null)
+          if (remoteTypingTimeoutRef.current) clearTimeout(remoteTypingTimeoutRef.current)
+        }
+
         scrollToBottom()
       } else {
         setConversations((prev) =>
@@ -51,14 +91,24 @@ export default function MessagesScreen() {
     })
 
     const unsubTypingStart = on('typing:start', (data: any) => {
-      if (data.conversationId === selectedId) {
+      // Kendimizin tetiklediği yazıyor olayını yok say
+      if (data.conversationId === selectedId && data.userId && data.userId !== user.id) {
         setIsTyping(true)
+        if (data.userName) setTypingUser(data.userName)
+        if (remoteTypingTimeoutRef.current) clearTimeout(remoteTypingTimeoutRef.current)
+        remoteTypingTimeoutRef.current = setTimeout(() => {
+          setIsTyping(false)
+          setTypingUser(null)
+        }, 3500)
+        scrollToBottom()
       }
     })
 
     const unsubTypingStop = on('typing:stop', (data: any) => {
-      if (data.conversationId === selectedId) {
+      if (data.conversationId === selectedId && data.userId && data.userId !== user.id) {
         setIsTyping(false)
+        setTypingUser(null)
+        if (remoteTypingTimeoutRef.current) clearTimeout(remoteTypingTimeoutRef.current)
       }
     })
 
@@ -69,6 +119,7 @@ export default function MessagesScreen() {
       unsubTypingStart?.()
       unsubTypingStop?.()
       unsubRead?.()
+      if (remoteTypingTimeoutRef.current) clearTimeout(remoteTypingTimeoutRef.current)
     }
   }, [user, selectedId])
 
@@ -111,56 +162,81 @@ export default function MessagesScreen() {
   }
 
   const handleSend = () => {
-    if (!newMessage.trim() || !selectedId) return
+    if (!newMessage.trim() || !selectedId || !user) return
     const content = newMessage.trim()
+    const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+
+    // Input alanını ve yazıyor göstergesini anında sıfırla (0ms gecikme)
     setNewMessage('')
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    const socket = getSocket()
+    socket?.emit('typing:stop', { conversationId: selectedId, userId: user.id })
 
     const optimisticMsg = {
-      id: `temp_${Date.now()}`,
+      id: tempId,
+      tempId,
       conversationId: selectedId,
-      senderId: user!.id,
-      sender: { id: user!.id, fullName: user!.fullName },
+      senderId: user.id,
+      sender: {
+        id: user.id,
+        fullName: user.fullName,
+        companyName: (user as any).companyName,
+        avatarUrl: (user as any).avatarUrl,
+      },
       content,
       type: 'TEXT',
       createdAt: new Date().toISOString(),
-      pending: true,
+      pending: false,
     }
+
+    // 1. Gönderenin ekranında anında (0ms) göster
     setMessages((prev) => [...prev, optimisticMsg])
     scrollToBottom()
 
-    const socket = getSocket()
+    // 2. Karşı tarafa Supabase Realtime WebSocket üzerinden ANINDA ilet (0ms gecikme)
     if (socket?.connected) {
       socket.emit('message:send', {
-        conversationId: selectedId,
-        content,
-        type: 'TEXT',
+        ...optimisticMsg,
       })
     }
 
+    // 3. Arka planda veritabanına kaydet
     conversationsApi
-      .sendMessage({ conversationId: selectedId, content })
-      .then(() => {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === optimisticMsg.id ? { ...m, pending: false } : m))
-        )
+      .sendMessage({ conversationId: selectedId, content, tempId })
+      .then((res: any) => {
+        const serverMsg = res?.data || res
+        if (serverMsg?.id) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === tempId || m.tempId === tempId
+                ? { ...m, ...serverMsg, id: serverMsg.id, pending: false }
+                : m
+            )
+          )
+        }
       })
-      .catch((err) => {
-        toast.error('Mesaj gönderilemedi: ' + err.message)
-        setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id))
-        setNewMessage(content)
+      .catch((err: any) => {
+        toast.error('Mesaj sunucuya iletilemedi: ' + (err.message || 'Hata'))
       })
   }
 
   const handleTyping = (value: string) => {
     setNewMessage(value)
     const socket = getSocket()
-    if (!socket || !selectedId) return
+    if (!socket || !selectedId || !user) return
 
-    socket.emit('typing:start', { conversationId: selectedId })
+    socket.emit('typing:start', {
+      conversationId: selectedId,
+      userId: user.id,
+      userName: user.fullName || (user as any).companyName,
+    })
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit('typing:stop', { conversationId: selectedId })
+      socket.emit('typing:stop', {
+        conversationId: selectedId,
+        userId: user.id,
+      })
     }, 1500)
   }
 
@@ -354,9 +430,21 @@ export default function MessagesScreen() {
                       )
                     })}
                     {isTyping && (
-                      <div className="flex justify-start">
-                        <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-lg px-3 py-2 font-mono text-[11px] text-[#5C615E]">
-                          Yazıyor...
+                      <div className="flex items-end gap-2 justify-start my-1.5 animate-in fade-in slide-in-from-bottom-1 duration-200">
+                        <Avatar className="w-6 h-6 rounded-md shrink-0 border border-[#E2E0D8] dark:border-[#252B28] mb-0.5">
+                          <AvatarFallback className="rounded-md bg-[#F0EFEA] dark:bg-[#1E2421] text-[#0D6847] dark:text-[#5CD6A5] font-mono text-[9px] font-bold">
+                            {initials(typingUser || selected?.participant?.fullName || selected?.participant?.companyName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="bg-white dark:bg-[#141716] border border-[#E2E0D8] dark:border-[#252B28] rounded-2xl rounded-bl-xs px-3.5 py-2 shadow-xs flex items-center gap-2">
+                          <span className="text-xs text-[#5C615E] dark:text-[#949B97] font-medium">
+                            {typingUser || selected?.participant?.fullName || 'Yazıyor'}
+                          </span>
+                          <span className="flex items-center gap-1 pl-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#0D6847] dark:bg-[#5CD6A5] animate-bounce [animation-delay:-0.3s]" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#0D6847] dark:bg-[#5CD6A5] animate-bounce [animation-delay:-0.15s]" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#0D6847] dark:bg-[#5CD6A5] animate-bounce" />
+                          </span>
                         </div>
                       </div>
                     )}

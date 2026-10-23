@@ -28,6 +28,7 @@ export interface SendMessageDTO {
   content: string
   type?: 'TEXT' | 'IMAGE' | 'LOCATION' | 'SYSTEM'
   metadata?: any
+  tempId?: string
 }
 
 // Sistem kurallarını ilk kullanımda seed et
@@ -266,25 +267,36 @@ export class MessagesService {
     }
 
     // 8. Engellenmediyse alıcıya bildir ve konuşma kanalına Supabase Realtime ile anlık ilet
-    const transformed = this.transformMessage(message, filterResult.hasViolations)
+    const transformed = {
+      ...this.transformMessage(message, filterResult.hasViolations),
+      tempId: dto.tempId || null,
+    }
 
     if (!isAutoBlocked) {
-      import('@/server/lib/realtime').then(({ broadcastToConversation }) => {
-        broadcastToConversation(conversationId, 'message:new', transformed).catch(() => {})
-      })
-
-      const otherParticipants = await db.conversationParticipant.findMany({
-        where: { conversationId, userId: { not: senderId } },
-      })
-      for (const p of otherParticipants) {
-        await createNotification({
-          userId: p.userId,
-          type: 'NEW_MESSAGE',
-          title: 'Yeni Mesaj',
-          body: `${message.sender.fullName}: ${filterResult.filteredContent.substring(0, 60)}${filterResult.filteredContent.length > 60 ? '...' : ''}`,
-          data: { conversationId, messageId: message.id, senderId },
-        })
+      try {
+        const { broadcastToConversation } = await import('@/server/lib/realtime')
+        await broadcastToConversation(conversationId, 'message:new', transformed)
+      } catch (err) {
+        console.warn('[MessagesService] broadcastToConversation error:', err)
       }
+
+      // Bildirimleri arka planda asenkron gönder, mesaj gönderme yanıtını ASLA geciktirme
+      db.conversationParticipant
+        .findMany({
+          where: { conversationId, userId: { not: senderId } },
+        })
+        .then((otherParticipants) => {
+          for (const p of otherParticipants) {
+            createNotification({
+              userId: p.userId,
+              type: 'NEW_MESSAGE',
+              title: 'Yeni Mesaj',
+              body: `${message.sender.fullName}: ${filterResult.filteredContent.substring(0, 60)}${filterResult.filteredContent.length > 60 ? '...' : ''}`,
+              data: { conversationId, messageId: message.id, senderId },
+            }).catch(() => {})
+          }
+        })
+        .catch(() => {})
     }
 
     return transformed
