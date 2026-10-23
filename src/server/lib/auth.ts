@@ -553,7 +553,7 @@ async function sendOneSignalEmailSafe(params: {
             ${params.body}
           </p>
           <div style="margin: 28px 0; text-align: center;">
-            <a href="https://gunubirlik.space-z.ai" style="display: inline-block; background: #10b981; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 10px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 6px rgba(16,185,129,0.3);">
+            <a href="https://gunubirlik.qrders.com.tr" style="display: inline-block; background: #10b981; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 10px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 6px rgba(16,185,129,0.3);">
               Uygulamada Görüntüle
             </a>
           </div>

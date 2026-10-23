@@ -74,7 +74,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `${rawCat.toUpperCase()} Günlük İş İlanları`,
     desc: `En güncel günlük ve part-time ${rawCat} iş ilanları.`,
   }
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.space-z.ai'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.qrders.com.tr'
 
   return {
     title: `${info.title} (2026)`,
@@ -98,7 +98,7 @@ export default async function CategoryJobsPage({ params }: PageProps) {
     title: `${rawCat.toUpperCase()} Günlük İş İlanları`,
     desc: `En güncel günlük ve part-time ${rawCat} iş ilanları.`,
   }
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.space-z.ai'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.qrders.com.tr'
 
   let jobs: any[] = []
   try {

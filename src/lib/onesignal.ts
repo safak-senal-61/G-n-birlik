@@ -21,8 +21,7 @@ function isOneSignalSupported(): boolean {
   return (
     hostname === 'gunubirlik.qrders.com.tr' ||
     hostname.endsWith('.qrders.com.tr') ||
-    hostname === 'gunubirlik.space-z.ai' ||
-    hostname.endsWith('.space-z.ai') ||
+    hostname === 'localhost' ||
     hostname.endsWith('.vercel.app')
   )
 }

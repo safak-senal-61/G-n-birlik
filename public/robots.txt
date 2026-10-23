@@ -16,4 +16,4 @@ Disallow: /admin/
 Disallow: /api/
 Disallow: /_next/
 
-Sitemap: https://gunubirlik.space-z.ai/sitemap.xml
+Sitemap: https://gunubirlik.qrders.com.tr/sitemap.xml

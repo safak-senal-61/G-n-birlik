@@ -26,7 +26,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.space-z.ai'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.qrders.com.tr'
 
   try {
     const job = await db.job.findUnique({
@@ -66,7 +66,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function JobDetailPage({ params }: PageProps) {
   const { id } = await params
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.space-z.ai'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.qrders.com.tr'
 
   let job: any = null
   try {

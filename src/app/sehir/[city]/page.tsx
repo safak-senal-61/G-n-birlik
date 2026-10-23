@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { city } = await params
   const rawCity = city.toLowerCase()
   const cityName = CITY_NAME_MAP[rawCity] || rawCity.charAt(0).toUpperCase() + rawCity.slice(1)
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.space-z.ai'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.qrders.com.tr'
 
   return {
     title: `${cityName} Günlük İş İlanları & Yevmiyeli İşler`,
@@ -68,7 +68,7 @@ export default async function CityJobsPage({ params }: PageProps) {
   const { city } = await params
   const rawCity = city.toLowerCase()
   const cityName = CITY_NAME_MAP[rawCity] || rawCity.charAt(0).toUpperCase() + rawCity.slice(1)
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.space-z.ai'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.qrders.com.tr'
 
   // Veritabanından ilgili şehrin aktif ilanlarını çek
   let jobs: any[] = []
