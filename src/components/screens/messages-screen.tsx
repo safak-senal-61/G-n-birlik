@@ -91,8 +91,13 @@ export default function MessagesScreen() {
     })
 
     const unsubTypingStart = on('typing:start', (data: any) => {
-      // Kendimizin tetiklediği yazıyor olayını yok say
-      if (data.conversationId === selectedId && data.userId && data.userId !== user.id) {
+      // Kendimizin tetiklediği yazıyor olayını kesinlikle yok say
+      const senderUserId = data.userId || data.senderId
+      if (senderUserId && user?.id && String(senderUserId) === String(user.id)) {
+        return
+      }
+
+      if (data.conversationId === selectedId) {
         setIsTyping(true)
         if (data.userName) setTypingUser(data.userName)
         if (remoteTypingTimeoutRef.current) clearTimeout(remoteTypingTimeoutRef.current)
@@ -105,7 +110,12 @@ export default function MessagesScreen() {
     })
 
     const unsubTypingStop = on('typing:stop', (data: any) => {
-      if (data.conversationId === selectedId && data.userId && data.userId !== user.id) {
+      const senderUserId = data.userId || data.senderId
+      if (senderUserId && user?.id && String(senderUserId) === String(user.id)) {
+        return
+      }
+
+      if (data.conversationId === selectedId) {
         setIsTyping(false)
         setTypingUser(null)
         if (remoteTypingTimeoutRef.current) clearTimeout(remoteTypingTimeoutRef.current)
@@ -272,14 +282,14 @@ export default function MessagesScreen() {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100dvh-210px)] sm:h-[600px]">
+      <div className="flex flex-col md:flex-row gap-4 h-[calc(100dvh-180px)] min-h-[580px] max-h-[860px]">
         {/* Konuşma Listesi */}
         <div
-          className={`border border-[#E2E0D8] dark:border-[#252B28] rounded-lg overflow-hidden bg-white dark:bg-[#141716] ${
-            selectedId ? 'hidden md:block' : ''
+          className={`w-full md:w-[350px] lg:w-[390px] shrink-0 border border-[#E2E0D8] dark:border-[#252B28] rounded-lg overflow-hidden bg-white dark:bg-[#141716] flex flex-col ${
+            selectedId ? 'hidden md:flex' : 'flex'
           }`}
         >
-          <ScrollArea className="h-full custom-scrollbar">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden divide-y divide-[#ECEAE4] dark:divide-[#222624]">
             {loading ? (
               <div className="p-3 space-y-2">
                 {[1, 2, 3, 4].map((i) => (
@@ -297,7 +307,7 @@ export default function MessagesScreen() {
                   key={conv.id}
                   type="button"
                   onClick={() => selectConversation(conv.id)}
-                  className={`w-full text-left p-3.5 border-b border-[#ECEAE4] dark:border-[#222624] transition-colors flex items-start gap-3 cursor-pointer ${
+                  className={`w-full text-left px-4 py-3.5 transition-colors flex items-start gap-3 cursor-pointer ${
                     selectedId === conv.id
                       ? 'bg-[#EAF3EE]/60 dark:bg-[#162921]/40'
                       : 'hover:bg-[#F9F8F6] dark:hover:bg-[#181C1A]'
@@ -308,13 +318,13 @@ export default function MessagesScreen() {
                       {initials(conv.participant?.fullName || conv.participant?.companyName)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 pr-1">
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="font-bold text-[#141615] dark:text-white text-xs sm:text-sm truncate">
                         {conv.participant?.companyName || conv.participant?.fullName}
                       </h4>
                       {conv.lastMessage && (
-                        <span className="font-mono text-[10px] text-[#5C615E] dark:text-[#949B97] shrink-0">
+                        <span className="font-mono text-[10px] sm:text-[11px] text-[#5C615E] dark:text-[#949B97] shrink-0 whitespace-nowrap pl-1">
                           {formatRelative(conv.lastMessage.createdAt)}
                         </span>
                       )}
@@ -329,20 +339,20 @@ export default function MessagesScreen() {
                     </p>
                   </div>
                   {conv.unreadCount > 0 && (
-                    <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-sm bg-[#C84B31] text-white shrink-0">
+                    <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-sm bg-[#C84B31] text-white shrink-0 ml-1">
                       {conv.unreadCount}
                     </span>
                   )}
                 </button>
               ))
             )}
-          </ScrollArea>
+          </div>
         </div>
 
         {/* Mesaj İçeriği */}
         <div
-          className={`md:col-span-2 border border-[#E2E0D8] dark:border-[#252B28] rounded-lg flex flex-col overflow-hidden bg-white dark:bg-[#141716] ${
-            !selectedId ? 'hidden md:flex' : ''
+          className={`flex-1 min-w-0 border border-[#E2E0D8] dark:border-[#252B28] rounded-lg flex flex-col overflow-hidden bg-white dark:bg-[#141716] ${
+            !selectedId ? 'hidden md:flex' : 'flex'
           }`}
         >
           {!selected ? (
