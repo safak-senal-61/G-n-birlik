@@ -178,9 +178,17 @@ export default function AdminUsersPage() {
                   <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                          {u.fullName[0]?.toUpperCase()}
-                        </div>
+                        {u.avatarUrl ? (
+                          <img
+                            src={u.avatarUrl}
+                            alt={u.fullName}
+                            className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-700 bg-slate-800"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                            {u.fullName[0]?.toUpperCase()}
+                          </div>
+                        )}
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-white truncate flex items-center gap-1.5">
                             {u.fullName}

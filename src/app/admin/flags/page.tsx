@@ -256,9 +256,17 @@ function FlagCard({ flag, onResolve }: { flag: FlagItem; onResolve: () => void }
       <div className="p-5">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex items-start gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center shrink-0">
-              <UserCircle className="w-6 h-6 text-slate-300" />
-            </div>
+            {flag.sender.avatarUrl ? (
+              <img
+                src={flag.sender.avatarUrl}
+                alt={flag.sender.fullName}
+                className="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-700 bg-slate-800"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center shrink-0">
+                <UserCircle className="w-6 h-6 text-slate-300" />
+              </div>
+            )}
             <div className="min-w-0">
               <p className="font-medium text-white truncate">{flag.sender.fullName}</p>
               <p className="text-xs text-slate-500 truncate">{flag.sender.email}</p>

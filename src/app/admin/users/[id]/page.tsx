@@ -77,9 +77,17 @@ export default function AdminUserDetailPage() {
         <div className="h-24 bg-gradient-to-r from-indigo-600/40 via-purple-600/30 to-slate-900" />
         <div className="px-6 pb-6">
           <div className="flex items-end gap-4 -mt-12 mb-4">
-            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 border-4 border-slate-900 flex items-center justify-center text-white font-bold text-3xl shrink-0">
-              {user.fullName[0]?.toUpperCase()}
-            </div>
+            {user.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt={user.fullName}
+                className="w-24 h-24 rounded-2xl object-cover border-4 border-slate-900 bg-slate-800 shrink-0 shadow-lg"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 border-4 border-slate-900 flex items-center justify-center text-white font-bold text-3xl shrink-0 shadow-lg">
+                {user.fullName[0]?.toUpperCase()}
+              </div>
+            )}
             <div className="flex-1 min-w-0 pb-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-2xl font-bold text-white">{user.fullName}</h1>
@@ -164,12 +172,12 @@ export default function AdminUserDetailPage() {
         <StatBox icon={Star} label="Değerlendirme" value={`${user.ratingAvg.toFixed(1)} (${user.ratingCount})`} color="from-amber-500 to-orange-500" />
       </div>
 
-      {/* Son İhlaller */}
+      {/* Son İhlaller & Yaptırım Geçmişi */}
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden">
           <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between">
             <h3 className="font-semibold text-white flex items-center gap-2">
-              <Flag className="w-4 h-4 text-amber-400" /> Son İhlaller
+              <Flag className="w-4 h-4 text-amber-400" /> Son İhlaller & İhlal Kaynağı
             </h3>
             <span className="text-xs text-slate-500">{recentFlags.length} kayıt</span>
           </div>
@@ -177,15 +185,77 @@ export default function AdminUserDetailPage() {
             {recentFlags.length === 0 ? (
               <div className="p-6 text-center text-sm text-slate-500">İhlal kaydı yok.</div>
             ) : (
-              recentFlags.map((flag: any) => (
-                <div key={flag.id} className="p-3 hover:bg-slate-800/30">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-white">{flag.violationType}</span>
-                    <span className="text-[10px] text-slate-500">{new Date(flag.createdAt).toLocaleString('tr-TR')}</span>
+              recentFlags.map((flag: any) => {
+                const sevStyle =
+                  flag.severity === 'CRITICAL'
+                    ? 'bg-red-950/60 border-red-800/60 text-red-300'
+                    : flag.severity === 'HIGH'
+                    ? 'bg-orange-950/60 border-orange-800/60 text-orange-300'
+                    : flag.severity === 'MEDIUM'
+                    ? 'bg-amber-950/60 border-amber-800/60 text-amber-300'
+                    : 'bg-blue-950/60 border-blue-800/60 text-blue-300';
+
+                return (
+                  <div key={flag.id} className="p-4 hover:bg-slate-800/30 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${sevStyle}`}>
+                          {flag.severity}
+                        </span>
+                        <span className="text-xs font-bold text-white">
+                          {flag.violationType === 'URL'
+                            ? 'Web Sitesi / Link'
+                            : flag.violationType === 'PHONE'
+                            ? 'Telefon Numarası'
+                            : flag.violationType === 'EMAIL'
+                            ? 'E-posta'
+                            : flag.violationType === 'PROFANITY'
+                            ? 'Küfür / Hakaret'
+                            : flag.violationType}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-500">
+                        {new Date(flag.createdAt).toLocaleString('tr-TR')}
+                      </span>
+                    </div>
+
+                    {/* İhlal Kaynağı / Tetikleyen İfade */}
+                    {flag.matchedText && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-amber-400 font-medium">Tetikleyen İfade:</span>
+                        <code className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-amber-200 font-mono text-[11px]">
+                          {flag.matchedText}
+                        </code>
+                      </div>
+                    )}
+
+                    {/* Mesaj İçeriği */}
+                    <div className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/80">
+                      <p className="text-[11px] text-slate-400 mb-0.5">
+                        {flag.message?.originalContent ? 'Orijinal Mesaj:' : 'Mesaj Metni:'}
+                      </p>
+                      <p className="text-xs text-slate-200">
+                        {flag.message?.originalContent || flag.message?.content || 'Mesaj detayı bulunamadı.'}
+                      </p>
+                    </div>
+
+                    {/* Konuşmaya Git */}
+                    {flag.conversationId && (
+                      <div className="flex items-center justify-between text-xs pt-1">
+                        <button
+                          onClick={() => router.push(`/admin/conversations?id=${flag.conversationId}`)}
+                          className="text-indigo-400 hover:text-indigo-300 text-[11px] font-medium flex items-center gap-1"
+                        >
+                          <MessageSquare className="w-3 h-3" /> İlgili Konuşmayı İncele
+                        </button>
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          ID: {flag.id.slice(-6)}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-slate-400 truncate">{flag.message?.content}</p>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -226,33 +296,66 @@ export default function AdminUserDetailPage() {
         </div>
       </div>
 
-      {/* Audit log (kullanıcı ile ilgili) */}
+      {/* Son İşlemler & Aktivite Geçmişi */}
       <div className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden">
-        <div className="px-5 py-3 border-b border-slate-800">
+        <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between">
           <h3 className="font-semibold text-white flex items-center gap-2">
-            <Clock className="w-4 h-4 text-slate-400" /> İşlem Gemişi
+            <Clock className="w-4 h-4 text-slate-400" /> Son İşlemler & Aktivite Geçmişi
           </h3>
+          <span className="text-xs text-slate-500">{(data.recentOperations || auditLogs).length} kayıt</span>
         </div>
         <div className="divide-y divide-slate-800 max-h-96 overflow-y-auto">
-          {auditLogs.length === 0 ? (
+          {(data.recentOperations || auditLogs).length === 0 ? (
             <div className="p-6 text-center text-sm text-slate-500">İşlem kaydı yok.</div>
           ) : (
-            auditLogs.map((log: any) => (
-              <div key={log.id} className="p-3 hover:bg-slate-800/30">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-white">{log.action}</span>
-                  <span className="text-[10px] text-slate-500">{new Date(log.createdAt).toLocaleString('tr-TR')}</span>
+            (data.recentOperations || auditLogs).map((op: any) => {
+              const badgeColor =
+                op.type === 'APPLICATION'
+                  ? 'bg-blue-950/60 border-blue-800/60 text-blue-300'
+                  : op.type === 'JOB_POST'
+                  ? 'bg-emerald-950/60 border-emerald-800/60 text-emerald-300'
+                  : op.type === 'WALLET'
+                  ? 'bg-purple-950/60 border-purple-800/60 text-purple-300'
+                  : op.type === 'SUSPENSION'
+                  ? 'bg-amber-950/60 border-amber-800/60 text-amber-300'
+                  : op.type === 'ADMIN_ACTION'
+                  ? 'bg-orange-950/60 border-orange-800/60 text-orange-300'
+                  : 'bg-slate-800 border-slate-700 text-slate-300';
+
+              return (
+                <div key={op.id} className="p-3.5 hover:bg-slate-800/30 flex items-start justify-between gap-3">
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${badgeColor}`}>
+                        {op.type === 'APPLICATION'
+                          ? 'Başvuru'
+                          : op.type === 'JOB_POST'
+                          ? 'İş İlanı'
+                          : op.type === 'WALLET'
+                          ? 'Cüzdan'
+                          : op.type === 'SUSPENSION'
+                          ? 'Yaptırım'
+                          : op.type === 'ADMIN_ACTION'
+                          ? 'Admin'
+                          : op.type === 'REGISTRATION'
+                          ? 'Kayıt'
+                          : op.title}
+                      </span>
+                      <p className="text-xs font-semibold text-white truncate">{op.title}</p>
+                    </div>
+                    {op.description && (
+                      <p className="text-xs text-slate-400">{op.description}</p>
+                    )}
+                    <p className="text-[10px] text-slate-500">
+                      Yapan: {op.actor || 'Sistem'}
+                    </p>
+                  </div>
+                  <span className="text-[10px] text-slate-500 shrink-0 mt-0.5">
+                    {new Date(op.createdAt).toLocaleString('tr-TR')}
+                  </span>
                 </div>
-                <p className="text-xs text-slate-500">
-                  Yapan: {log.actor?.fullName || 'Sistem'}
-                </p>
-                {log.metadata && (
-                  <p className="text-[10px] text-slate-600 font-mono mt-1">
-                    {typeof log.metadata === 'object' ? JSON.stringify(log.metadata) : log.metadata}
-                  </p>
-                )}
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

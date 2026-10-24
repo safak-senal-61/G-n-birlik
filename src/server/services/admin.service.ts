@@ -314,35 +314,142 @@ export async function getUserDetail(userId: string) {
 
   if (!user) throw new ApiError('Kullanıcı bulunamadı.', 404)
 
-  const [flags, suspensions, auditLogs, messageCount, conversationCount, jobCount, applicationCount] =
-    await Promise.all([
-      db.moderationFlag.findMany({
-        where: { senderId: userId },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-        include: {
-          message: {
-            select: { content: true, originalContent: true, createdAt: true, conversationId: true },
-          },
+  const [
+    flags,
+    suspensions,
+    auditLogs,
+    messageCount,
+    conversationCount,
+    jobCount,
+    applicationCount,
+    recentApps,
+    recentJobs,
+    walletTx,
+  ] = await Promise.all([
+    db.moderationFlag.findMany({
+      where: { senderId: userId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      include: {
+        message: {
+          select: { id: true, content: true, originalContent: true, createdAt: true, conversationId: true },
         },
-      }),
-      db.suspension.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-      }),
-      db.auditLog.findMany({
-        where: {
-          OR: [{ targetType: 'USER', targetId: userId }, { actorId: userId }],
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-      }),
-      db.message.count({ where: { senderId: userId } }),
-      db.conversationParticipant.count({ where: { userId } }),
-      db.job.count({ where: { employerId: userId } }),
-      db.application.count({ where: { workerId: userId } }),
-    ])
+      },
+    }),
+    db.suspension.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    }),
+    db.auditLog.findMany({
+      where: {
+        OR: [{ targetType: 'USER', targetId: userId }, { actorId: userId }],
+      },
+      include: {
+        actor: { select: { fullName: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    }),
+    db.message.count({ where: { senderId: userId } }),
+    db.conversationParticipant.count({ where: { userId } }),
+    db.job.count({ where: { employerId: userId } }),
+    db.application.count({ where: { workerId: userId } }),
+    db.application.findMany({
+      where: { workerId: userId },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      include: { job: { select: { id: true, title: true, wageAmount: true } } },
+    }),
+    db.job.findMany({
+      where: { employerId: userId },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: { id: true, title: true, status: true, wageAmount: true, createdAt: true },
+    }),
+    db.walletTransaction.findMany({
+      where: { wallet: { userId } },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: { id: true, type: true, amount: true, description: true, status: true, createdAt: true },
+    }),
+  ])
+
+  // Son İşlemler & Kullanıcı Aktivite Zaman Tüneli
+  const recentOperations: any[] = []
+
+  // 1. Audit logları ekle
+  auditLogs.forEach((log) => {
+    recentOperations.push({
+      id: `audit_${log.id}`,
+      type: 'ADMIN_ACTION',
+      title: log.action,
+      description: typeof log.metadata === 'object' ? JSON.stringify(log.metadata) : log.metadata || '',
+      actor: log.actor?.fullName || 'Sistem',
+      createdAt: log.createdAt,
+    })
+  })
+
+  // 2. Yaptırımları ekle
+  suspensions.forEach((s) => {
+    recentOperations.push({
+      id: `susp_${s.id}`,
+      type: 'SUSPENSION',
+      title: s.type === 'PERMANENT' ? 'Kalıcı Ban Uygulandı' : 'Geçici Askı Uygulandı',
+      description: s.reason,
+      actor: 'Otomatik Moderasyon / Sistem',
+      createdAt: s.createdAt,
+    })
+  })
+
+  // 3. Başvuruları ekle
+  recentApps.forEach((app) => {
+    recentOperations.push({
+      id: `app_${app.id}`,
+      type: 'APPLICATION',
+      title: `İş Başvurusu: ${app.job.title}`,
+      description: `Durum: ${app.status} · Günlük Yevmiye: ₺${app.job.wageAmount}`,
+      actor: user.fullName,
+      createdAt: app.createdAt,
+    })
+  })
+
+  // 4. İlanları ekle
+  recentJobs.forEach((job) => {
+    recentOperations.push({
+      id: `job_${job.id}`,
+      type: 'JOB_POST',
+      title: `İş İlanı Açıldı: ${job.title}`,
+      description: `Durum: ${job.status} · Yevmiye: ₺${job.wageAmount}`,
+      actor: user.fullName,
+      createdAt: job.createdAt,
+    })
+  })
+
+  // 5. Cüzdan hareketlerini ekle
+  walletTx.forEach((tx) => {
+    recentOperations.push({
+      id: `tx_${tx.id}`,
+      type: 'WALLET',
+      title: `Cüzdan İşlemi: ${tx.type === 'DEPOSIT' ? 'Para Yatırma' : tx.type === 'WITHDRAW' ? 'Para Çekme' : tx.type}`,
+      description: `Tutar: ₺${tx.amount} · Durum: ${tx.status}${tx.description ? ` (${tx.description})` : ''}`,
+      actor: user.fullName,
+      createdAt: tx.createdAt,
+    })
+  })
+
+  // 6. Kayıt işlemi
+  recentOperations.push({
+    id: `reg_${user.id}`,
+    type: 'REGISTRATION',
+    title: 'Hesap Oluşturuldu',
+    description: `Platforma kayıt olundu (${user.role === 'WORKER' ? 'İş Arayan' : 'İşveren'})`,
+    actor: user.fullName,
+    createdAt: user.createdAt,
+  })
+
+  // Tarihe göre yeniden eskiye sırala
+  recentOperations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   return {
     user: {
@@ -362,6 +469,7 @@ export async function getUserDetail(userId: string) {
     recentFlags: flags,
     suspensions,
     auditLogs,
+    recentOperations,
   }
 }
 

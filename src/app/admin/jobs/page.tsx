@@ -144,9 +144,17 @@ export default function AdminJobsPage() {
 
                 {/* İşveren bilgisi */}
                 <div className="p-3 bg-slate-950/40 border border-slate-800 rounded-xl mb-4 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                    {job.employer.fullName[0]?.toUpperCase()}
-                  </div>
+                  {job.employer.avatarUrl ? (
+                    <img
+                      src={job.employer.avatarUrl}
+                      alt={job.employer.fullName}
+                      className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-700 bg-slate-800"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                      {job.employer.fullName[0]?.toUpperCase()}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate flex items-center gap-1.5">
                       {job.employer.fullName}
