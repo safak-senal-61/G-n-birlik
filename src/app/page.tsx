@@ -31,10 +31,29 @@ import Logo from '@/components/shared/logo'
 
 export default function Home() {
   const { user, token, isLoading, isAuthenticated, initialize } = useAuth()
-  const { view } = useApp()
+  const { view, go } = useApp()
   const [authChecked, setAuthChecked] = useState(false)
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [maintenanceChecked, setMaintenanceChecked] = useState(false)
+
+  // Push bildirimi ve doğrudan URL parametreleri yönlendirmesi
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const targetView = params.get('view') as any
+      const convId = params.get('c') || params.get('conversationId')
+      const jobId = params.get('jobId')
+
+      if (convId) {
+        go('messages', { conversationId: convId })
+      } else if (jobId) {
+        go('job-detail', { jobId })
+      } else if (targetView) {
+        go(targetView)
+      }
+    } catch {}
+  }, [go])
 
   // Bakım modu ve auth kontrolü (paralel ve gecikmesiz)
   useEffect(() => {

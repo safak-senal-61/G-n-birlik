@@ -15,9 +15,15 @@ import { getSocket, connectSocket, on } from '@/lib/socket'
 
 export default function MessagesScreen() {
   const { user } = useAuth()
-  const { go } = useApp()
+  const { go, selectedConversationId } = useApp()
   const [conversations, setConversations] = useState<any[]>([])
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(selectedConversationId || null)
+
+  useEffect(() => {
+    if (selectedConversationId) {
+      setSelectedId(selectedConversationId)
+    }
+  }, [selectedConversationId])
   const [messages, setMessages] = useState<any[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)

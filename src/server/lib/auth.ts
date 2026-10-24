@@ -420,62 +420,126 @@ async function sendOneSignalPushSafe(params: {
   }
 
   const authHeader = (ONESIGNAL_REST_API_KEY.startsWith('os_v2_') ? 'Key ' : 'Bearer ') + ONESIGNAL_REST_API_KEY
+  const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://gunubirlik.qrders.com.tr'
 
   try {
-    let webPath = '/'
-    if (params.data?.jobId) webPath = `/jobs/${params.data.jobId}`
-    else if (params.data?.applicationId) webPath = `/applications`
-    else if (params.data?.conversationId) webPath = `/messages`
-    else if (params.data?.type === 'WALLET_DEPOSIT' || params.type === 'WALLET_DEPOSIT') webPath = `/wallet`
+    let webPath = '/notifications'
+    if (params.data?.jobId) {
+      webPath = `/ilan/${params.data.jobId}`
+    } else if (params.data?.applicationId) {
+      webPath = `/applications`
+    } else if (params.data?.conversationId) {
+      webPath = `/messages?c=${params.data.conversationId}`
+    } else if (params.data?.type === 'WALLET_DEPOSIT' || params.type === 'WALLET_DEPOSIT') {
+      webPath = `/wallet`
+    }
 
-    // Önce external_id (modern OneSignal SDK v5 login) ile dene
+    const fullWebUrl = `${SITE_URL}${webPath}`
+    const isMessage = params.type === 'NEW_MESSAGE' || !!params.data?.conversationId
+    const convId = params.data?.conversationId
+
+    // 1. Android ve iOS Gruplama / Yığınlama (Notification Grouping / Threading)
+    // Her mesajın ayrı ayrı ekranı doldurmasını önler; aynı konuşmadaki mesajları tek başlık altında toplar.
+    const groupKey = convId ? `gb_conv_${convId}` : isMessage ? 'gb_messages' : `gb_${params.type || 'general'}`
+
+    const groupMessage = isMessage
+      ? { tr: '$[notif_count] yeni mesajınız var', en: 'You have $[notif_count] new messages' }
+      : { tr: '$[notif_count] yeni bildirim', en: 'You have $[notif_count] new notifications' }
+
+    // 2. Aksiyon Butonları (Mobile & Web)
+    // Uygulamaya girmeden doğrudan bildirim üzerinden işlem yapabilme (Yanıtla, Görüntüle, Okundu İşaretle)
+    const mobileButtons = isMessage
+      ? [
+          { id: 'reply', text: 'Yanıtla', icon: 'ic_menu_send' },
+          { id: 'view', text: 'Görüntüle', icon: 'ic_menu_view' },
+          { id: 'mark_read', text: 'Okundu İşaretle' },
+        ]
+      : params.data?.jobId
+      ? [
+          { id: 'view_job', text: 'İlanı İncele' },
+        ]
+      : params.data?.applicationId
+      ? [
+          { id: 'view_app', text: 'Başvuruyu Gör' },
+        ]
+      : undefined
+
+    const webButtons = isMessage
+      ? [
+          { id: 'reply', text: 'Yanıtla', url: fullWebUrl },
+          { id: 'view', text: 'Görüntüle', url: fullWebUrl },
+        ]
+      : params.data?.jobId
+      ? [
+          { id: 'view_job', text: 'İlanı Aç', url: fullWebUrl },
+        ]
+      : undefined
+
+    const appUrl = buildDeepLink(params.data, params.type || 'notifications')
+
+    // 3. Ortak OneSignal REST API Payload Alanları
+    const commonPayload = {
+      app_id: ONESIGNAL_APP_ID,
+      headings: { en: params.title, tr: params.title },
+      contents: { en: params.message, tr: params.message },
+      data: {
+        ...params.data,
+        type: params.type,
+      },
+      // Bildirim Gruplama / Yığınlama (her mesaj ayrı gelmez, tek bildirim altında toplanır):
+      android_group: groupKey,
+      android_group_message: groupMessage,
+      thread_id: groupKey,
+      summary_arg: isMessage ? 'Günübirlik Mesaj' : 'Günübirlik',
+      summary_arg_count: 1,
+      web_push_topic: groupKey,
+      // Aksiyon Butonları & Derin Bağlantılar (uygulama ve web yönlendirmesi):
+      buttons: mobileButtons,
+      web_buttons: webButtons,
+      web_url: fullWebUrl,
+      url: fullWebUrl,
+      app_url: appUrl,
+    }
+
+    // Yöntem 1: Modern OneSignal external_id alias ile hedefle (react-native-onesignal v5 ve web login)
     const res = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authHeader,
+        Authorization: authHeader,
       },
       body: JSON.stringify({
-        app_id: ONESIGNAL_APP_ID,
-        include_aliases: [{ external_id: params.userId }],
+        ...commonPayload,
         target_channel: 'push',
-        headings: { en: params.title, tr: params.title },
-        contents: { en: params.message, tr: params.message },
-        data: params.data || {},
-        web_url: webPath,
-        app_url: buildDeepLink(params.data, params.type || 'notifications'),
-        buttons: params.type === 'NEW_MESSAGE' ? [{ id: 'reply', text: 'Yanıtla' }] : undefined,
+        include_aliases: {
+          external_id: [params.userId],
+        },
       }),
     })
 
-    const result = await res.json() as any
+    const result = (await res.json()) as any
 
     if (result.id && result.recipients > 0) {
       console.log(`[OneSignal] Push gönderildi (external_id): ${result.id} → ${params.userId} (${result.recipients} cihaz)`)
       return
     }
 
-    // external_id ile alıcı bulunamadıysa tag filtresi ile dene (Web SDK / tag kayıtları)
+    // Yöntem 2: Fallback olarak tag filtresi ile hedefle (web sdk tag kayıtları)
     const res2 = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authHeader,
+        Authorization: authHeader,
       },
       body: JSON.stringify({
-        app_id: ONESIGNAL_APP_ID,
+        ...commonPayload,
         filters: [
           { field: 'tag', key: 'user_id', relation: '=', value: params.userId },
         ],
-        headings: { en: params.title, tr: params.title },
-        contents: { en: params.message, tr: params.message },
-        url: webPath,
-        data: params.data || {},
-        buttons: params.type === 'NEW_MESSAGE' ? [{ id: 'reply', text: 'Yanıtla' }] : undefined,
       }),
     })
 
-    const result2 = await res2.json() as any
+    const result2 = (await res2.json()) as any
     if (result2.id && result2.recipients > 0) {
       console.log(`[OneSignal] Push gönderildi (tag): ${result2.id} → ${params.userId} (${result2.recipients} cihaz)`)
       return
@@ -515,7 +579,7 @@ const EMAIL_NOTIFY_TYPES = new Set([
   'ACCOUNT_REACTIVATED',
   'JOB_APPROVED',
   'JOB_REJECTED',
-  'ESCROW_DISPUTED'
+  'ESCROW_DISPUTED',
 ])
 
 async function sendOneSignalEmailSafe(params: {
