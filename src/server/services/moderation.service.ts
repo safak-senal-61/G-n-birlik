@@ -117,6 +117,21 @@ const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
 
 const URL_REGEX = /(?:(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/g
 
+// Platformun kendi güvenli iç alan adları (moderasyon dışı)
+const ALLOWED_INTERNAL_DOMAINS = [
+  'gunubirlik.qrders.com.tr',
+  'qrders.com.tr',
+  'gunubirlik.app',
+  'localhost',
+  '127.0.0.1',
+]
+
+export function isInternalPlatformUrl(url: string): boolean {
+  if (!url) return false
+  const lower = url.toLowerCase()
+  return ALLOWED_INTERNAL_DOMAINS.some((domain) => lower.includes(domain))
+}
+
 const SOCIAL_HANDLE_REGEX =
   /(?:@|instagram\.com\/|facebook\.com\/|twitter\.com\/|x\.com\/|tiktok\.com\/|youtube\.com\/|t\.me\/|wa\.me\/|whatsapp\.com\/)[a-zA-Z0-9._-]+/gi
 
@@ -178,6 +193,17 @@ export async function filterMessageContent(
   content: string,
   options: { customRules?: any[] } = {}
 ): Promise<FilterResult> {
+  // Sistem iş paylaşım kartı (JSON payload) moderasyon filtresini doğrudan geçer
+  if (content.startsWith('[JOB_CARD]')) {
+    return {
+      filteredContent: content,
+      violations: [],
+      hasViolations: false,
+      shouldBlock: false,
+      maxSeverity: null,
+    }
+  }
+
   const violations: Violation[] = []
   let filtered = content
   let shouldBlock = false
@@ -279,14 +305,15 @@ export async function filterMessageContent(
   // 7. URL / web sitesi (LOW)
   URL_REGEX.lastIndex = 0
   while ((m = URL_REGEX.exec(content)) !== null) {
-    // E-posta değilse
-    if (!m[0].includes('@')) {
+    const rawUrl = m[0]
+    // E-posta değilse ve platformun kendi resmi bağlantısı değilse
+    if (!rawUrl.includes('@') && !isInternalPlatformUrl(rawUrl)) {
       violations.push({
         type: 'URL',
         severity: 'LOW',
         matchedText: '[link]',
         startIndex: m.index,
-        endIndex: m.index + m[0].length,
+        endIndex: m.index + rawUrl.length,
       })
     }
   }
